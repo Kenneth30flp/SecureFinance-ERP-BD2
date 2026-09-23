@@ -1,0 +1,36 @@
+{
+  "name": "securefinance-erp-bd2",
+  "version": "1.0.0",
+  "description": "SecureFinance ERP BD2 - Fase 1: estructura y modelo de seguridad",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "check": "node --check server.js && node --check src/config/database.js",
+    "check:db": "node -e \"require('dotenv').config({quiet:true}); const db=require('./src/config/database'); Promise.resolve().then(()=>db.getPool()).then(()=>console.log('Conexion SQL Server correcta')).catch(e=>{console.error(e.code || e.message); process.exitCode=1;}).finally(()=>db.closePool());\""
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kenneth30flp/SecureFinance-ERP-BD2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Kenneth30flp/SecureFinance-ERP-BD2/issues"
+  },
+  "homepage": "https://github.com/Kenneth30flp/SecureFinance-ERP-BD2#readme",
+  "dependencies": {
+    "bootstrap": "^5.3.8",
+    "dotenv": "^18.0.3",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "mssql": "^12.7.2"
+  }
+}
