@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Auditoría | SecureFinance ERP</title>
+  <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="bg-white border-bottom">
+    <nav class="container py-3 d-flex align-items-center justify-content-between gap-3" aria-label="Principal">
+      <a class="brand-title text-decoration-none" href="/dashboard">SecureFinance ERP</a>
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-secondary small">Usuario: <strong><%= usuario.nombreUsuario %></strong></span>
+        <a class="btn btn-outline-secondary" href="/logout">Cerrar sesión</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container audit-content py-5">
+    <p class="eyebrow mb-2">Monitoreo y trazabilidad</p>
+    <h1 class="h2 fw-bold mb-4">Auditoría</h1>
+
+    <section class="card border-0 shadow-sm mb-4">
+      <div class="card-body p-4">
+        <h2 class="h5 mb-3">Filtros</h2>
+        <form method="GET" action="/auditoria" class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label" for="fechaInicial">Fecha inicial</label>
+            <input id="fechaInicial" class="form-control" type="date" name="fechaInicial" value="<%= filtros.fechaInicial || '' %>">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="fechaFinal">Fecha final</label>
+            <input id="fechaFinal" class="form-control" type="date" name="fechaFinal" value="<%= filtros.fechaFinal || '' %>">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label" for="tabla">Tabla</label>
+            <input id="tabla" class="form-control" type="text" name="tabla" value="<%= filtros.tabla || '' %>">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label" for="operacion">Operación</label>
+            <input id="operacion" class="form-control" type="text" name="operacion" value="<%= filtros.operacion || '' %>">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label" for="cliente">Cliente</label>
+            <input id="cliente" class="form-control" type="text" name="cliente" value="<%= filtros.cliente || '' %>">
+          </div>
+          <div class="col-12 text-end">
+            <button class="btn btn-primary" type="submit">Aplicar filtros</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="card border-0 shadow-sm mb-4">
+      <div class="card-body p-4">
+        <h2 class="h5 mb-3">BITÁCORA DE ACCESO</h2>
+        <% if (bitacoraAcceso.length) { %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>FechaHora</th>
+                  <th>NombreUsuarioIntentado</th>
+                  <th>Resultado</th>
+                  <th>HostName</th>
+                  <th>AppName</th>
+                  <th>UsuarioSQL</th>
+                  <th>IpConexionSQL</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% bitacoraAcceso.forEach((registro) => { %>
+                  <tr>
+                    <td><%= registro.FechaHora %></td>
+                    <td><%= registro.NombreUsuarioIntentado %></td>
+                    <td><%= registro.Resultado %></td>
+                    <td><%= registro.HostName || '-' %></td>
+                    <td><%= registro.AppName || '-' %></td>
+                    <td><%= registro.UsuarioSQL || '-' %></td>
+                    <td><%= registro.IpConexionSQL || '-' %></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } else { %>
+          <p class="text-secondary mb-0">No hay registros de acceso.</p>
+        <% } %>
+      </div>
+    </section>
+
+    <section class="card border-0 shadow-sm mb-4">
+      <div class="card-body p-4">
+        <h2 class="h5 mb-3">AUDITORÍA DML</h2>
+        <% if (auditoriaDml.length) { %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>FechaHora</th>
+                  <th>TablaAfectada</th>
+                  <th>Operacion</th>
+                  <th>UsuarioSQL</th>
+                  <th>HostName</th>
+                  <th>ValorAnterior</th>
+                  <th>ValorNuevo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% auditoriaDml.forEach((registro) => { %>
+                  <tr>
+                    <td><%= registro.FechaHora %></td>
+                    <td><%= registro.TablaAfectada || '-' %></td>
+                    <td><%= registro.Operacion || '-' %></td>
+                    <td><%= registro.UsuarioSQL || '-' %></td>
+                    <td><%= registro.HostName || '-' %></td>
+                    <td class="small text-break"><%= registro.ValorAnterior || '-' %></td>
+                    <td class="small text-break"><%= registro.ValorNuevo || '-' %></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } else { %>
+          <p class="text-secondary mb-0">No hay registros de auditoría DML.</p>
+        <% } %>
+      </div>
+    </section>
+
+    <section class="card border-0 shadow-sm mb-4">
+      <div class="card-body p-4">
+        <h2 class="h5 mb-3">HISTÓRICO DE VENTAS</h2>
+        <% if (historicoVentas.length) { %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Factura</th>
+                  <th>Fecha</th>
+                  <th>Cliente</th>
+                  <th>Usuario</th>
+                  <th>Subtotal</th>
+                  <th>IVA</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% historicoVentas.forEach((registro) => { %>
+                  <tr>
+                    <td><%= registro.Factura || '-' %></td>
+                    <td><%= registro.Fecha || '-' %></td>
+                    <td><%= registro.Cliente || '-' %></td>
+                    <td><%= registro.Usuario || '-' %></td>
+                    <td><%= registro.Subtotal ?? '-' %></td>
+                    <td><%= registro.IVA ?? '-' %></td>
+                    <td><%= registro.Total ?? '-' %></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } else { %>
+          <p class="text-secondary mb-0">No hay histórico de ventas disponible.</p>
+        <% } %>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

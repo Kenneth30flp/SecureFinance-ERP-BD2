@@ -7,8 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "check": "node --check server.js && node --check src/config/database.js && node --check src/services/authService.js && node --check src/controllers/authController.js && node --check src/routes/authRoutes.js && node --check src/middleware/authMiddleware.js && node --check tests/auth.test.js",
-    "test": "node --test tests/auth.test.js",
+    "check": "node --check server.js && node --check src/config/database.js && node --check src/services/authService.js && node --check src/services/auditoriaService.js && node --check src/controllers/authController.js && node --check src/controllers/auditoriaController.js && node --check src/routes/authRoutes.js && node --check src/routes/auditoriaRoutes.js && node --check src/middleware/authMiddleware.js && node --check tests/auth.test.js && node --check tests/audit.test.js",
+    "test": "node --test tests/auth.test.js tests/audit.test.js",
     "check:db": "node -e \"require('dotenv').config({quiet:true}); const db=require('./src/config/database'); Promise.resolve().then(()=>db.getPool()).then(()=>console.log('Conexion SQL Server correcta')).catch(e=>{console.error(e.code || e.message); process.exitCode=1;}).finally(()=>db.closePool());\""
   },
   "engines": {
