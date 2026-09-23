@@ -7,8 +7,11 @@ const path = require('node:path');
 const { getPool, closePool } = require('./src/config/database');
 const { createAuthService } = require('./src/services/authService');
 const { createAuthRoutes } = require('./src/routes/authRoutes');
+const { createVentaService } = require('./src/services/ventaService');
+const { createVentaRoutes } = require('./src/routes/ventaRoutes');
 
 function createApp({ secret = process.env.SESSION_SECRET, authService = createAuthService(),
+  ventaService = createVentaService(),
   production = process.env.NODE_ENV === 'production' } = {}) {
   if (!secret || secret.trim().length < 32) {
     throw new Error('Configura SESSION_SECRET con al menos 32 caracteres.');
@@ -37,6 +40,7 @@ function createApp({ secret = process.env.SESSION_SECRET, authService = createAu
     },
   }));
   app.use(createAuthRoutes(authService));
+  app.use(createVentaRoutes(ventaService));
   // Comprueba HTTP únicamente; la conexión SQL se valida durante el arranque.
   app.get('/health', (req, res) => res.json({ status: 'ok', phase: 3 }));
   app.use((error, req, res, next) => {

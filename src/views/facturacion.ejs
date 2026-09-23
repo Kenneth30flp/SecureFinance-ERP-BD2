@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="<%= csrf %>">
+  <title>Facturación | SecureFinance ERP</title>
+  <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/facturacion.js" defer></script>
+</head>
+<body>
+  <header class="bg-white border-bottom">
+    <nav class="container py-3 d-flex align-items-center justify-content-between gap-3" aria-label="Principal">
+      <a class="brand-title text-decoration-none" href="/dashboard">SecureFinance ERP</a>
+      <a class="btn btn-outline-secondary" href="/dashboard">Volver al dashboard</a>
+    </nav>
+  </header>
+  <main class="container py-5">
+    <p class="eyebrow mb-2">Ventas</p>
+    <h1 class="h2 fw-bold">Facturación</h1>
+    <p class="text-secondary">Cajero: <%= usuario.nombreUsuario %> · Fecha: <time id="fecha"></time></p>
+    <noscript><p class="alert alert-warning">Activa JavaScript para preparar y procesar la venta.</p></noscript>
+    <div id="mensaje" class="alert d-none" role="status" aria-live="polite" tabindex="-1"></div>
+    <form id="venta-form">
+      <fieldset id="venta-campos">
+        <legend class="visually-hidden">Datos de la venta</legend>
+        <section class="card border-0 shadow-sm mb-4">
+          <div class="card-body p-4">
+            <label for="cliente" class="form-label">Cliente</label>
+            <select id="cliente" class="form-select" required>
+              <option value="">Selecciona un cliente</option>
+              <% clientes.forEach((cliente) => { %>
+                <option value="<%= cliente.ClienteId %>"><%= cliente.Nombre %> · <%= cliente.NIT %></option>
+              <% }); %>
+            </select>
+            <% if (!clientes.length) { %><p class="text-secondary mt-2">No hay clientes activos disponibles.</p><% } %>
+          </div>
+        </section>
+        <section class="card border-0 shadow-sm mb-4" aria-labelledby="productos-title">
+          <div class="card-body p-4">
+            <h2 class="h5 mb-3" id="productos-title">Productos</h2>
+            <div class="row g-3 align-items-end">
+              <div class="col-md-7">
+                <label for="producto" class="form-label">Producto · precio sin IVA · stock</label>
+                <select id="producto" class="form-select">
+                  <option value="">Selecciona un producto</option>
+                  <% productos.forEach((producto) => { %>
+                    <option value="<%= producto.ProductoId %>" data-precio="<%= Number(producto.Precio).toFixed(2) %>"
+                      data-stock="<%= producto.Stock %>" data-descripcion="<%= producto.Descripcion %>" <%= producto.Stock === 0 ? 'disabled' : '' %>>
+                      <%= producto.Codigo %> · <%= producto.Descripcion %> · Q <%= Number(producto.Precio).toFixed(2) %> · <%= producto.Stock %> disponibles
+                    </option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label for="cantidad" class="form-label">Cantidad</label>
+                <input id="cantidad" class="form-control" type="number" min="1" max="2147483647" step="1" value="1">
+              </div>
+              <div class="col-md-3"><button class="btn btn-outline-primary w-100" type="button" id="agregar">Agregar producto</button></div>
+            </div>
+            <div class="table-responsive mt-4">
+              <table class="table align-middle">
+                <caption>Detalle de la venta. Importes en quetzales.</caption>
+                <thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th><th>Acción</th></tr></thead>
+                <tbody id="lineas"></tbody>
+              </table>
+            </div>
+            <p id="sin-lineas" class="text-secondary">Agrega productos para comenzar.</p>
+            <dl class="row mb-0 text-end">
+              <dt class="col-8">Subtotal</dt><dd class="col-4" id="subtotal">Q 0.00</dd>
+              <dt class="col-8">IVA (12%)</dt><dd class="col-4" id="iva">Q 0.00</dd>
+              <dt class="col-8 fs-5">Total</dt><dd class="col-4 fs-5 fw-bold" id="total">Q 0.00</dd>
+            </dl>
+          </div>
+        </section>
+        <p class="text-secondary">Los importes son preliminares. Al procesar, se verifican los precios y las existencias actuales.</p>
+        <button class="btn btn-primary px-4 py-2" type="submit" id="procesar" disabled>Procesar Venta</button>
+      </fieldset>
+    </form>
+    <a class="btn btn-outline-primary mt-3 d-none" id="nueva-venta" href="/facturacion">Nueva venta</a>
+  </main>
+</body>
+</html>

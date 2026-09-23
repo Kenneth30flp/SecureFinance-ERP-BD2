@@ -18,6 +18,9 @@
     <p class="eyebrow mb-2">Tu espacio de trabajo</p>
     <h1 class="h2 fw-bold mb-3">Bienvenido: <%= usuario.nombreUsuario %></h1>
     <p class="text-secondary mb-4">Tu sesión está activa. Estos son los permisos disponibles para tu cuenta.</p>
+    <% if (usuario.permisos.includes('VENTAS_REGISTRAR')) { %>
+      <a class="btn btn-primary mb-4" href="/facturacion">Registrar venta</a>
+    <% } %>
     <section class="card border-0 shadow-sm" aria-labelledby="permisos-title">
       <div class="card-body p-4">
         <h2 class="h5 mb-3" id="permisos-title">Permisos disponibles</h2>
