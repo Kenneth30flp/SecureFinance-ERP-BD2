@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard | SecureFinance ERP</title>
+  <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="bg-white border-bottom">
+    <nav class="container py-3 d-flex align-items-center justify-content-between gap-3" aria-label="Principal">
+      <a class="brand-title text-decoration-none" href="/dashboard">SecureFinance ERP</a>
+      <a class="btn btn-outline-secondary" href="/logout">Cerrar sesión</a>
+    </nav>
+  </header>
+  <main class="container dashboard-content py-5">
+    <p class="eyebrow mb-2">Tu espacio de trabajo</p>
+    <h1 class="h2 fw-bold mb-3">Bienvenido: <%= usuario.nombreUsuario %></h1>
+    <p class="text-secondary mb-4">Tu sesión está activa. Estos son los permisos disponibles para tu cuenta.</p>
+    <section class="card border-0 shadow-sm" aria-labelledby="permisos-title">
+      <div class="card-body p-4">
+        <h2 class="h5 mb-3" id="permisos-title">Permisos disponibles</h2>
+        <% if (usuario.permisos.length) { %>
+          <ul class="list-group list-group-flush">
+            <% usuario.permisos.forEach((permiso) => { %>
+              <li class="list-group-item px-0 py-3"><%= permiso %></li>
+            <% }); %>
+          </ul>
+        <% } else { %>
+          <p class="text-secondary mb-0">No tienes permisos activos asignados.</p>
+        <% } %>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
