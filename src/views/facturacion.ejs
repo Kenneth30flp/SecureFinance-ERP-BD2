@@ -9,24 +9,32 @@
   <link rel="stylesheet" href="/css/styles.css">
   <script src="/js/facturacion.js" defer></script>
 </head>
-<body>
-  <header class="bg-white border-bottom">
-    <nav class="container py-3 d-flex align-items-center justify-content-between gap-3" aria-label="Principal">
-      <a class="brand-title text-decoration-none" href="/dashboard">SecureFinance ERP</a>
-      <a class="btn btn-outline-secondary" href="/dashboard">Volver al dashboard</a>
+<body class="app-shell">
+<a class="skip-link" href="#workspace">Ir al contenido</a>
+  <aside class="sidebar">
+    <a class="brand-title" href="/dashboard"><svg class="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M23 8H9v15h14v17H7M30 40V8h13M30 23h11" stroke="currentColor" stroke-width="4"/><path d="M7 31h9M37 33h6" stroke="var(--copper-soft)" stroke-width="3"/></svg><span>SecureFinance<small>ERP / Operations desk</small></span></a>
+    <p class="nav-label">ÁREA DE TRABAJO</p>
+    <nav class="desk-nav" aria-label="Principal">
+      <a href="/dashboard" ><span>00</span>Dashboard</a>
+      <% if (usuario.permisos.includes('VENTAS_REGISTRAR')) { %><a href="/facturacion" aria-current="page"><span>01</span>Facturación</a><% } %>
+      <% if (usuario.permisos.includes('AUDITORIA_CONSULTAR')) { %><a href="/auditoria" ><span>02</span>Auditoría</a><% } %>
     </nav>
-  </header>
-  <main class="container py-5">
-    <p class="eyebrow mb-2">Ventas</p>
+    <div class="sidebar-account"><span class="nav-label">USUARIO ACTUAL</span><strong><%= usuario.nombreUsuario %></strong><a class="btn btn-nav" href="/logout">Cerrar sesión <span aria-hidden="true">&nearr;</span></a></div>
+    <span class="sidebar-foot">SECUREFINANCE / ERP</span>
+  </aside>
+  <main id="workspace" class="container page-content">
+    <div class="page-header"><p class="eyebrow mb-2">OPERATIONS / 01 · Ventas y caja</p>
     <h1 class="h2 fw-bold">Facturación</h1>
-    <p class="text-secondary">Cajero: <%= usuario.nombreUsuario %> · Fecha: <time id="fecha"></time></p>
+    <p class="text-secondary">Cajero: <%= usuario.nombreUsuario %> · Fecha: <time id="fecha"></time></p></div>
     <noscript><p class="alert alert-warning">Activa JavaScript para preparar y procesar la venta.</p></noscript>
     <div id="mensaje" class="alert d-none" role="status" aria-live="polite" tabindex="-1"></div>
     <form id="venta-form">
       <fieldset id="venta-campos">
         <legend class="visually-hidden">Datos de la venta</legend>
-        <section class="card border-0 shadow-sm mb-4">
-          <div class="card-body p-4">
+        <div class="sale-layout"><div class="sale-detail">
+        <section class="work-panel">
+          <div class="panel-body">
+            <h2 class="h5 mb-3"><span class="section-index">01</span> Cliente de la operación</h2>
             <label for="cliente" class="form-label">Cliente</label>
             <select id="cliente" class="form-select" required>
               <option value="">Selecciona un cliente</option>
@@ -37,11 +45,11 @@
             <% if (!clientes.length) { %><p class="text-secondary mt-2">No hay clientes activos disponibles.</p><% } %>
           </div>
         </section>
-        <section class="card border-0 shadow-sm mb-4" aria-labelledby="productos-title">
-          <div class="card-body p-4">
-            <h2 class="h5 mb-3" id="productos-title">Productos</h2>
-            <div class="row g-3 align-items-end">
-              <div class="col-md-7">
+        <section class="work-panel" aria-labelledby="productos-title">
+          <div class="panel-body">
+            <h2 class="h5 mb-3" id="productos-title"><span class="section-index">02</span> Preparación de líneas</h2>
+            <div class="product-entry">
+              <div class="product-select">
                 <label for="producto" class="form-label">Producto · precio sin IVA · stock</label>
                 <select id="producto" class="form-select">
                   <option value="">Selecciona un producto</option>
@@ -53,29 +61,31 @@
                   <% }); %>
                 </select>
               </div>
-              <div class="col-md-2">
+              <div class="quantity-entry">
                 <label for="cantidad" class="form-label">Cantidad</label>
                 <input id="cantidad" class="form-control" type="number" min="1" max="2147483647" step="1" value="1">
               </div>
-              <div class="col-md-3"><button class="btn btn-outline-primary w-100" type="button" id="agregar">Agregar producto</button></div>
+              <div class="product-add"><button class="btn btn-outline-primary w-100" type="button" id="agregar">Agregar producto</button></div>
             </div>
-            <div class="table-responsive mt-4">
-              <table class="table align-middle">
+            <div class="table-responsive mt-4" tabindex="0" role="region" aria-label="Detalle de productos">
+              <table class="table table-modern sale-table align-middle">
                 <caption>Detalle de la venta. Importes en quetzales.</caption>
-                <thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th><th>Acción</th></tr></thead>
+                <thead><tr><th scope="col">Producto</th><th scope="col">Cantidad</th><th scope="col">Precio</th><th scope="col">Subtotal</th><th scope="col">Acción</th></tr></thead>
                 <tbody id="lineas"></tbody>
               </table>
             </div>
-            <p id="sin-lineas" class="text-secondary">Agrega productos para comenzar.</p>
-            <dl class="row mb-0 text-end">
-              <dt class="col-8">Subtotal</dt><dd class="col-4" id="subtotal">Q 0.00</dd>
-              <dt class="col-8">IVA (12%)</dt><dd class="col-4" id="iva">Q 0.00</dd>
-              <dt class="col-8 fs-5">Total</dt><dd class="col-4 fs-5 fw-bold" id="total">Q 0.00</dd>
+            <p id="sin-lineas" class="empty-state">Agrega productos para comenzar.</p>
+            </div></section></div>
+        <section class="sale-summary" aria-labelledby="resumen-title"><div class="panel-body">
+            <p class="eyebrow">CAJA / COMPROBANTE</p><h2 id="resumen-title">Resumen de operación</h2><p class="receipt-meta">QUETZALES / GTQ <span>VENTA</span></p>
+            <dl class="sale-totals">
+              <dt >Subtotal</dt><dd  id="subtotal">Q 0.00</dd>
+              <dt >IVA (12%)</dt><dd  id="iva">Q 0.00</dd>
+              <dt class="total-label">Total</dt><dd class="money-total" id="total">Q 0.00</dd>
             </dl>
-          </div>
-        </section>
-        <p class="text-secondary">Los importes son preliminares. Al procesar, se verifican los precios y las existencias actuales.</p>
-        <button class="btn btn-primary px-4 py-2" type="submit" id="procesar" disabled>Procesar Venta</button>
+        <p class="summary-note">Los importes son preliminares. Al procesar, se verifican los precios y las existencias actuales.</p>
+        <button class="btn btn-primary w-100 py-2" type="submit" id="procesar" disabled>Procesar Venta</button>
+          </div></section></div>
       </fieldset>
     </form>
     <a class="btn btn-outline-primary mt-3 d-none" id="nueva-venta" href="/facturacion">Nueva venta</a>

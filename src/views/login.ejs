@@ -8,12 +8,10 @@
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body class="login-page">
-  <main class="login-card card border-0 shadow-sm">
-    <div class="card-body p-4 p-sm-5">
-      <div class="brand-mark mb-4" aria-hidden="true">SF</div>
-      <p class="eyebrow mb-2">Bienvenido</p>
-      <h1 class="h3 fw-bold mb-2">SecureFinance ERP</h1>
-      <p class="text-secondary mb-4">Ingresa con tu cuenta para continuar.</p>
+  <main class="login-portal">
+    <header class="portal-header"><a class="brand-title" href="/login"><svg class="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M23 8H9v15h14v17H7M30 40V8h13M30 23h11" stroke="currentColor" stroke-width="4"/><path d="M7 31h9M37 33h6" stroke="var(--copper-soft)" stroke-width="3"/></svg><span>SecureFinance<small>ERP / Financial operations desk</small></span></a><span class="portal-reference">PORTAL DE ACCESO</span></header>
+    <div class="portal-title"><p class="eyebrow">OPERACIONES FINANCIERAS</p><h1>El control empieza<br>en cada operación.</h1><p>Ventas, caja y trazabilidad en un mismo espacio de trabajo.</p></div>
+    <section class="portal-access" aria-labelledby="access-title"><div class="access-heading"><span class="section-index">01 / ACCESO</span><h2 id="access-title">Ingresa a tu escritorio</h2><p>Utiliza tu cuenta de SecureFinance ERP.</p></div>
       <% if (error) { %>
         <div class="alert alert-danger" role="alert"><%= error %></div>
       <% } %>
@@ -30,7 +28,8 @@
         </div>
         <button class="btn btn-primary w-100 py-2" type="submit">Ingresar</button>
       </form>
-    </div>
+    </section>
+    <footer class="portal-footer"><span>SECUREFINANCE ERP</span><span>Operación / Control / Trazabilidad</span></footer>
   </main>
 </body>
 </html>
