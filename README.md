@@ -1,209 +1,129 @@
 # SecureFinance ERP — BD2
 
-Login web con EJS y Bootstrap 5, autenticación mediante procedimientos SQL, sesiones, dashboard de permisos y módulo de ventas transaccionales de Edward. No incluye recuperación de contraseña ni los módulos de auditoría y reportes.
+Proyecto académico con Node.js, Express, EJS, Bootstrap y SQL Server. Incluye autenticación segura mediante SHA2_512 + Salt, RBAC, bitácora de accesos, clientes, productos, facturación multiproducto, transacciones ACID, control de stock, movimiento de caja, auditoría DML mediante triggers, histórico de ventas, interfaz web corporativa y permisos mínimos SQL.
+
+La recuperación y el cambio de contraseña completos **no están implementados**. Existen el esquema `Token_Recuperacion` y el indicador `DebeCambiarPassword`, pero este indicador no obliga a cambiar la contraseña mediante una interfaz.
 
 ## Equipo
 
-- Kenneth: arquitectura BD, estructura común, usuarios, roles, permisos, autenticación, contraseñas y bitácora de accesos (incluido `sp_RegistrarAcceso`).
+- Kenneth: arquitectura BD, estructura común, usuarios, roles, permisos, autenticación, contraseñas y bitácora de accesos.
 - Edward: tablas de negocio, inventario, ventas transaccionales y facturación.
 - José: triggers DML, bitácora de transacciones, funciones, auditoría y reportes.
 - Rubén: documento técnico, ERD final, matriz de pruebas, guía y evidencias.
 
-La aplicación usa Node.js por decisión del equipo, sustituyendo la presentación C# descrita en el PDF. La seguridad y lógica de datos se mantendrán en SQL Server.
+La aplicación usa Node.js por decisión del equipo, sustituyendo la presentación C# descrita en el PDF. La seguridad y la lógica de datos residen en SQL Server.
 
-## Facturación — integración de Edward
+## Requisitos y configuración
 
-Sobre la base con `01`–`04` ya instalados, Kenneth ejecuta en SSMS:
+Node.js 24 o posterior, npm, SQL Server 2016 SP1 o posterior y SSMS. Para Node, habilitar TCP/IP y configurar el host y el puerto TCP real de la instancia; no concatenar el nombre de instancia al host.
 
-1. `database/05_BusinessTables.sql` **una sola vez** (tablas y `dbo.TipoDetalleVenta`).
-2. `database/05_BusinessSeedData.sql` (tres clientes y cuatro productos ficticios; repetible sin reponer stock).
-3. `database/06_TransactionProcedures.sql` (tres SP; repetible).
-4. `database/07_TransactionPermissions.sql`, con cuenta administradora y el usuario SQL `securefinance_app` existente.
-5. `database/tests/TransactionTests.sql`, con cuenta de desarrollo, en una base de pruebas sin escritores concurrentes. Revierte los datos; los IDENTITY pueden avanzar.
+Crear el archivo local `.env` tomando `.env.example` como referencia. Las credenciales SQL y `SESSION_SECRET` van exclusivamente en `.env`; generar un secreto de sesión aleatorio de al menos 32 caracteres. Configurar servidor, puerto, base `SecureFinanceERP` y cuenta SQL dedicada. No usar `sa` desde Node ni publicar `.env`, contraseñas personales o tokens.
 
-Las concesiones del paso 4 son únicamente:
+Mantener `DB_ENCRYPT=true`. Para un certificado autofirmado, `DB_TRUST_SERVER_CERTIFICATE=true` es una opción exclusivamente de desarrollo local. La aplicación escucha inicialmente en `127.0.0.1:3000`.
 
-```sql
-GRANT EXECUTE ON OBJECT::dbo.sp_ListarClientes TO securefinance_app;
-GRANT EXECUTE ON OBJECT::dbo.sp_ListarProductosDisponibles TO securefinance_app;
-GRANT EXECUTE ON OBJECT::dbo.sp_ProcesarVentaTransaccional TO securefinance_app;
-GRANT EXECUTE, REFERENCES ON TYPE::dbo.TipoDetalleVenta TO securefinance_app;
-```
+## Instalación final
 
-El TVP requiere ambos permisos sobre el tipo ([Microsoft](https://learn.microsoft.com/en-us/sql/relational-databases/tables/use-table-valued-parameters-database-engine)). No se concede DML directo ni roles globales. El unificado permanece sin cambios.
+Ambas opciones son para una **instalación nueva**. El Full no es una migración ni debe ejecutarse sobre una instalación con las tablas ya creadas. Ejecutar los scripts con una cuenta administradora autorizada y detenerse ante cualquier error SQL; no continuar los lotes después de un error. En `sqlcmd`, usar `-b` para detenerse ante errores. Las fechas se almacenan en UTC donde aplica.
 
-Con el `.env` local ya configurado por el equipo, ejecutar `npm run check`, `npm test`, `npm run check:db` y `npm start`. Iniciar sesión con un usuario que tenga `VENTAS_REGISTRAR`, abrir **Registrar venta**, seleccionar cliente y agregar dos productos. Con dos teclados DEMO y tres mouse DEMO, precios originales, esperar subtotal **Q 476.75**, IVA **Q 57.21** y total **Q 533.96**. Procesar y verificar el número de factura y los importes confirmados. En SQL, con cuenta de desarrollo, comprobar factura, dos detalles, un ingreso de caja y descuentos de stock de 2 y 3. Sin sesión, ambas rutas redirigen al login; sin permiso, responden 403. Los cambios de permisos se reflejan al volver a iniciar sesión.
+### Opción A — instalación completa nueva
 
-`GET /facturacion` carga catálogos activos. `POST /facturacion/procesar` recibe JSON `{ ClienteId, Detalle: [{ ProductoId, Cantidad }] }` y la cabecera `X-CSRF-Token` del formulario. El usuario procede exclusivamente de la sesión. Se permiten hasta 100 productos únicos; la interfaz acumula productos repetidos y el servidor rechaza duplicados. Los precios son sin IVA; SQL calcula el IVA del 12% sobre el subtotal global y redondea a centavos. Los importes confirmados se devuelven como cadenas decimales. Se bloquean los productos por ID ascendente hasta terminar la transacción. Cualquier error revierte toda la venta, incluida una eventual transacción externa; Node invoca el SP en autocommit. No se reintenta automáticamente un resultado incierto.
+1. Ejecutar `npm ci`.
+2. Crear/configurar manualmente el login SQL externo `securefinance_app`, o preparar una cuenta equivalente según el entorno. Ningún instalador crea logins ni passwords. Los scripts de permisos suministrados usan específicamente `securefinance_app`; una cuenta equivalente requiere que el administrador configure su usuario y los mismos permisos mínimos y ajuste `DB_USER` localmente.
+3. Ejecutar `database/SecureFinanceERP_Full.sql` en SSMS o sqlcmd. Incluye los diez bloques de la opción B, con el contenido de sus fuentes modulares y sin pruebas.
+4. Si el login fue creado después del Full, ejecutar `database/10_AppPermissions.sql`.
+5. Configurar `.env` según la sección anterior.
+6. Ejecutar `npm run check`.
+7. Ejecutar `npm test`.
+8. Ejecutar `npm run check:db` para verificar la conexión real.
+9. Ejecutar `npm start` y abrir `http://localhost:3000/login`.
 
-`npm test` usa mocks SQL y prueba también la interfaz con un DOM mínimo. Para integración real local: `npm run test:sql -- ".\SQLEXPRESS"` requiere `sqlcmd`, autenticación Windows y permiso para crear/eliminar una base. El comando genera una base temporal aislada, instala los scripts sin alterar sus archivos, verifica las suites SQL existentes, semillas, mínimos privilegios y dos ventas concurrentes, y elimina su base al terminar. No usa `.env` ni se conecta a la base de Kenneth. No sustituye la prueba final del driver `mssql` mediante la cuenta de aplicación y TCP de ese entorno.
+Si falta el login, el Full muestra una advertencia: la base fue instalada, el administrador debe configurar el login y ejecutar después `10_AppPermissions.sql`. Esa ausencia no aborta la instalación.
 
-Subtotal e IVA están concentrados en un bloque del SP para integrar después las funciones de José. No se incluyen triggers, funciones de auditoría ni reportes.
+### Opción B — instalación modular
 
-## Preparación
+Instalar dependencias y preparar el login como en la opción A. Ejecutar estos archivos en este orden:
 
-Requisitos: Node.js 24 o posterior, npm, SQL Server 2016 SP1 o posterior y SSMS. Habilitar TCP/IP en la instancia y conocer su puerto. Para una instancia con nombre, configurar su host y puerto TCP real en las variables, sin concatenar el nombre de instancia al host.
+1. `database/01_CreateDatabase.sql`
+2. `database/02_SecurityTables.sql`
+3. `database/03_SecurityStoredProcedures.sql`
+4. `database/04_SecuritySeedData.sql`
+5. `database/05_BusinessTables.sql`
+6. `database/05_BusinessSeedData.sql`
+7. `database/06_TransactionProcedures.sql`
+8. `database/07_AuditCore.sql`
+9. `database/08_AuditTriggers.sql`
+10. `database/10_AppPermissions.sql`
 
-1. Ejecutar `npm ci` para instalar las versiones del lockfile.
-2. En SSMS, ejecutar `database/01_CreateDatabase.sql` con una cuenta autorizada. No cambia una base existente.
-3. Ejecutar `database/02_SecurityTables.sql` **una sola vez** sobre la base preparada. Es una instalación inicial transaccional; no elimina ni reemplaza tablas existentes. Una segunda ejecución fallará por objetos existentes.
-4. Ejecutar `database/tests/SecurityTests.sql` con la cuenta de desarrollo. Debe imprimir `OK`; los datos se revierten. Los contadores IDENTITY pueden avanzar aunque se reviertan las filas.
-5. Crear manualmente un `.env` local tomando `.env.example` como referencia. Completar las credenciales de una cuenta SQL dedicada y `SESSION_SECRET` con un secreto aleatorio de al menos 32 caracteres. El repositorio no incluye `.env` ni credenciales reales.
-6. Ejecutar `npm run check`, `npm run check:db` y `npm start`.
-7. Con Fase 2 instalada y permisos EXECUTE concedidos como se indica abajo, abrir `http://localhost:3000/login`. `/health` debe devolver `{"status":"ok","phase":3}`. El servidor valida la conexión SQL antes de escuchar; `/health` comprueba HTTP, no la disponibilidad continua de SQL.
+Continuar con `.env`, las verificaciones y el arranque de los pasos 5–9 de la opción A. No ejecutar además el Full.
 
-Si el certificado local es autofirmado, se puede configurar `DB_TRUST_SERVER_CERTIFICATE=true` exclusivamente para desarrollo. Se conserva `DB_ENCRYPT=true`. La aplicación escucha inicialmente solo en `127.0.0.1`.
+`07_AuditCore.sql` requiere `Factura`, `Cliente` y `Usuario`. Los triggers requieren `Producto`, `Factura` y `Bitacora_Transacciones`; por eso auditoría va después de negocio y los triggers después del núcleo de auditoría.
 
-## Modelo inicial
+`07_TransactionPermissions.sql` y `09_AuditPermissions.sql` se conservan como scripts parciales/históricos. Para la instalación final se recomienda `10_AppPermissions.sql`, que reúne todas las concesiones necesarias.
 
-| Tabla | Propósito |
+## Cuenta SQL y permisos mínimos
+
+`10_AppPermissions.sql` usa `SecureFinanceERP`, comprueba `SUSER_ID(N'securefinance_app')` y crea el usuario de base con `CREATE USER [securefinance_app] FOR LOGIN [securefinance_app]` solo si el login existe y el usuario falta. Si el usuario ya existe, aplica las concesiones. El administrador debe ejecutarlo con visibilidad del login y verificar que un usuario preexistente esté correctamente mapeado.
+
+| Área | Permisos concedidos |
 |---|---|
-| `dbo.Usuario` | Identidad, correo único, estado, hash de 64 bytes y sal única de 32 bytes. |
-| `dbo.Rol` | Catálogo de roles con nombre único. |
-| `dbo.Permiso` | Catálogo de códigos de permiso únicos. |
-| `dbo.Usuario_Rol` | Relación muchos a muchos de usuarios y roles, sin duplicados. |
-| `dbo.Rol_Permiso` | Relación muchos a muchos de roles y permisos, sin duplicados. |
-| `dbo.Token_Recuperacion` | Hash del token, vigencia, consumo e invalidación; solo el esquema en esta fase. |
-| `dbo.Bitacora_Acceso` | Resultado, usuario opcional, nombre intentado, fecha UTC, host, aplicación, principal SQL e IP disponibles. |
+| Autenticación | `EXECUTE` sobre `dbo.sp_Login` y `dbo.sp_ObtenerPermisosUsuario` |
+| Ventas | `EXECUTE` sobre `dbo.sp_ListarClientes`, `dbo.sp_ListarProductosDisponibles` y `dbo.sp_ProcesarVentaTransaccional` |
+| TVP | `EXECUTE` y `REFERENCES` sobre `TYPE::dbo.TipoDetalleVenta` |
+| Auditoría | `EXECUTE` sobre `dbo.sp_ConsultarBitacoraAcceso`, `dbo.sp_ConsultarAuditoriaTransacciones` y `dbo.sp_ConsultarHistoricoVentas` |
 
-Los cuatro resultados permitidos son `EXITOSO`, `PASSWORD_INCORRECTA`, `USUARIO_INEXISTENTE` y `USUARIO_INACTIVO`. El usuario es nulo únicamente para el resultado inexistente. No se almacenan contraseñas ni tokens originales en la bitácora. No hay borrado en cascada. Las columnas de texto usan la collation de la base; esta determina sensibilidad a mayúsculas y acentos.
+El script imprime `OK` al aplicar los permisos y puede repetirse. No concede `sysadmin`, `db_owner`, `db_datareader`, `db_datawriter`, `CONTROL`, permisos globales SELECT/INSERT/UPDATE/DELETE ni acceso directo a tablas. No concede ejecución a los procedimientos administrativos o internos: las llamadas internas usan la cadena de propiedad `dbo`. No revoca privilegios previos; el administrador debe comprobar que la cuenta dedicada no herede permisos adicionales y que pueda conectarse a la base.
 
-Los procedimientos generan sal con `CRYPT_GEN_RANDOM(32)` y hash con `HASHBYTES('SHA2_512', CONVERT(VARBINARY(256), @Password) + @Salt)`. Reciben `@Password NVARCHAR(MAX)` y validan entre 1 y 256 bytes antes de convertir, evitando truncamiento silencioso: máximo 128 unidades UTF-16. No recortan espacios ni normalizan contraseñas. Se concatenan los bytes UTF-16LE de la contraseña y los 32 bytes de sal. La misma sal se usa para calcular e insertar el hash; `UNIQUE` impide repetirla. El resultado SHA2_512 tiene [64 bytes según Microsoft](https://learn.microsoft.com/en-us/sql/t-sql/functions/hashbytes-transact-sql). Cualquier futuro cambio/restablecimiento deberá repetir exactamente esta fórmula con una sal nueva; todavía no se implementa. No hay hashing de contraseñas en Node.
+## Modelo y seguridad
 
-`HOST_NAME()`, `APP_NAME()` y `SUSER_SNAME()` describen la conexión del backend. `CONNECTIONPROPERTY('client_net_address')` captura su IP cuando está disponible y puede devolver NULL. `IpClienteAplicacion` queda separada para el navegador. Estos metadatos no constituyen por sí solos prueba de identidad del usuario final.
+Seguridad: `Usuario`, `Rol`, `Permiso`, `Usuario_Rol`, `Rol_Permiso`, `Token_Recuperacion` y `Bitacora_Acceso`. Negocio: `Cliente`, `Producto`, `Factura`, `DetalleFactura`, `MovimientoCaja` y el tipo de tabla `TipoDetalleVenta`. Auditoría DML: `Bitacora_Transacciones`.
 
-## Cuenta SQL de aplicación
+SQL genera una sal única de 32 bytes con `CRYPT_GEN_RANDOM(32)` y calcula `HASHBYTES('SHA2_512', CONVERT(VARBINARY(256), @Password) + @Salt)`, con resultado de 64 bytes. Los procedimientos validan entre 1 y 256 bytes de contraseña antes de convertir; no recortan espacios ni normalizan. Node no calcula hashes ni consulta hash o sal. Usa procedimientos con parámetros tipados.
 
-La aplicación usa el login SQL dedicado `securefinance_app`, mapeado a un usuario en `SecureFinanceERP` con permiso de conexión (`CONNECT`). No utilizar `sa` ni permisos directos sobre tablas.
+`sp_Login` registra cada intento mediante `sp_RegistrarAcceso`. Los resultados son `EXITOSO`, `PASSWORD_INCORRECTA`, `USUARIO_INEXISTENTE` y `USUARIO_INACTIVO`. No devuelve hash, sal ni contraseña. La bitácora contiene fecha UTC y metadatos de conexión; la IP SQL describe la conexión del backend, no necesariamente el navegador. Ejecutar login en autocommit: un rollback externo también revertiría su bitácora.
 
-Conceder manualmente `EXECUTE` únicamente sobre `dbo.sp_Login` y `dbo.sp_ObtenerPermisosUsuario`, preferiblemente mediante un rol de base de datos. No otorgar `sysadmin`, `db_owner`, `db_datareader`, `db_datawriter`, permisos DDL ni DML directo. La bitácora se escribe mediante la llamada interna del login a `sp_RegistrarAcceso`. No se crean cuentas ni contraseñas desde estos scripts.
+Tras autenticar, Node consulta `sp_ObtenerPermisosUsuario`, regenera la sesión y guarda la identidad y los códigos de permisos. Los cambios RBAC se reflejan al volver a iniciar sesión. Las sesiones usan **MemoryStore solo para desarrollo académico**, se pierden al reiniciar y requieren reemplazo para producción. La cookie dura 30 minutos y usa `httpOnly` y `sameSite: 'lax'`; un despliegue real requiere HTTPS y configuración explícita del proxy de confianza si corresponde.
 
-## Estructura y siguientes fases
+## Semillas DEMO
 
-`server.js` configura Express, EJS, Bootstrap local y express-session. `authRoutes` define rutas, `authController` maneja HTTP y sesiones, `authService` ejecuta los SP con parámetros tipados y `authMiddleware` protege el dashboard. `src/config/database.js` comparte el pool existente con parámetros de entorno.
+Las credenciales DEMO son exclusivamente académicas: **`admin_demo` / `Demo_Academica_2026!`**, correo `admin.demo@example.invalid`. Se crea con `DebeCambiarPassword = 1`, sin flujo completo de cambio de contraseña.
 
-Las sesiones usan MemoryStore únicamente para desarrollo académico local y se pierden al reiniciar. No es una solución definitiva de producción. La cookie dura 30 minutos, usa `httpOnly` y `sameSite: 'lax'`. En desarrollo local HTTP no usa Secure; en producción `secure: 'auto'` lo activa cuando Express detecta HTTPS. El servidor actual escucha HTTP local y no confía en cabeceras de proxy. Un despliegue real requiere HTTPS, configurar explícitamente el proxy de confianza si corresponde y sustituir MemoryStore; [express-session documenta esta limitación](https://expressjs.com/en/resources/middleware/session/). `SESSION_SECRET` proviene de `.env`, con al menos 32 caracteres.
-
-Las semillas de Fase 2 son exclusivamente académicas. No es necesario repetir su instalación para integrar Fase 3 sobre una base ya validada.
-
-## Fase 3: rutas y verificación web
-
-| Ruta | Comportamiento |
+| Rol | Permisos RBAC |
 |---|---|
-| `GET /` | Redirige a login o dashboard según la sesión. |
-| `GET /login` | Muestra el formulario; con sesión redirige al dashboard. |
-| `POST /login` | Recibe NombreUsuario y Password; ejecuta `dbo.sp_Login`. |
-| `GET /dashboard` | Requiere sesión; muestra usuario y permisos. |
-| `GET /logout` | Destruye la sesión, elimina la cookie y redirige a login. |
-| `GET /health` | Devuelve estado HTTP y `phase: 3`. |
+| Administrador | `USUARIOS_ADMINISTRAR`, `VENTAS_REGISTRAR`, `AUDITORIA_CONSULTAR` |
+| Cajero | `VENTAS_REGISTRAR` |
+| Auditor | `AUDITORIA_CONSULTAR` |
 
-Después de EXITOSO, Node consulta `dbo.sp_ObtenerPermisosUsuario`, regenera el identificador de sesión y guarda únicamente `usuarioId`, `nombreUsuario`, `correo`, `debeCambiarPassword` y los códigos de `permisos` en `req.session.usuario`. Guarda la sesión antes de redirigir. Si falla la consulta de permisos, no se crea una sesión autenticada. El hashing y la comparación ocurren exclusivamente en SQL Server; Node no consulta hash ni sal, no transforma la contraseña y no construye SQL concatenado. Los permisos son una instantánea del login; los cambios posteriores se reflejan al iniciar sesión nuevamente.
+Las semillas de seguridad conservan los usuarios existentes; no restablecen su contraseña ni reactivan roles o permisos. Las de negocio incluyen tres clientes y cuatro productos ficticios. Reejecutarlas no repone stock ni cambia precios o estados existentes. Esto no hace repetible el instalador completo: los scripts de creación de tablas son de instalación inicial.
 
-Con Fase 2 ya instalada, probar en este orden:
+## Ventas, auditoría e interfaz
 
-1. Confirmar las dos concesiones EXECUTE con el administrador SQL. Conservar el `.env` local existente y la cuenta `securefinance_app`.
-2. Ejecutar `npm run check`, `npm test` y `npm start` (en PowerShell puede usarse `npm.cmd`). `npm test` usa SQL simulado; no verifica la instancia real.
-3. Abrir `/health`: esperar `{"status":"ok","phase":3}`. En ventana privada abrir `/` y `/dashboard`: ambos deben redirigir a `/login`.
-4. Abrir `/login`: formulario con usuario, contraseña y botón Ingresar.
-5. Probar `admin_demo` con una contraseña incorrecta y luego `no_existe_demo`: ambos deben mostrar **Usuario o contraseña incorrectos.**, permanecer en login y no crear sesión.
-6. Ingresar con **admin_demo / Demo_Academica_2026!**: esperar `/dashboard`, nombre del usuario y los permisos `USUARIOS_ADMINISTRAR`, `VENTAS_REGISTRAR`, `AUDITORIA_CONSULTAR`.
-7. Con sesión, visitar `/` o `/login`: esperar redirección al dashboard.
-8. Pulsar **Cerrar sesión**: esperar `/login`; visitar nuevamente `/dashboard`: debe redirigir a `/login`.
+`/dashboard` muestra la sesión y sus permisos. `/facturacion` requiere `VENTAS_REGISTRAR` y permite ventas con varios productos. `POST /facturacion/procesar` recibe cliente y detalle con token CSRF; obtiene el usuario exclusivamente de la sesión. SQL calcula importes y registra factura, detalles, ingreso de caja y descuentos de stock en una transacción ACID. Un error revierte toda la venta. Los precios son sin IVA; se calcula el 12% sobre el subtotal global, redondeado a centavos. Node invoca el procedimiento en autocommit, sin reintentar automáticamente resultados inciertos.
 
-Para un usuario inactivo se muestra **El usuario se encuentra inactivo.** Los errores técnicos muestran un mensaje genérico, sin detalles SQL. El indicador `DebeCambiarPassword` se conserva en sesión; el cambio de contraseña queda fuera de esta fase. Las pruebas HTTP locales verifican también escape de datos, cookies y rechazo de la sesión anterior al cerrar sesión. La validación real del login y de su bitácora debe realizarse en la instancia del equipo.
+`/auditoria` requiere `AUDITORIA_CONSULTAR` y ofrece bitácora de accesos, auditoría de transacciones e histórico de ventas con filtros. Los triggers registran cambios de precio o stock y eliminaciones de productos, e inserciones de facturas, con valores anteriores/nuevos según la operación. La autenticación se registra exclusivamente en `Bitacora_Acceso`. El núcleo incluye las funciones de IVA, subtotal, consulta de auditoría e histórico de ventas y sus procedimientos de consulta.
 
-## Fase 2: instalación sobre la Fase 1 existente
+Sin sesión, las páginas protegidas redirigen al login; sin el permiso requerido, ventas y auditoría responden 403. `/health` comprueba HTTP, no la disponibilidad continua de SQL; el servidor valida la conexión SQL antes de escuchar.
 
-En SSMS, con la cuenta de desarrollo autorizada, ejecutar en este orden:
+## Pruebas y validación
 
-1. `database/03_SecurityStoredProcedures.sql`: crea o actualiza los cuatro SP, sin modificar tablas.
-2. `database/04_SecuritySeedData.sql`: imprime `OK: semillas DEMO disponibles; datos existentes conservados.` En la primera ejecución también devuelve `Codigo = 0`, `Resultado = REGISTRADO` y el ID creado.
-3. `database/tests/SecurityTests.sql`: pruebas originales de Fase 1; imprime `OK`.
-4. `database/tests/AuthenticationTests.sql`: pruebas de Fase 2; imprime `OK: Fase 2, ... Datos revertidos.`
+- `npm run check`: comprobación de sintaxis JavaScript de aplicación y pruebas.
+- `npm test`: pruebas Node de autenticación, ventas, interfaz y auditoría con mocks; no conecta a SQL Server.
+- `npm run check:db`: conexión SQL real usando la configuración local de `.env`.
+- `database/tests/SecurityTests.sql`: esquema y restricciones de seguridad.
+- `database/tests/AuthenticationTests.sql`: autenticación, hashing, semillas y RBAC.
+- `database/tests/TransactionTests.sql`: ventas transaccionales, importes, stock y rollback.
+- `database/tests/AuditTests.sql`: funciones, triggers y consultas de auditoría e histórico.
 
-No volver a ejecutar `02` ni el unificado sobre las tablas ya instaladas. Para una **instalación nueva**, ejecutar `01`, `02`, `03`, `04`, o alternativamente solo `database/SecureFinanceERP_Full.sql`, que contiene esos cuatro archivos completos y en orden. El unificado requiere detenerse ante errores de instalación; no es una migración idempotente. Después ejecutar ambos archivos de pruebas.
+Las cuatro suites SQL se ejecutan contra SQL Server después de instalar el esquema completo, con una cuenta de desarrollo autorizada y una base de pruebas sin escritores concurrentes. Revisar sus mensajes `OK` y cualquier error. Sus transacciones revierten datos temporales, pero los contadores IDENTITY pueden avanzar. No están incluidas en el Full.
 
-Los scripts `03` y `04` pueden repetirse. El seed crea los roles Administrador, Cajero y Auditor y asigna estos permisos:
+También existe `npm run test:sql -- ".\SQLEXPRESS"`: requiere `sqlcmd`, autenticación Windows y permisos para crear/eliminar una base temporal aislada. Su alcance actual es seguridad, autenticación y ventas, incluyendo concurrencia y permisos transaccionales; no instala auditoría ni valida el Full o `10_AppPermissions.sql`. No usa `.env` y no sustituye las cuatro suites SQL ni la prueba del driver `mssql` con la cuenta real de aplicación.
 
-| Rol | Permisos |
-|---|---|
-| Administrador | USUARIOS_ADMINISTRAR, VENTAS_REGISTRAR, AUDITORIA_CONSULTAR |
-| Cajero | VENTAS_REGISTRAR |
-| Auditor | AUDITORIA_CONSULTAR |
+### Verificación manual final de Kenneth
 
-Usuario **DEMO**: `admin_demo`, correo `admin.demo@example.invalid`, contraseña temporal pública **`Demo_Academica_2026!`**. Se crea mediante `sp_RegistrarUsuario` con `DebeCambiarPassword = 1`. Ese indicador aún no ejecuta ni obliga el cambio mediante una interfaz: el flujo se implementará posteriormente. Reejecutar el seed no cambia la contraseña, estado ni indicador de un usuario existente; tampoco reactiva roles o permisos. Si los datos ya fueron modificados, las expectativas DEMO pueden variar.
+1. En una instancia de pruebas, instalar el Full sobre una base nueva con el login disponible: verificar creación/mapeo del usuario y mensaje `OK` de permisos.
+2. En un entorno aislado sin ese login, instalar el Full: verificar que no falle por su ausencia y que muestre la advertencia. Configurar manualmente el login y ejecutar `10_AppPermissions.sql`; repetir este último para confirmar que no falla por usuario existente. No eliminar el login ni la base de trabajo para simular estos casos.
+3. Ejecutar las cuatro suites SQL y comprobar funciones, procedimientos, triggers y semillas. Comparar también una instalación modular nueva con la instalación Full en entornos separados.
+4. Conectarse como `securefinance_app`: probar login, permisos RBAC, catálogos, venta con TVP y las tres consultas de auditoría. Confirmar que no puede leer/escribir tablas directamente ni tiene roles amplios.
+5. Ejecutar `npm run check:db`, iniciar la web y probar login correcto/incorrecto, cierre de sesión, restricciones de acceso y filtros de auditoría.
+6. Con precios DEMO originales, vender dos teclados y tres mouse: subtotal **Q 476.75**, IVA **Q 57.21**, total **Q 533.96**. Con la cuenta de desarrollo verificar una factura, dos detalles, un ingreso de caja, stock reducido en 2 y 3, auditoría de factura/productos e histórico. Una venta con stock insuficiente debe revertirse íntegramente.
 
-## Contrato de los procedimientos
-
-`sp_RegistrarUsuario` recibe NombreUsuario, Correo, Password y NombreCompleto (obligatorio en el modelo), y permite obtener `@UsuarioId OUTPUT`. Devuelve una fila con `Codigo`, `Resultado`, `UsuarioId`: 0/REGISTRADO, 10/DATOS_INVALIDOS, 11/USUARIO_O_CORREO_EXISTENTE o 12/CONFLICTO_UNICIDAD (incluye carreras concurrentes). El valor RETURN repite Codigo. Los errores técnicos se propagan con THROW. Las validaciones de correo y nombres respetan el modelo actual: no vacíos, longitudes máximas y unicidad según collation; no se agrega un validador de formato de correo.
-
-`sp_Login` devuelve exactamente una fila y siete columnas: `Codigo`, `Resultado`, `UsuarioId`, `NombreUsuario`, `Correo`, `Activo`, `DebeCambiarPassword`. RETURN repite Codigo. En fallos, todos los datos de usuario son NULL.
-
-| Codigo | Resultado |
-|---|---|
-| 0 | EXITOSO |
-| 1 | USUARIO_INEXISTENTE |
-| 2 | USUARIO_INACTIVO |
-| 3 | PASSWORD_INCORRECTA |
-
-Nunca devuelve PasswordHash, Salt, contraseña ni token. La capa web usa el mismo mensaje para usuario inexistente y contraseña incorrecta; informa por separado si el usuario está inactivo. Password NULL, vacío o demasiado largo se considera incorrecto para un usuario activo. Nombre NULL o demasiado largo se considera inexistente.
-
-`sp_RegistrarAcceso` es un procedimiento interno sin result set; registra fecha UTC y metadatos de conexión sin exigir VIEW SERVER STATE. Un nombre intentado que exceda la columna existente se limita a NVARCHAR(50); NULL se registra como cadena vacía. La IP SQL puede ser NULL en conexiones locales y no es la IP del navegador. El login registra exactamente un intento antes de devolver su resultado; un error al escribir la bitácora impide devolver éxito. **Llamar login en autocommit**: una transacción externa que luego haga rollback también revierte la bitácora. Las pruebas aprovechan este comportamiento para limpiar sus datos.
-
-`sp_ObtenerPermisosUsuario @UsuarioId` devuelve `PermisoId` y `Codigo` únicos, solo para usuario, roles y permisos activos. Sin asignaciones activas devuelve cero filas; un mismo permiso concedido por dos roles aparece una vez.
-
-Para pruebas de SP con la cuenta SQL de aplicación, un administrador puede conceder únicamente EXECUTE sobre `dbo.sp_Login` y `dbo.sp_ObtenerPermisosUsuario` mediante un rol de base de datos. No conceder acceso directo a tablas ni EXECUTE sobre `sp_RegistrarAcceso`: la cadena de propiedad dbo permite su llamada interna desde login. El registro administrativo se prueba con la cuenta de desarrollo; su exposición a Node se decidirá posteriormente. Estos scripts no alteran cuentas SQL ni concesiones existentes.
-
-## Pruebas manuales en SSMS
-
-Ejecutar con la cuenta de desarrollo después de instalar las semillas:
-
-```sql
-USE SecureFinanceERP;
-GO
--- Esperado: 0 / EXITOSO, datos seguros, DebeCambiarPassword = 1.
-EXEC dbo.sp_Login @NombreUsuario = N'admin_demo', @Password = N'Demo_Academica_2026!';
--- Esperado: 3 / PASSWORD_INCORRECTA, datos de usuario NULL.
-EXEC dbo.sp_Login @NombreUsuario = N'admin_demo', @Password = N'Incorrecta';
--- Esperado: 1 / USUARIO_INEXISTENTE, datos de usuario NULL.
-EXEC dbo.sp_Login @NombreUsuario = N'no_existe_demo', @Password = N'Incorrecta';
-
--- Esperado: los tres intentos anteriores y sus metadatos; no contiene secretos.
-SELECT TOP (20) BitacoraAccesoId, UsuarioId, NombreUsuarioIntentado,
-       Resultado, FechaHora, HostName, AppName, UsuarioSQL, IpConexionSQL
-FROM dbo.Bitacora_Acceso ORDER BY BitacoraAccesoId DESC;
-
--- Esperado: los tres permisos del Administrador, sin duplicados.
-DECLARE @Id INT = (SELECT UsuarioId FROM dbo.Usuario WHERE NombreUsuario = N'admin_demo');
-EXEC dbo.sp_ObtenerPermisosUsuario @UsuarioId = @Id;
-GO
--- Prueba reversible de usuario inactivo: 2 / USUARIO_INACTIVO.
-SET XACT_ABORT ON;
-BEGIN TRY
-    BEGIN TRANSACTION;
-    UPDATE dbo.Usuario SET Activo = 0 WHERE NombreUsuario = N'admin_demo';
-    EXEC dbo.sp_Login @NombreUsuario = N'admin_demo', @Password = N'Demo_Academica_2026!';
-    -- El intento se puede consultar aquí, antes del rollback.
-    SELECT TOP (1) Resultado, FechaHora FROM dbo.Bitacora_Acceso
-    WHERE NombreUsuarioIntentado = N'admin_demo' ORDER BY BitacoraAccesoId DESC;
-    ROLLBACK TRANSACTION;
-END TRY
-BEGIN CATCH
-    IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
-    THROW;
-END CATCH;
-```
-
-Para comprobar idempotencia, ejecutar `04` nuevamente: no deben duplicarse usuarios, roles, permisos ni asignaciones. `AuthenticationTests.sql` verifica además registro, fórmula binaria con Unicode y espacios, longitud de hash, sal presente y distinta para la misma contraseña, rechazo de duplicados y contraseñas largas, los cuatro accesos, contrato de columnas y permisos sin duplicados ni entidades inactivas. Ambas suites hacen rollback; los contadores IDENTITY pueden avanzar.
-
-## Validación
-
-- `npm run check`: sintaxis de los archivos JavaScript de aplicación y pruebas.
-- `npm test`: pruebas de servicio y HTTP con SQL simulado, sin conexión a SQL Server.
-- `npm ls --depth=0`: dependencias instaladas.
-- `npm audit`: estado de vulnerabilidades reportadas por npm.
-- `npm run check:db`: conexión real usando exclusivamente la configuración local.
-- `database/tests/SecurityTests.sql`: integración SQL manual, con rollback de datos temporales.
-- `database/tests/AuthenticationTests.sql`: integración SQL de Fase 2, con rollback.
-
-Las revisiones estáticas no sustituyen ejecutar los scripts contra la instancia del equipo. La conexión y las pruebas SQL requieren que un integrante configure su entorno real.
+Las comprobaciones estáticas y los mocks no sustituyen estas verificaciones en SQL Server.

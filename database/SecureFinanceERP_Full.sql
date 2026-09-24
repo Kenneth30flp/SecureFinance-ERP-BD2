@@ -1,7 +1,16 @@
--- Instalación NUEVA exclusivamente. No ejecutar sobre las tablas de Fase 1 existentes.
--- Copia unificada de 01, 02, 03 y 04. Sin módulos de negocio.
+-- Instalación NUEVA de SecureFinance ERP.
+-- Incluye seguridad, RBAC, negocio, ventas, auditoría y semillas DEMO.
+-- No es una migración. No ejecutar sobre una instalación existente con las tablas ya creadas.
+-- No crea passwords ni logins de servidor. El login securefinance_app se configura externamente.
+-- Las fechas se almacenan en UTC donde aplica.
+-- Las credenciales DEMO son exclusivamente académicas.
+-- Ejecutar con una cuenta administradora en SSMS o sqlcmd; detener la ejecución ante errores.
+-- Copia íntegra de los scripts modulares indicados en cada bloque, sin archivos de pruebas.
 
+-- =========================================================
+-- 01. CREACIÓN DE BASE DE DATOS
 -- Fuente: database/01_CreateDatabase.sql
+-- =========================================================
 -- Ejecutar en SSMS con una cuenta autorizada para crear bases de datos.
 USE [master];
 GO
@@ -12,7 +21,10 @@ END;
 GO
 
 
+-- =========================================================
+-- 02. SEGURIDAD, USUARIOS, ROLES Y PERMISOS
 -- Fuente: database/02_SecurityTables.sql
+-- =========================================================
 USE [SecureFinanceERP];
 GO
 SET XACT_ABORT ON;
@@ -126,7 +138,10 @@ END CATCH;
 GO
 
 
+-- =========================================================
+-- 03. PROCEDIMIENTOS DE AUTENTICACIÓN
 -- Fuente: database/03_SecurityStoredProcedures.sql
+-- =========================================================
 USE [SecureFinanceERP];
 GO
 SET ANSI_NULLS ON;
@@ -261,7 +276,10 @@ END;
 GO
 
 
+-- =========================================================
+-- 04. SEMILLAS DE SEGURIDAD
 -- Fuente: database/04_SecuritySeedData.sql
+-- =========================================================
 USE [SecureFinanceERP];
 GO
 SET NOCOUNT ON;
@@ -332,3 +350,496 @@ BEGIN CATCH
 END CATCH;
 GO
 
+
+-- =========================================================
+-- 05. TABLAS DE NEGOCIO Y TVP
+-- Fuente: database/05_BusinessTables.sql
+-- =========================================================
+USE [SecureFinanceERP];
+GO
+SET XACT_ABORT ON;
+-- Instalación inicial, una sola vez después de 01-04. No reemplaza objetos.
+-- Fechas UTC; precios sin IVA. El ingreso de caja representa la venta cobrada.
+BEGIN TRY
+    BEGIN TRANSACTION;
+    CREATE TABLE dbo.Cliente (
+        ClienteId INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Cliente PRIMARY KEY,
+        NIT NVARCHAR(25) NOT NULL CONSTRAINT UQ_Cliente_NIT UNIQUE,
+        Nombre NVARCHAR(150) NOT NULL,
+        Correo NVARCHAR(254) NULL,
+        Telefono NVARCHAR(25) NULL,
+        Activo BIT NOT NULL CONSTRAINT DF_Cliente_Activo DEFAULT (1),
+        FechaCreacion DATETIME2(3) NOT NULL CONSTRAINT DF_Cliente_Fecha DEFAULT SYSUTCDATETIME(),
+        CONSTRAINT CK_Cliente_NIT CHECK (LEN(LTRIM(RTRIM(NIT))) > 0),
+        CONSTRAINT CK_Cliente_Nombre CHECK (LEN(LTRIM(RTRIM(Nombre))) > 0)
+    );
+    CREATE TABLE dbo.Producto (
+        ProductoId INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Producto PRIMARY KEY,
+        Codigo NVARCHAR(40) NOT NULL CONSTRAINT UQ_Producto_Codigo UNIQUE,
+        Descripcion NVARCHAR(200) NOT NULL,
+        Precio DECIMAL(12,2) NOT NULL,
+        Stock INT NOT NULL CONSTRAINT DF_Producto_Stock DEFAULT (0),
+        Activo BIT NOT NULL CONSTRAINT DF_Producto_Activo DEFAULT (1),
+        FechaCreacion DATETIME2(3) NOT NULL CONSTRAINT DF_Producto_Fecha DEFAULT SYSUTCDATETIME(),
+        CONSTRAINT CK_Producto_Codigo CHECK (LEN(LTRIM(RTRIM(Codigo))) > 0),
+        CONSTRAINT CK_Producto_Descripcion CHECK (LEN(LTRIM(RTRIM(Descripcion))) > 0),
+        CONSTRAINT CK_Producto_Precio CHECK (Precio >= 0),
+        CONSTRAINT CK_Producto_Stock CHECK (Stock >= 0)
+    );
+    CREATE TABLE dbo.Factura (
+        FacturaId INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Factura PRIMARY KEY,
+        ClienteId INT NOT NULL CONSTRAINT FK_Factura_Cliente REFERENCES dbo.Cliente(ClienteId),
+        UsuarioId INT NOT NULL CONSTRAINT FK_Factura_Usuario REFERENCES dbo.Usuario(UsuarioId),
+        FechaHora DATETIME2(3) NOT NULL CONSTRAINT DF_Factura_Fecha DEFAULT SYSUTCDATETIME(),
+        Subtotal DECIMAL(19,2) NOT NULL,
+        IVA DECIMAL(19,2) NOT NULL,
+        Total DECIMAL(19,2) NOT NULL,
+        Estado VARCHAR(15) NOT NULL CONSTRAINT DF_Factura_Estado DEFAULT ('EMITIDA'),
+        CONSTRAINT CK_Factura_Importes CHECK (Subtotal >= 0 AND IVA >= 0 AND Total = Subtotal + IVA),
+        CONSTRAINT CK_Factura_Estado CHECK (Estado = 'EMITIDA')
+    );
+    CREATE INDEX IX_Factura_Cliente ON dbo.Factura(ClienteId, FechaHora);
+    CREATE INDEX IX_Factura_Usuario ON dbo.Factura(UsuarioId);
+    CREATE TABLE dbo.DetalleFactura (
+        DetalleFacturaId INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_DetalleFactura PRIMARY KEY,
+        FacturaId INT NOT NULL CONSTRAINT FK_DetalleFactura_Factura REFERENCES dbo.Factura(FacturaId),
+        ProductoId INT NOT NULL CONSTRAINT FK_DetalleFactura_Producto REFERENCES dbo.Producto(ProductoId),
+        Cantidad INT NOT NULL,
+        PrecioUnitario DECIMAL(12,2) NOT NULL,
+        Subtotal DECIMAL(19,2) NOT NULL,
+        CONSTRAINT UQ_DetalleFactura_Producto UNIQUE (FacturaId, ProductoId),
+        CONSTRAINT CK_DetalleFactura_Cantidad CHECK (Cantidad > 0),
+        CONSTRAINT CK_DetalleFactura_Precio CHECK (PrecioUnitario >= 0),
+        CONSTRAINT CK_DetalleFactura_Subtotal CHECK (Subtotal >= 0 AND Subtotal = PrecioUnitario * CONVERT(DECIMAL(10,0), Cantidad))
+    );
+    CREATE INDEX IX_DetalleFactura_Producto ON dbo.DetalleFactura(ProductoId);
+    CREATE TABLE dbo.MovimientoCaja (
+        MovimientoCajaId INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_MovimientoCaja PRIMARY KEY,
+        FacturaId INT NOT NULL CONSTRAINT UQ_MovimientoCaja_Factura UNIQUE
+            CONSTRAINT FK_MovimientoCaja_Factura REFERENCES dbo.Factura(FacturaId),
+        TipoMovimiento VARCHAR(10) NOT NULL CONSTRAINT DF_MovimientoCaja_Tipo DEFAULT ('INGRESO'),
+        Monto DECIMAL(19,2) NOT NULL,
+        FechaHora DATETIME2(3) NOT NULL CONSTRAINT DF_MovimientoCaja_Fecha DEFAULT SYSUTCDATETIME(),
+        CONSTRAINT CK_MovimientoCaja_Tipo CHECK (TipoMovimiento = 'INGRESO'),
+        CONSTRAINT CK_MovimientoCaja_Monto CHECK (Monto >= 0)
+    );
+    -- Sin PK/CHECK aquí: el SP devuelve errores de negocio precisos para duplicados/cantidades.
+    CREATE TYPE dbo.TipoDetalleVenta AS TABLE (ProductoId INT NOT NULL, Cantidad INT NOT NULL);
+    COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+    IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+    THROW;
+END CATCH;
+GO
+
+
+-- =========================================================
+-- 06. SEMILLAS DE NEGOCIO
+-- Fuente: database/05_BusinessSeedData.sql
+-- =========================================================
+USE [SecureFinanceERP];
+GO
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
+-- Ficticios. Reejecutar no repone stock ni cambia precios/estados existentes.
+BEGIN TRY
+    BEGIN TRANSACTION;
+    INSERT dbo.Cliente (NIT, Nombre, Correo, Telefono)
+    SELECT s.NIT, s.Nombre, s.Correo, s.Telefono
+    FROM (VALUES
+        (N'DEMO-001', N'Comercial Aurora DEMO', N'aurora@example.invalid', N'5550-0101'),
+        (N'DEMO-002', N'Librería Horizonte DEMO', N'horizonte@example.invalid', N'5550-0102'),
+        (N'CF-DEMO', N'Consumidor final DEMO', NULL, NULL)
+    ) s(NIT, Nombre, Correo, Telefono)
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Cliente WITH (UPDLOCK, HOLDLOCK) WHERE NIT = s.NIT);
+    INSERT dbo.Producto (Codigo, Descripcion, Precio, Stock)
+    SELECT s.Codigo, s.Descripcion, s.Precio, s.Stock
+    FROM (VALUES
+        (N'DEMO-TECLADO', N'Teclado USB', CONVERT(DECIMAL(12,2), 125.50), 50),
+        (N'DEMO-MOUSE', N'Mouse óptico', CONVERT(DECIMAL(12,2), 75.25), 80),
+        (N'DEMO-MONITOR', N'Monitor 24 pulgadas', CONVERT(DECIMAL(12,2), 1450.00), 20),
+        (N'DEMO-CABLE', N'Cable HDMI', CONVERT(DECIMAL(12,2), 35.90), 100)
+    ) s(Codigo, Descripcion, Precio, Stock)
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Producto WITH (UPDLOCK, HOLDLOCK) WHERE Codigo = s.Codigo);
+    COMMIT TRANSACTION;
+    PRINT N'OK: semillas de negocio disponibles; datos existentes conservados.';
+END TRY
+BEGIN CATCH
+    IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+    THROW;
+END CATCH;
+GO
+
+
+-- =========================================================
+-- 07. PROCEDIMIENTOS TRANSACCIONALES
+-- Fuente: database/06_TransactionProcedures.sql
+-- =========================================================
+USE [SecureFinanceERP];
+GO
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_ListarClientes
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT ClienteId, NIT, Nombre FROM dbo.Cliente WHERE Activo = 1 ORDER BY Nombre, ClienteId;
+END;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_ListarProductosDisponibles
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT ProductoId, Codigo, Descripcion, Precio, Stock
+    FROM dbo.Producto WHERE Activo = 1 ORDER BY Descripcion, ProductoId;
+END;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_ProcesarVentaTransaccional
+    @ClienteId INT,
+    @UsuarioId INT,
+    @Detalle dbo.TipoDetalleVenta READONLY,
+    @FacturaId INT = NULL OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+    SET @FacturaId = NULL;
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        IF NOT EXISTS (SELECT 1 FROM @Detalle)
+            THROW 52001, 'La venta debe contener productos.', 1;
+        IF (SELECT COUNT_BIG(*) FROM @Detalle) > 100
+            THROW 52002, 'La venta admite hasta 100 productos.', 1;
+        IF EXISTS (SELECT 1 FROM @Detalle WHERE Cantidad <= 0 OR ProductoId <= 0)
+            THROW 52003, 'Producto o cantidad inválidos.', 1;
+        IF EXISTS (SELECT ProductoId FROM @Detalle GROUP BY ProductoId HAVING COUNT(*) > 1)
+            THROW 52004, 'No se permiten productos repetidos.', 1;
+
+        DECLARE @Activo BIT;
+        SELECT @Activo = Activo FROM dbo.Cliente WITH (HOLDLOCK) WHERE ClienteId = @ClienteId;
+        IF @Activo IS NULL THROW 52005, 'El cliente no existe.', 1;
+        IF @Activo = 0 THROW 52006, 'El cliente está inactivo.', 1;
+        IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WITH (HOLDLOCK) WHERE UsuarioId = @UsuarioId AND Activo = 1)
+            THROW 52007, 'El usuario no existe o está inactivo.', 1;
+
+        DECLARE @Lineas TABLE (ProductoId INT PRIMARY KEY, Cantidad INT,
+            PrecioUnitario DECIMAL(12,2), Subtotal DECIMAL(19,2));
+        DECLARE @ProductoId INT = 0, @Siguiente INT, @Cantidad INT,
+                @Precio DECIMAL(12,2), @Stock INT;
+        -- Acceso puntual por PK en orden ascendente, independiente del orden del TVP.
+        -- UPDLOCK + HOLDLOCK conserva precio/stock hasta COMMIT y serializa ventas
+        -- del mismo producto. No se reintentan ventas automáticamente tras un timeout.
+        WHILE 1 = 1
+        BEGIN
+            SELECT @Siguiente = MIN(ProductoId) FROM @Detalle WHERE ProductoId > @ProductoId;
+            IF @Siguiente IS NULL BREAK;
+            SET @ProductoId = @Siguiente;
+            SELECT @Cantidad = Cantidad FROM @Detalle WHERE ProductoId = @ProductoId;
+            SELECT @Precio = NULL, @Stock = NULL, @Activo = NULL;
+            SELECT @Precio = Precio, @Stock = Stock, @Activo = Activo
+            FROM dbo.Producto WITH (UPDLOCK, HOLDLOCK) WHERE ProductoId = @ProductoId;
+            IF @Precio IS NULL THROW 52008, 'Un producto no existe.', 1;
+            IF @Activo = 0 THROW 52009, 'Un producto está inactivo.', 1;
+            IF @Stock < @Cantidad THROW 52010, 'Stock insuficiente para uno de los productos.', 1;
+            INSERT @Lineas VALUES (@ProductoId, @Cantidad, @Precio,
+                @Precio * CONVERT(DECIMAL(10,0), @Cantidad));
+            UPDATE dbo.Producto SET Stock = Stock - @Cantidad WHERE ProductoId = @ProductoId;
+        END;
+
+        -- Punto de integración futuro con las funciones de José. Redondeo del IVA
+        -- sobre el subtotal global, a dos decimales; nunca FLOAT ni importes del cliente.
+        DECLARE @Subtotal DECIMAL(19,2), @IVA DECIMAL(19,2), @Total DECIMAL(19,2),
+                @FechaHora DATETIME2(3) = SYSUTCDATETIME();
+        SELECT @Subtotal = SUM(Subtotal) FROM @Lineas;
+        SET @IVA = ROUND(@Subtotal * CONVERT(DECIMAL(3,2), 0.12), 2);
+        SET @Total = @Subtotal + @IVA;
+        INSERT dbo.Factura (ClienteId, UsuarioId, FechaHora, Subtotal, IVA, Total)
+        VALUES (@ClienteId, @UsuarioId, @FechaHora, @Subtotal, @IVA, @Total);
+        SET @FacturaId = CONVERT(INT, SCOPE_IDENTITY());
+        INSERT dbo.DetalleFactura (FacturaId, ProductoId, Cantidad, PrecioUnitario, Subtotal)
+        SELECT @FacturaId, ProductoId, Cantidad, PrecioUnitario, Subtotal FROM @Lineas;
+        INSERT dbo.MovimientoCaja (FacturaId, Monto, FechaHora) VALUES (@FacturaId, @Total, @FechaHora);
+        COMMIT TRANSACTION;
+        -- Strings monetarios evitan pérdida de centavos al convertir DECIMAL(19,2) a JS Number.
+        SELECT @FacturaId AS FacturaId, @FechaHora AS FechaHora,
+            CONVERT(VARCHAR(21), @Subtotal) AS Subtotal,
+            CONVERT(VARCHAR(21), @IVA) AS IVA, CONVERT(VARCHAR(21), @Total) AS Total;
+    END TRY
+    BEGIN CATCH
+        -- Sin SAVEPOINT: la venta debe revertirse completa. Si el llamador abrió
+        -- una transacción, también se revierte; Node llama el SP en autocommit.
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        SET @FacturaId = NULL;
+        THROW;
+    END CATCH;
+END;
+GO
+
+
+-- =========================================================
+-- 08. AUDITORÍA, FUNCIONES Y PROCEDIMIENTOS DE CONSULTA
+-- Fuente: database/07_AuditCore.sql
+-- =========================================================
+USE [SecureFinanceERP];
+GO
+SET XACT_ABORT ON;
+GO
+
+IF OBJECT_ID(N'dbo.Bitacora_Transacciones', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Bitacora_Transacciones (
+        BitacoraTransaccionId BIGINT IDENTITY(1,1) NOT NULL
+            CONSTRAINT PK_Bitacora_Transacciones PRIMARY KEY,
+        FechaHora DATETIME2(3) NOT NULL
+            CONSTRAINT DF_BitacoraTransacciones_Fecha DEFAULT SYSUTCDATETIME(),
+        TablaAfectada NVARCHAR(128) NOT NULL
+            CONSTRAINT CK_BitacoraTransacciones_Tabla CHECK (LEN(LTRIM(RTRIM(TablaAfectada)) ) > 0),
+        Operacion VARCHAR(20) NOT NULL
+            CONSTRAINT CK_BitacoraTransacciones_Operacion CHECK (Operacion IN ('INSERT', 'UPDATE', 'DELETE')),
+        UsuarioSQL NVARCHAR(128) NOT NULL
+            CONSTRAINT DF_BitacoraTransacciones_UsuarioSQL DEFAULT SUSER_SNAME(),
+        HostName NVARCHAR(128) NOT NULL
+            CONSTRAINT DF_BitacoraTransacciones_Host DEFAULT HOST_NAME(),
+        AppName NVARCHAR(128) NOT NULL
+            CONSTRAINT DF_BitacoraTransacciones_App DEFAULT APP_NAME(),
+        IdentificadorRegistro NVARCHAR(4000) NOT NULL,
+        ValorAnterior NVARCHAR(MAX) NULL,
+        ValorNuevo NVARCHAR(MAX) NULL,
+        CONSTRAINT CK_BitacoraTransacciones_Registro CHECK (LEN(LTRIM(RTRIM(IdentificadorRegistro))) > 0)
+    );
+
+    CREATE INDEX IX_BitacoraTransacciones_Fecha ON dbo.Bitacora_Transacciones(FechaHora);
+    CREATE INDEX IX_BitacoraTransacciones_Tabla ON dbo.Bitacora_Transacciones(TablaAfectada, FechaHora);
+END;
+GO
+
+CREATE OR ALTER FUNCTION dbo.fn_CalcularIVA
+(
+    @Monto DECIMAL(18, 2)
+)
+RETURNS DECIMAL(18, 2)
+AS
+BEGIN
+    RETURN CAST(@Monto * 0.12 AS DECIMAL(18,2));
+END;
+GO
+
+CREATE OR ALTER FUNCTION dbo.fn_CalcularSubtotal
+(
+    @Cantidad DECIMAL(18, 2),
+    @PrecioUnitario DECIMAL(18, 2)
+)
+RETURNS DECIMAL(18, 2)
+AS
+BEGIN
+    RETURN CAST(@Cantidad * @PrecioUnitario AS DECIMAL(18, 2));
+END;
+GO
+
+CREATE OR ALTER FUNCTION dbo.fn_ConsultarAuditoria
+(
+    @FechaInicial DATETIME2(3) = NULL,
+    @FechaFinal DATETIME2(3) = NULL,
+    @Tabla NVARCHAR(128) = NULL,
+    @Operacion VARCHAR(20) = NULL
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT
+        bt.BitacoraTransaccionId,
+        bt.FechaHora,
+        bt.TablaAfectada,
+        bt.Operacion,
+        bt.UsuarioSQL,
+        bt.HostName,
+        bt.AppName,
+        bt.IdentificadorRegistro,
+        bt.ValorAnterior,
+        bt.ValorNuevo
+    FROM dbo.Bitacora_Transacciones AS bt
+    WHERE (@FechaInicial IS NULL OR bt.FechaHora >= @FechaInicial)
+      AND (@FechaFinal IS NULL OR bt.FechaHora <= @FechaFinal)
+      AND (@Tabla IS NULL OR bt.TablaAfectada = @Tabla)
+      AND (@Operacion IS NULL OR bt.Operacion = @Operacion);
+GO
+
+CREATE OR ALTER FUNCTION dbo.fn_ObtenerHistoricoVentas
+(
+    @FechaInicial DATETIME2(3) = NULL,
+    @FechaFinal DATETIME2(3) = NULL,
+    @Cliente NVARCHAR(150) = NULL
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT f.FacturaId AS Factura, f.FechaHora AS Fecha,
+           c.Nombre AS Cliente, u.NombreUsuario AS Usuario,
+           f.Subtotal, f.IVA, f.Total
+    FROM dbo.Factura AS f
+    INNER JOIN dbo.Cliente AS c ON c.ClienteId = f.ClienteId
+    INNER JOIN dbo.Usuario AS u ON u.UsuarioId = f.UsuarioId
+    WHERE (@FechaInicial IS NULL OR f.FechaHora >= @FechaInicial)
+      AND (@FechaFinal IS NULL OR f.FechaHora <= @FechaFinal)
+      AND (@Cliente IS NULL OR CHARINDEX(@Cliente, c.Nombre) > 0);
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_ConsultarHistoricoVentas
+    @FechaInicial DATETIME2(3) = NULL,
+    @FechaFinal DATETIME2(3) = NULL,
+    @Cliente NVARCHAR(150) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT Factura, Fecha, Cliente, Usuario, Subtotal, IVA, Total
+    FROM dbo.fn_ObtenerHistoricoVentas(@FechaInicial, @FechaFinal, @Cliente)
+    ORDER BY Fecha DESC, Factura DESC;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_ConsultarBitacoraAcceso
+    @FechaInicial DATETIME2(3) = NULL,
+    @FechaFinal DATETIME2(3) = NULL,
+    @NombreUsuarioIntentado NVARCHAR(50) = NULL,
+    @Resultado VARCHAR(30) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT
+        ba.FechaHora,
+        ba.NombreUsuarioIntentado,
+        ba.Resultado,
+        ba.HostName,
+        ba.AppName,
+        ba.UsuarioSQL,
+        ba.IpConexionSQL
+    FROM dbo.Bitacora_Acceso AS ba
+    WHERE (@FechaInicial IS NULL OR ba.FechaHora >= @FechaInicial)
+      AND (@FechaFinal IS NULL OR ba.FechaHora <= @FechaFinal)
+      AND (@NombreUsuarioIntentado IS NULL OR ba.NombreUsuarioIntentado = @NombreUsuarioIntentado)
+      AND (@Resultado IS NULL OR ba.Resultado = @Resultado)
+    ORDER BY ba.FechaHora DESC;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_ConsultarAuditoriaTransacciones
+    @FechaInicial DATETIME2(3) = NULL,
+    @FechaFinal DATETIME2(3) = NULL,
+    @Tabla NVARCHAR(128) = NULL,
+    @Operacion VARCHAR(20) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT *
+    FROM dbo.fn_ConsultarAuditoria(@FechaInicial, @FechaFinal, @Tabla, @Operacion)
+    ORDER BY FechaHora DESC;
+END;
+GO
+
+
+-- =========================================================
+-- 09. TRIGGERS DE AUDITORÍA
+-- Fuente: database/08_AuditTriggers.sql
+-- =========================================================
+USE [SecureFinanceERP];
+GO
+SET XACT_ABORT ON;
+GO
+-- La autenticacion se registra exclusivamente en Bitacora_Acceso.
+DROP TRIGGER IF EXISTS dbo.tr_Usuario_Auditar_Update;
+GO
+
+CREATE OR ALTER TRIGGER dbo.tr_Producto_Auditar_Update
+ON dbo.Producto
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO dbo.Bitacora_Transacciones
+        (TablaAfectada, Operacion, UsuarioSQL, HostName, AppName,
+         IdentificadorRegistro, ValorAnterior, ValorNuevo)
+    SELECT N'Producto', 'UPDATE', SUSER_SNAME(), HOST_NAME(), APP_NAME(),
+           CONVERT(NVARCHAR(4000), i.ProductoId),
+           (SELECT d.ProductoId, d.Codigo, d.Descripcion, d.Precio, d.Stock, d.Activo FOR JSON PATH, WITHOUT_ARRAY_WRAPPER),
+           (SELECT i.ProductoId, i.Codigo, i.Descripcion, i.Precio, i.Stock, i.Activo FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
+    FROM inserted AS i INNER JOIN deleted AS d ON d.ProductoId = i.ProductoId
+    WHERE d.Precio <> i.Precio OR d.Stock <> i.Stock;
+END;
+GO
+
+CREATE OR ALTER TRIGGER dbo.tr_Producto_Auditar_Delete
+ON dbo.Producto
+AFTER DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO dbo.Bitacora_Transacciones
+        (TablaAfectada, Operacion, UsuarioSQL, HostName, AppName,
+         IdentificadorRegistro, ValorAnterior, ValorNuevo)
+    SELECT N'Producto', 'DELETE', SUSER_SNAME(), HOST_NAME(), APP_NAME(),
+           CONVERT(NVARCHAR(4000), d.ProductoId),
+           (SELECT d.ProductoId, d.Codigo, d.Descripcion, d.Precio, d.Stock, d.Activo FOR JSON PATH, WITHOUT_ARRAY_WRAPPER),
+           NULL
+    FROM deleted AS d;
+END;
+GO
+
+CREATE OR ALTER TRIGGER dbo.tr_Factura_Auditar_Insert
+ON dbo.Factura
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO dbo.Bitacora_Transacciones
+        (TablaAfectada, Operacion, UsuarioSQL, HostName, AppName,
+         IdentificadorRegistro, ValorAnterior, ValorNuevo)
+    SELECT N'Factura', 'INSERT', SUSER_SNAME(), HOST_NAME(), APP_NAME(),
+           CONVERT(NVARCHAR(4000), i.FacturaId),
+           NULL,
+           (SELECT i.FacturaId, i.ClienteId, i.UsuarioId, i.FechaHora, i.Subtotal, i.IVA, i.Total, i.Estado FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
+    FROM inserted AS i;
+END;
+GO
+
+
+-- =========================================================
+-- 10. PERMISOS MÍNIMOS DE APLICACIÓN
+-- Fuente: database/10_AppPermissions.sql
+-- =========================================================
+-- Referencia final de permisos mínimos. Ejecutar después de instalar todos los módulos.
+-- Usar una cuenta administradora con visibilidad del login y permisos para crear usuarios/conceder permisos.
+-- No crea logins de servidor ni contraseñas. Puede volver a ejecutarse.
+USE [SecureFinanceERP];
+GO
+IF SUSER_ID(N'securefinance_app') IS NULL
+BEGIN
+    PRINT N'ADVERTENCIA: la base SecureFinanceERP fue instalada; los permisos de aplicación quedan pendientes porque no existe el login de servidor securefinance_app.';
+    PRINT N'El administrador debe crear/configurar manualmente el login y después ejecutar database/10_AppPermissions.sql.';
+END
+ELSE
+BEGIN
+    IF DATABASE_PRINCIPAL_ID(N'securefinance_app') IS NULL
+    BEGIN
+        CREATE USER [securefinance_app] FOR LOGIN [securefinance_app];
+    END;
+
+    -- Autenticación: los procedimientos internos se ejecutan por la cadena de propiedad dbo.
+    GRANT EXECUTE ON OBJECT::dbo.sp_Login TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ObtenerPermisosUsuario TO [securefinance_app];
+
+    -- Ventas y parámetro de tabla (TVP).
+    GRANT EXECUTE ON OBJECT::dbo.sp_ListarClientes TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ListarProductosDisponibles TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ProcesarVentaTransaccional TO [securefinance_app];
+    GRANT EXECUTE, REFERENCES ON TYPE::dbo.TipoDetalleVenta TO [securefinance_app];
+
+    -- Consultas de auditoría e histórico de ventas.
+    GRANT EXECUTE ON OBJECT::dbo.sp_ConsultarBitacoraAcceso TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ConsultarAuditoriaTransacciones TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ConsultarHistoricoVentas TO [securefinance_app];
+
+    PRINT N'OK: permisos mínimos de autenticación, ventas, TVP y auditoría aplicados a securefinance_app.';
+END;
+GO
