@@ -1,14 +1,15 @@
 {
   "name": "securefinance-erp-bd2",
   "version": "1.0.0",
-  "description": "SecureFinance ERP BD2 - Fase 3: autenticación y sesiones",
+  "description": "SecureFinance ERP BD2 - autenticación, facturación y auditoría",
   "private": true,
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "check": "node --check server.js && node --check src/config/database.js && node --check src/services/authService.js && node --check src/services/auditoriaService.js && node --check src/controllers/authController.js && node --check src/controllers/auditoriaController.js && node --check src/routes/authRoutes.js && node --check src/routes/auditoriaRoutes.js && node --check src/middleware/authMiddleware.js && node --check tests/auth.test.js && node --check tests/audit.test.js",
-    "test": "node --test tests/auth.test.js tests/audit.test.js",
+    "check": "node --check server.js && node --check src/config/database.js && node --check src/services/authService.js && node --check src/controllers/authController.js && node --check src/routes/authRoutes.js && node --check src/middleware/authMiddleware.js && node --check src/services/ventaService.js && node --check src/controllers/ventaController.js && node --check src/routes/ventaRoutes.js && node --check src/public/js/facturacion.js && node --check src/services/auditoriaService.js && node --check src/controllers/auditoriaController.js && node --check src/routes/auditoriaRoutes.js && node --check tests/auth.test.js && node --check tests/venta.test.js && node --check tests/facturacion.test.js && node --check tests/audit.test.js && node --check database/tests/TransactionIntegrationTests.js",
+    "test": "node --test tests/*.test.js",
+    "test:sql": "node database/tests/TransactionIntegrationTests.js",
     "check:db": "node -e \"require('dotenv').config({quiet:true}); const db=require('./src/config/database'); Promise.resolve().then(()=>db.getPool()).then(()=>console.log('Conexion SQL Server correcta')).catch(e=>{console.error(e.code || e.message); process.exitCode=1;}).finally(()=>db.closePool());\""
   },
   "engines": {
