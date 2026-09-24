@@ -7,76 +7,79 @@
   <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body>
-  <header class="bg-white border-bottom">
-    <nav class="container py-3 d-flex align-items-center justify-content-between gap-3" aria-label="Principal">
-      <a class="brand-title text-decoration-none" href="/dashboard">SecureFinance ERP</a>
-      <div class="d-flex align-items-center gap-2">
-        <span class="text-secondary small">Usuario: <strong><%= usuario.nombreUsuario %></strong></span>
-        <a class="btn btn-outline-primary" href="/dashboard">Volver al dashboard</a>
-        <a class="btn btn-outline-secondary" href="/logout">Cerrar sesión</a>
-      </div>
+<body class="app-shell">
+<a class="skip-link" href="#workspace">Ir al contenido</a>
+  <aside class="sidebar">
+    <a class="brand-title" href="/dashboard"><svg class="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M23 8H9v15h14v17H7M30 40V8h13M30 23h11" stroke="currentColor" stroke-width="4"/><path d="M7 31h9M37 33h6" stroke="var(--copper-soft)" stroke-width="3"/></svg><span>SecureFinance<small>ERP / Operations desk</small></span></a>
+    <p class="nav-label">ÁREA DE TRABAJO</p>
+    <nav class="desk-nav" aria-label="Principal">
+      <a href="/dashboard" ><span>00</span>Dashboard</a>
+      <% if (usuario.permisos.includes('VENTAS_REGISTRAR')) { %><a href="/facturacion" ><span>01</span>Facturación</a><% } %>
+      <% if (usuario.permisos.includes('AUDITORIA_CONSULTAR')) { %><a href="/auditoria" aria-current="page"><span>02</span>Auditoría</a><% } %>
     </nav>
-  </header>
+    <div class="sidebar-account"><span class="nav-label">USUARIO ACTUAL</span><strong><%= usuario.nombreUsuario %></strong><a class="btn btn-nav" href="/logout">Cerrar sesión <span aria-hidden="true">&nearr;</span></a></div>
+    <span class="sidebar-foot">SECUREFINANCE / ERP</span>
+  </aside>
 
-  <main class="container audit-content py-5">
-    <p class="eyebrow mb-2">Monitoreo y trazabilidad</p>
-    <h1 class="h2 fw-bold mb-4">Auditoría</h1>
+  <main id="workspace" class="container audit-content page-content">
+    <div class="page-header"><p class="eyebrow mb-2">CONTROL / 02 · Observabilidad</p>
+    <h1 class="h2 fw-bold mb-2">AUDITORÍA</h1><p class="text-secondary">Control y trazabilidad del sistema</p></div>
 
-    <section class="card border-0 shadow-sm mb-4">
-      <div class="card-body p-4">
+    <dl class="audit-metrics" aria-label="Registros mostrados"><div><dt>Accesos registrados</dt><dd><%= bitacoraAcceso.length %></dd></div><div><dt>Eventos DML</dt><dd><%= auditoriaDml.length %></dd></div><div><dt>Ventas mostradas</dt><dd><%= historicoVentas.length %></dd></div></dl>
+    <section class="filter-panel">
+      <div class="panel-body">
         <h2 class="h5 mb-3">Filtros</h2>
-        <form method="GET" action="/auditoria" class="row g-3">
-          <div class="col-md-3">
+        <form method="GET" action="/auditoria" class="filter-grid">
+          <div class="filter-field">
             <label class="form-label" for="fechaInicial">Fecha inicial</label>
             <input id="fechaInicial" class="form-control" type="date" name="fechaInicial" value="<%= filtros.fechaInicial || '' %>">
           </div>
-          <div class="col-md-3">
+          <div class="filter-field">
             <label class="form-label" for="fechaFinal">Fecha final</label>
             <input id="fechaFinal" class="form-control" type="date" name="fechaFinal" value="<%= filtros.fechaFinal || '' %>">
           </div>
-          <div class="col-md-2">
+          <div class="filter-field">
             <label class="form-label" for="tabla">Tabla</label>
             <input id="tabla" class="form-control" type="text" name="tabla" value="<%= filtros.tabla || '' %>">
           </div>
-          <div class="col-md-2">
+          <div class="filter-field">
             <label class="form-label" for="operacion">Operación</label>
             <input id="operacion" class="form-control" type="text" name="operacion" value="<%= filtros.operacion || '' %>">
           </div>
-          <div class="col-md-2">
+          <div class="filter-field">
             <label class="form-label" for="cliente">Cliente</label>
             <input id="cliente" class="form-control" type="text" name="cliente" value="<%= filtros.cliente || '' %>">
           </div>
-          <div class="col-12 text-end">
+          <div class="filter-submit">
             <button class="btn btn-primary" type="submit">Aplicar filtros</button>
           </div>
         </form>
       </div>
     </section>
 
-    <section class="card border-0 shadow-sm mb-4">
-      <div class="card-body p-4">
-        <h2 class="h5 mb-3">BITÁCORA DE ACCESO</h2>
+    <section class="log-panel">
+      <div class="panel-body">
+        <h2 class="h5 mb-3"><span class="section-index">01</span> BITÁCORA DE ACCESO</h2>
         <% if (bitacoraAcceso.length) { %>
-          <div class="table-responsive">
-            <table class="table table-sm align-middle">
+          <div class="table-responsive" tabindex="0" role="region" aria-label="Bitácora de acceso">
+            <table class="table table-modern align-middle">
               <thead>
                 <tr>
-                  <th>FechaHora</th>
-                  <th>NombreUsuarioIntentado</th>
-                  <th>Resultado</th>
-                  <th>HostName</th>
-                  <th>AppName</th>
-                  <th>UsuarioSQL</th>
-                  <th>IpConexionSQL</th>
+                  <th scope="col">Fecha y hora</th>
+                  <th scope="col">Usuario intentado</th>
+                  <th scope="col">Resultado</th>
+                  <th scope="col">Equipo</th>
+                  <th scope="col">Aplicación</th>
+                  <th scope="col">Usuario SQL</th>
+                  <th scope="col">IP de conexión SQL</th>
                 </tr>
               </thead>
               <tbody>
                 <% bitacoraAcceso.forEach((registro) => { %>
                   <tr>
-                    <td><%= registro.FechaHora %></td>
+                    <td class="timestamp"><%= registro.FechaHora %></td>
                     <td><%= registro.NombreUsuarioIntentado %></td>
-                    <td><%= registro.Resultado %></td>
+                    <td><span class="status-badge <%= ({ EXITOSO: 'status-success', PASSWORD_INCORRECTA: 'status-danger', USUARIO_INACTIVO: 'status-warning', USUARIO_INEXISTENTE: 'status-neutral' })[registro.Resultado] || 'status-neutral' %>"><%= registro.Resultado %></span></td>
                     <td><%= registro.HostName || '-' %></td>
                     <td><%= registro.AppName || '-' %></td>
                     <td><%= registro.UsuarioSQL || '-' %></td>
@@ -87,83 +90,83 @@
             </table>
           </div>
         <% } else { %>
-          <p class="text-secondary mb-0">No hay registros de acceso.</p>
+          <p class="empty-state mb-0">No hay registros de acceso.</p>
         <% } %>
       </div>
     </section>
 
-    <section class="card border-0 shadow-sm mb-4">
-      <div class="card-body p-4">
-        <h2 class="h5 mb-3">AUDITORÍA DML</h2>
+    <section class="log-panel">
+      <div class="panel-body">
+        <h2 class="h5 mb-3"><span class="section-index">02</span> AUDITORÍA DML</h2>
         <% if (auditoriaDml.length) { %>
-          <div class="table-responsive">
-            <table class="table table-sm align-middle">
+          <div class="table-responsive" tabindex="0" role="region" aria-label="Registros de auditoría">
+            <table class="table table-modern align-middle">
               <thead>
                 <tr>
-                  <th>FechaHora</th>
-                  <th>TablaAfectada</th>
-                  <th>Operacion</th>
-                  <th>UsuarioSQL</th>
-                  <th>HostName</th>
-                  <th>ValorAnterior</th>
-                  <th>ValorNuevo</th>
+                  <th scope="col">Fecha y hora</th>
+                  <th scope="col">Tabla afectada</th>
+                  <th scope="col">Operación</th>
+                  <th scope="col">Usuario SQL</th>
+                  <th scope="col">Equipo</th>
+                  <th scope="col">Valor anterior</th>
+                  <th scope="col">Valor nuevo</th>
                 </tr>
               </thead>
               <tbody>
                 <% auditoriaDml.forEach((registro) => { %>
                   <tr>
-                    <td><%= registro.FechaHora %></td>
+                    <td class="timestamp"><%= registro.FechaHora %></td>
                     <td><%= registro.TablaAfectada || '-' %></td>
-                    <td><%= registro.Operacion || '-' %></td>
+                    <td><span class="status-badge <%= ({ INSERT: 'status-success', UPDATE: 'status-info', DELETE: 'status-danger' })[registro.Operacion] || 'status-neutral' %>"><%= registro.Operacion || '-' %></span></td>
                     <td><%= registro.UsuarioSQL || '-' %></td>
                     <td><%= registro.HostName || '-' %></td>
-                    <td class="small text-break"><%= registro.ValorAnterior || '-' %></td>
-                    <td class="small text-break"><%= registro.ValorNuevo || '-' %></td>
+                    <td><pre class="json-value" tabindex="0" role="region" aria-label="Valor anterior"><code><%= registro.ValorAnterior || '-' %></code></pre></td>
+                    <td><pre class="json-value json-after" tabindex="0" role="region" aria-label="Valor nuevo"><code><%= registro.ValorNuevo || '-' %></code></pre></td>
                   </tr>
                 <% }); %>
               </tbody>
             </table>
           </div>
         <% } else { %>
-          <p class="text-secondary mb-0">No hay registros de auditoría DML.</p>
+          <p class="empty-state mb-0">No hay registros de auditoría DML.</p>
         <% } %>
       </div>
     </section>
 
-    <section class="card border-0 shadow-sm mb-4">
-      <div class="card-body p-4">
-        <h2 class="h5 mb-3">HISTÓRICO DE VENTAS</h2>
+    <section class="log-panel">
+      <div class="panel-body">
+        <h2 class="h5 mb-3"><span class="section-index">03</span> HISTÓRICO DE VENTAS</h2>
         <% if (historicoVentas.length) { %>
-          <div class="table-responsive">
-            <table class="table table-sm align-middle">
+          <div class="table-responsive" tabindex="0" role="region" aria-label="Registros de auditoría">
+            <table class="table table-modern align-middle">
               <thead>
                 <tr>
-                  <th>Factura</th>
-                  <th>Fecha</th>
-                  <th>Cliente</th>
-                  <th>Usuario</th>
-                  <th>Subtotal</th>
-                  <th>IVA</th>
-                  <th>Total</th>
+                  <th scope="col">Factura</th>
+                  <th scope="col">Fecha</th>
+                  <th scope="col">Cliente</th>
+                  <th scope="col">Usuario</th>
+                  <th scope="col" class="text-end">Subtotal</th>
+                  <th scope="col" class="text-end">IVA</th>
+                  <th scope="col" class="text-end">Total</th>
                 </tr>
               </thead>
               <tbody>
                 <% historicoVentas.forEach((registro) => { %>
                   <tr>
                     <td><%= registro.Factura || '-' %></td>
-                    <td><%= registro.Fecha || '-' %></td>
+                    <td class="timestamp"><%= registro.Fecha || '-' %></td>
                     <td><%= registro.Cliente || '-' %></td>
                     <td><%= registro.Usuario || '-' %></td>
-                    <td><%= registro.Subtotal ?? '-' %></td>
-                    <td><%= registro.IVA ?? '-' %></td>
-                    <td><%= registro.Total ?? '-' %></td>
+                    <td class="money-cell"><%= registro.Subtotal == null ? '-' : 'Q ' + registro.Subtotal %></td>
+                    <td class="money-cell"><%= registro.IVA == null ? '-' : 'Q ' + registro.IVA %></td>
+                    <td class="money-cell sale-history-total"><%= registro.Total == null ? '-' : 'Q ' + registro.Total %></td>
                   </tr>
                 <% }); %>
               </tbody>
             </table>
           </div>
         <% } else { %>
-          <p class="text-secondary mb-0">No hay histórico de ventas disponible.</p>
+          <p class="empty-state mb-0">No hay histórico de ventas disponible.</p>
         <% } %>
       </div>
     </section>
