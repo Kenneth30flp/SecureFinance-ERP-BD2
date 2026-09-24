@@ -1,6 +1,6 @@
 # SecureFinance ERP — BD2
 
-Fase 3: login web con EJS y Bootstrap 5, autenticación mediante procedimientos SQL, sesiones y dashboard mínimo de permisos. No incluye recuperación de contraseña, RBAC completo ni módulos de negocio.
+Login web con EJS y Bootstrap 5, autenticación mediante procedimientos SQL, sesiones, dashboard de permisos y módulo de ventas transaccionales de Edward. No incluye recuperación de contraseña ni los módulos de auditoría y reportes.
 
 ## Equipo
 
@@ -10,6 +10,35 @@ Fase 3: login web con EJS y Bootstrap 5, autenticación mediante procedimientos 
 - Rubén: documento técnico, ERD final, matriz de pruebas, guía y evidencias.
 
 La aplicación usa Node.js por decisión del equipo, sustituyendo la presentación C# descrita en el PDF. La seguridad y lógica de datos se mantendrán en SQL Server.
+
+## Facturación — integración de Edward
+
+Sobre la base con `01`–`04` ya instalados, Kenneth ejecuta en SSMS:
+
+1. `database/05_BusinessTables.sql` **una sola vez** (tablas y `dbo.TipoDetalleVenta`).
+2. `database/05_BusinessSeedData.sql` (tres clientes y cuatro productos ficticios; repetible sin reponer stock).
+3. `database/06_TransactionProcedures.sql` (tres SP; repetible).
+4. `database/07_TransactionPermissions.sql`, con cuenta administradora y el usuario SQL `securefinance_app` existente.
+5. `database/tests/TransactionTests.sql`, con cuenta de desarrollo, en una base de pruebas sin escritores concurrentes. Revierte los datos; los IDENTITY pueden avanzar.
+
+Las concesiones del paso 4 son únicamente:
+
+```sql
+GRANT EXECUTE ON OBJECT::dbo.sp_ListarClientes TO securefinance_app;
+GRANT EXECUTE ON OBJECT::dbo.sp_ListarProductosDisponibles TO securefinance_app;
+GRANT EXECUTE ON OBJECT::dbo.sp_ProcesarVentaTransaccional TO securefinance_app;
+GRANT EXECUTE, REFERENCES ON TYPE::dbo.TipoDetalleVenta TO securefinance_app;
+```
+
+El TVP requiere ambos permisos sobre el tipo ([Microsoft](https://learn.microsoft.com/en-us/sql/relational-databases/tables/use-table-valued-parameters-database-engine)). No se concede DML directo ni roles globales. El unificado permanece sin cambios.
+
+Con el `.env` local ya configurado por el equipo, ejecutar `npm run check`, `npm test`, `npm run check:db` y `npm start`. Iniciar sesión con un usuario que tenga `VENTAS_REGISTRAR`, abrir **Registrar venta**, seleccionar cliente y agregar dos productos. Con dos teclados DEMO y tres mouse DEMO, precios originales, esperar subtotal **Q 476.75**, IVA **Q 57.21** y total **Q 533.96**. Procesar y verificar el número de factura y los importes confirmados. En SQL, con cuenta de desarrollo, comprobar factura, dos detalles, un ingreso de caja y descuentos de stock de 2 y 3. Sin sesión, ambas rutas redirigen al login; sin permiso, responden 403. Los cambios de permisos se reflejan al volver a iniciar sesión.
+
+`GET /facturacion` carga catálogos activos. `POST /facturacion/procesar` recibe JSON `{ ClienteId, Detalle: [{ ProductoId, Cantidad }] }` y la cabecera `X-CSRF-Token` del formulario. El usuario procede exclusivamente de la sesión. Se permiten hasta 100 productos únicos; la interfaz acumula productos repetidos y el servidor rechaza duplicados. Los precios son sin IVA; SQL calcula el IVA del 12% sobre el subtotal global y redondea a centavos. Los importes confirmados se devuelven como cadenas decimales. Se bloquean los productos por ID ascendente hasta terminar la transacción. Cualquier error revierte toda la venta, incluida una eventual transacción externa; Node invoca el SP en autocommit. No se reintenta automáticamente un resultado incierto.
+
+`npm test` usa mocks SQL y prueba también la interfaz con un DOM mínimo. Para integración real local: `npm run test:sql -- ".\SQLEXPRESS"` requiere `sqlcmd`, autenticación Windows y permiso para crear/eliminar una base. El comando genera una base temporal aislada, instala los scripts sin alterar sus archivos, verifica las suites SQL existentes, semillas, mínimos privilegios y dos ventas concurrentes, y elimina su base al terminar. No usa `.env` ni se conecta a la base de Kenneth. No sustituye la prueba final del driver `mssql` mediante la cuenta de aplicación y TCP de ese entorno.
+
+Subtotal e IVA están concentrados en un bloque del SP para integrar después las funciones de José. No se incluyen triggers, funciones de auditoría ni reportes.
 
 ## Preparación
 
