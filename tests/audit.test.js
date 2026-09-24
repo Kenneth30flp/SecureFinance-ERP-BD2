@@ -17,8 +17,8 @@ function fakePool(responses) {
           inputs.push({ name, type, value });
           return this;
         },
-        query(sqlText) {
-          calls.push({ sqlText, inputs });
+        execute(procedure) {
+          calls.push({ procedure, inputs });
           const response = responses.shift();
           if (response instanceof Error) throw response;
           return response;
@@ -75,9 +75,9 @@ test('Servicio auditoría: consulta de tablas reales y filtros', async () => {
   assert.equal(acceso.length, 1);
   assert.equal(dml.length, 1);
   assert.equal(ventas.length, 1);
-  assert.match(pool.calls[0].sqlText, /Bitacora_Acceso/);
-  assert.match(pool.calls[1].sqlText, /fn_ConsultarAuditoria/);
-  assert.match(pool.calls[2].sqlText, /fn_ObtenerHistoricoVentas/);
+  assert.equal(pool.calls[0].procedure, 'dbo.sp_ConsultarBitacoraAcceso');
+  assert.equal(pool.calls[1].procedure, 'dbo.sp_ConsultarAuditoriaTransacciones');
+  assert.equal(pool.calls[2].procedure, 'dbo.sp_ConsultarHistoricoVentas');
 });
 
 test('HTTP auditoría: redirige sin sesión, 403 sin permiso y 200 con permiso', async (t) => {
@@ -95,7 +95,7 @@ test('HTTP auditoría: redirige sin sesión, 403 sin permiso y 200 con permiso',
           nombreUsuario,
           correo: 'admin@example.invalid',
           debeCambiarPassword: false,
-          permisos: ['AUDITORIA_CONSULTAR'],
+          permisos: ['AUDITORIA_CONSULTAR', 'VENTAS_REGISTRAR'],
         },
       }),
     },
@@ -124,6 +124,10 @@ test('HTTP auditoría: redirige sin sesión, 403 sin permiso y 200 con permiso',
 
   response = await request('/auditoria', { headers: { cookie } });
   assert.equal(response.status, 200);
+  const dashboard = await request('/dashboard', { headers: { cookie } });
+  const dashboardHtml = await dashboard.text();
+  assert.ok(dashboardHtml.includes('href="/facturacion"'));
+  assert.ok(dashboardHtml.includes('href="/auditoria"'));
   const html = await response.text();
   assert.match(html, /BITÁCORA DE ACCESO/);
   assert.match(html, /AUDITORÍA DML/);
@@ -163,6 +167,56 @@ test('HTTP auditoría: redirige sin sesión, 403 sin permiso y 200 con permiso',
   });
   assert.equal(noPermissionResponse.status, 403);
   assert.doesNotMatch(await noPermissionResponse.text(), /PasswordHash|TokenHash/);
+  const deniedDashboard = await fetch(noPermissionBase + '/dashboard', { headers: { cookie: noPermissionCookie } });
+  assert.ok(!(await deniedDashboard.text()).includes('href="/auditoria"'));
+  assert.equal(pool.calls.length, 3);
+  for (let failingIndex = 0; failingIndex < 3; failingIndex++) {
+    const responses = [bitacoraAcceso(), auditoriaDml(), historicoVentas()];
+    responses[failingIndex] = new Error('PasswordHash Salt TokenHash SESSION_SECRET DB_PASSWORD private-value');
+    const failingPool = fakePool(responses);
+    Object.assign(service, createAuditoriaService(async () => failingPool));
+    const failed = await request('/auditoria', { headers: { cookie } });
+    assert.equal(failed.status, 500);
+    const body = await failed.text();
+    assert.doesNotMatch(body, /Password|Salt|TokenHash|SESSION_SECRET|DB_PASSWORD|private-value/);
+    assert.match(body, /No fue posible consultar/);
+  }
+  noPermissionServer.closeAllConnections();
   noPermissionServer.close();
   server.close();
+});
+
+
+test('Servicio: todos los filtros son tipados y los valores no son SQL', async () => {
+  const { sql } = require('../src/config/database');
+  const pool = fakePool([{recordset: []}, {recordset: []}, {recordset: []}]);
+  const service = createAuditoriaService(async () => pool);
+  const filters = {fechaInicial: '2026-01-01', fechaFinal: '2026-01-02', usuario: 'admin', resultado: 'EXITOSO', tabla: 'Producto', operacion: 'UPDATE', cliente: "Ana'; DROP TABLE Factura;--"};
+  await service.getBitacoraAcceso(filters);
+  await service.getAuditoriaDml(filters);
+  await service.getHistoricoVentas(filters);
+  const expected = [
+    [['NombreUsuarioIntentado', sql.NVarChar(50), filters.usuario], ['Resultado', sql.VarChar(30), filters.resultado]],
+    [['Tabla', sql.NVarChar(128), filters.tabla], ['Operacion', sql.VarChar(20), filters.operacion]],
+    [['Cliente', sql.NVarChar(150), filters.cliente]],
+  ];
+  pool.calls.forEach((call, index) => {
+    assert.deepEqual(call.inputs, [
+      {name: 'FechaInicial', type: sql.DateTime2(3), value: new Date('2026-01-01T00:00:00.000Z')},
+      {name: 'FechaFinal', type: sql.DateTime2(3), value: new Date('2026-01-02T23:59:59.999Z')},
+      ...expected[index].map(([name,type,value]) => ({name,type,value})),
+    ]);
+  });
+});
+
+test('Servicio: sin filtros envia NULL y propaga errores de SQL', async () => {
+  const pool = fakePool([{}, {}, {}]);
+  const service = createAuditoriaService(async () => pool);
+  for (const method of ['getBitacoraAcceso', 'getAuditoriaDml', 'getHistoricoVentas']) {
+    assert.deepEqual(await service[method](), []);
+  }
+  assert.ok(pool.calls.every(call => call.inputs.every(input => input.value === null)));
+  const error = Object.assign(new Error('fn_ObtenerHistoricoVentas no existe'), {number: 208});
+  const failed = createAuditoriaService(async () => fakePool([error]));
+  await assert.rejects(failed.getHistoricoVentas(), error);
 });

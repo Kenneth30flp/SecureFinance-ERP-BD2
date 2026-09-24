@@ -82,25 +82,36 @@ RETURN
       AND (@Operacion IS NULL OR bt.Operacion = @Operacion);
 GO
 
-IF OBJECT_ID(N'dbo.fn_ObtenerHistoricoVentas', N'IF') IS NULL
+CREATE OR ALTER FUNCTION dbo.fn_ObtenerHistoricoVentas
+(
+    @FechaInicial DATETIME2(3) = NULL,
+    @FechaFinal DATETIME2(3) = NULL,
+    @Cliente NVARCHAR(150) = NULL
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT f.FacturaId AS Factura, f.FechaHora AS Fecha,
+           c.Nombre AS Cliente, u.NombreUsuario AS Usuario,
+           f.Subtotal, f.IVA, f.Total
+    FROM dbo.Factura AS f
+    INNER JOIN dbo.Cliente AS c ON c.ClienteId = f.ClienteId
+    INNER JOIN dbo.Usuario AS u ON u.UsuarioId = f.UsuarioId
+    WHERE (@FechaInicial IS NULL OR f.FechaHora >= @FechaInicial)
+      AND (@FechaFinal IS NULL OR f.FechaHora <= @FechaFinal)
+      AND (@Cliente IS NULL OR CHARINDEX(@Cliente, c.Nombre) > 0);
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_ConsultarHistoricoVentas
+    @FechaInicial DATETIME2(3) = NULL,
+    @FechaFinal DATETIME2(3) = NULL,
+    @Cliente NVARCHAR(150) = NULL
+AS
 BEGIN
-    EXEC('CREATE FUNCTION dbo.fn_ObtenerHistoricoVentas
-    (
-        @FechaInicial DATETIME2(3) = NULL,
-        @FechaFinal DATETIME2(3) = NULL,
-        @Cliente NVARCHAR(150) = NULL
-    )
-    RETURNS TABLE
-    AS
-    RETURN
-        SELECT CAST(NULL AS INT) AS Factura,
-               CAST(NULL AS DATETIME2(3)) AS Fecha,
-               CAST(NULL AS NVARCHAR(150)) AS Cliente,
-               CAST(NULL AS NVARCHAR(100)) AS Usuario,
-               CAST(NULL AS DECIMAL(18,2)) AS Subtotal,
-               CAST(NULL AS DECIMAL(18,2)) AS IVA,
-               CAST(NULL AS DECIMAL(18,2)) AS Total
-        WHERE 1 = 0;');
+    SET NOCOUNT ON;
+    SELECT Factura, Fecha, Cliente, Usuario, Subtotal, IVA, Total
+    FROM dbo.fn_ObtenerHistoricoVentas(@FechaInicial, @FechaFinal, @Cliente)
+    ORDER BY Fecha DESC, Factura DESC;
 END;
 GO
 
