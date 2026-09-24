@@ -7,5 +7,6 @@ body { background: #f3f6fa; color: #182b43; }
 .brand-title { color: #173f6b; font-size: 1.15rem; font-weight: 700; }
 .btn-primary { --bs-btn-bg: #173f6b; --bs-btn-border-color: #173f6b; --bs-btn-hover-bg: #102f51; --bs-btn-hover-border-color: #102f51; }
 .form-control { padding: .7rem .8rem; }
-.dashboard-content { max-width: 960px; }
+.dashboard-content, .audit-content { max-width: 1200px; }
 .list-group-item { overflow-wrap: anywhere; color: #243d5a; }
+.table td, .table th { vertical-align: top; }
