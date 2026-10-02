@@ -85,7 +85,15 @@ Tras autenticar, Node consulta `sp_ObtenerPermisosUsuario`, regenera la sesión 
 
 ## Semillas DEMO
 
-Las credenciales DEMO son exclusivamente académicas: **`admin_demo` / `Demo_Academica_2026!`**, correo `admin.demo@example.invalid`. Se crea con `DebeCambiarPassword = 1`, sin flujo completo de cambio de contraseña.
+Las credenciales finales de la base académica son:
+
+| Usuario | Contraseña |
+|---|---|
+| `admin` | `Demo_Academica_2026!` |
+| `cajero` | `Cajero_Demo_2026!` |
+| `auditor` | `Auditor_Demo_2026!` |
+
+El seed de seguridad crea únicamente `admin`, con correo `admin.demo@example.invalid` y `DebeCambiarPassword = 1`. Los usuarios `cajero` y `auditor` ya están configurados en la base académica actual. Esta sincronización de nombres no cambia contraseñas ni accesos históricos; las pruebas usan sus propias contraseñas temporales.
 
 | Rol | Permisos RBAC |
 |---|---|

@@ -13,7 +13,7 @@
     <div class="portal-title"><p class="eyebrow">OPERACIONES FINANCIERAS</p><h1>El control empieza<br>en cada operación.</h1><p>Ventas, caja y trazabilidad en un mismo espacio de trabajo.</p></div>
     <section class="portal-access" aria-labelledby="access-title"><div class="access-heading"><span class="section-index">01 / ACCESO</span><h2 id="access-title">Ingresa a tu escritorio</h2><p>Utiliza tu cuenta de SecureFinance ERP.</p></div>
       <% if (error) { %>
-        <div class="alert alert-danger" role="alert"><%= error %></div>
+        <div class="alert desk-message alert-danger" data-marker="×" role="alert"><%= error %></div>
       <% } %>
       <form method="post" action="/login">
         <div class="mb-3">
@@ -25,6 +25,7 @@
           <label class="form-label" for="password">Contraseña</label>
           <input class="form-control" id="password" name="Password" type="password"
                  autocomplete="current-password" maxlength="128" required>
+          <a class="access-link" href="/recuperar-password">¿Olvidaste tu contraseña?</a>
         </div>
         <button class="btn btn-primary w-100 py-2" type="submit">Ingresar</button>
       </form>

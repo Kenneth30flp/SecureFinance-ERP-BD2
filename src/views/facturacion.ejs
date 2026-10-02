@@ -7,6 +7,7 @@
   <title>Facturación | SecureFinance ERP</title>
   <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/messages.js" defer></script>
   <script src="/js/facturacion.js" defer></script>
 </head>
 <body class="app-shell">
@@ -18,8 +19,9 @@
       <a href="/dashboard" ><span>00</span>Dashboard</a>
       <% if (usuario.permisos.includes('VENTAS_REGISTRAR')) { %><a href="/facturacion" aria-current="page"><span>01</span>Facturación</a><% } %>
       <% if (usuario.permisos.includes('AUDITORIA_CONSULTAR')) { %><a href="/auditoria" ><span>02</span>Auditoría</a><% } %>
+      <% if (usuario.permisos.includes('USUARIOS_ADMINISTRAR')) { %><a href="/usuarios"><span>03</span>Usuarios y Roles</a><% } %>
     </nav>
-    <div class="sidebar-account"><span class="nav-label">USUARIO ACTUAL</span><strong><%= usuario.nombreUsuario %></strong><a class="btn btn-nav" href="/logout">Cerrar sesión <span aria-hidden="true">&nearr;</span></a></div>
+    <div class="sidebar-account"><span class="nav-label">USUARIO ACTUAL</span><strong><%= usuario.nombreUsuario %></strong><a class="access-link" href="/cambiar-password">Cambiar contraseña</a><a class="btn btn-nav" href="/logout">Cerrar sesión <span aria-hidden="true">&nearr;</span></a></div>
     <span class="sidebar-foot">SECUREFINANCE / ERP</span>
   </aside>
   <main id="workspace" class="container page-content">
@@ -28,7 +30,7 @@
     <p class="text-secondary">Cajero: <%= usuario.nombreUsuario %> · Fecha: <time id="fecha"></time></p></div>
     <noscript><p class="alert alert-warning">Activa JavaScript para preparar y procesar la venta.</p></noscript>
     <div id="mensaje" class="alert d-none" role="status" aria-live="polite" tabindex="-1"></div>
-    <form id="venta-form">
+    <form id="venta-form" data-max-descuento="<%= politica.MaxDescuento %>">
       <fieldset id="venta-campos">
         <legend class="visually-hidden">Datos de la venta</legend>
         <div class="sale-layout"><div class="sale-detail">
@@ -36,12 +38,16 @@
           <div class="panel-body">
             <h2 class="h5 mb-3"><span class="section-index">01</span> Cliente de la operación</h2>
             <label for="cliente" class="form-label">Cliente</label>
+            <div class="client-picker">
+            <input id="buscar-cliente" type="search" class="form-control search-field" placeholder="Buscar por NIT o nombre" aria-label="Buscar cliente por NIT o nombre" autocomplete="off">
             <select id="cliente" class="form-select" required>
               <option value="">Selecciona un cliente</option>
               <% clientes.forEach((cliente) => { %>
-                <option value="<%= cliente.ClienteId %>"><%= cliente.Nombre %> · <%= cliente.NIT %></option>
+                <option value="<%= cliente.ClienteId %>" data-search="<%= cliente.NIT + ' ' + cliente.Nombre %>" data-nombre="<%= cliente.Nombre %>" data-nit="<%= cliente.NIT %>"><%= cliente.Nombre %> · <%= cliente.NIT %></option>
               <% }); %>
             </select>
+            </div>
+            <div id="cliente-actual" class="selected-client" hidden><span class="receipt-label">Cliente actual</span><strong id="cliente-actual-nombre"></strong><small id="cliente-actual-nit"></small></div>
             <% if (!clientes.length) { %><p class="text-secondary mt-2">No hay clientes activos disponibles.</p><% } %>
           </div>
         </section>
@@ -51,11 +57,12 @@
             <div class="product-entry">
               <div class="product-select">
                 <label for="producto" class="form-label">Producto · precio sin IVA · stock</label>
+                <input id="buscar-producto" type="search" class="form-control search-field" placeholder="Buscar por código o descripción" aria-label="Buscar producto por código o descripción" autocomplete="off">
                 <select id="producto" class="form-select">
                   <option value="">Selecciona un producto</option>
                   <% productos.forEach((producto) => { %>
                     <option value="<%= producto.ProductoId %>" data-precio="<%= Number(producto.Precio).toFixed(2) %>"
-                      data-stock="<%= producto.Stock %>" data-descripcion="<%= producto.Descripcion %>" <%= producto.Stock === 0 ? 'disabled' : '' %>>
+                      data-stock="<%= producto.Stock %>" data-search="<%= producto.Codigo + ' ' + producto.Descripcion %>" data-descripcion="<%= producto.Descripcion %>" <%= producto.Stock === 0 ? 'disabled' : '' %>>
                       <%= producto.Codigo %> · <%= producto.Descripcion %> · Q <%= Number(producto.Precio).toFixed(2) %> · <%= producto.Stock %> disponibles
                     </option>
                   <% }); %>
@@ -70,24 +77,52 @@
             <div class="table-responsive mt-4" tabindex="0" role="region" aria-label="Detalle de productos">
               <table class="table table-modern sale-table align-middle">
                 <caption>Detalle de la venta. Importes en quetzales.</caption>
-                <thead><tr><th scope="col">Producto</th><th scope="col">Cantidad</th><th scope="col">Precio</th><th scope="col">Subtotal</th><th scope="col">Acción</th></tr></thead>
+                <thead><tr><th scope="col">Producto</th><th scope="col">Cant.</th><th scope="col">Precio</th><th scope="col">Descuento</th><th scope="col">Ahorro</th><th scope="col">Subtotal neto</th><th scope="col">Acción</th></tr></thead>
                 <tbody id="lineas"></tbody>
               </table>
             </div>
             <p id="sin-lineas" class="empty-state">Agrega productos para comenzar.</p>
+            <p class="summary-note">Descuento máximo autorizado: <strong><%= Number(politica.MaxDescuento) %>%</strong>. Stock e importes sujetos a verificación al confirmar.</p>
             </div></section></div>
         <section class="sale-summary" aria-labelledby="resumen-title"><div class="panel-body">
             <p class="eyebrow">CAJA / COMPROBANTE</p><h2 id="resumen-title">Resumen de operación</h2><p class="receipt-meta">QUETZALES / GTQ <span>VENTA</span></p>
             <dl class="sale-totals">
-              <dt >Subtotal</dt><dd  id="subtotal">Q 0.00</dd>
+              <dt >Subtotal bruto</dt><dd  id="subtotal">Q 0.00</dd>
+              <dt>Descuento</dt><dd class="discount-reduction" id="descuento-total">&#8722; Q 0.00</dd>
+              <dt>Subtotal neto</dt><dd id="subtotal-neto">Q 0.00</dd>
               <dt >IVA (12%)</dt><dd  id="iva">Q 0.00</dd>
               <dt class="total-label">Total</dt><dd class="money-total" id="total">Q 0.00</dd>
             </dl>
+        <div id="motivo-campo" class="discount-reason" hidden>
+          <label for="motivo-descuento" class="form-label">Motivo de descuentos · opcional</label>
+          <select id="motivo-descuento" class="form-select"><option value="">Sin motivo</option>
+            <% ['Promoción', 'Cliente frecuente', 'Ajuste comercial', 'Autorización administrativa', 'Otro'].forEach((motivo) => { %><option value="<%= motivo %>"><%= motivo %></option><% }); %>
+          </select>
+          <p class="summary-note">Se guarda en la factura y aplica a sus descuentos.</p>
+        </div>
         <p class="summary-note">Los importes son preliminares. Al procesar, se verifican los precios y las existencias actuales.</p>
         <button class="btn btn-primary w-100 py-2" type="submit" id="procesar" disabled>Procesar Venta</button>
           </div></section></div>
       </fieldset>
     </form>
+    <dialog id="confirmacion" class="operation-dialog" aria-labelledby="confirmacion-titulo">
+      <div class="dialog-heading"><p class="eyebrow">CAJA / VALIDACIÓN FINAL</p><h2 id="confirmacion-titulo">Confirmar operación</h2></div>
+      <p class="receipt-label">Cliente</p><p id="confirmar-cliente"></p>
+      <ul id="confirmar-productos" class="confirmation-lines"></ul>
+      <dl class="sale-totals"><dt>Subtotal bruto</dt><dd id="confirmar-subtotal"></dd><dt>Descuento</dt><dd id="confirmar-descuento" class="discount-reduction"></dd><dt>Subtotal neto</dt><dd id="confirmar-neto"></dd><dt>IVA (12%)</dt><dd id="confirmar-iva"></dd><dt class="total-label">Total</dt><dd id="confirmar-total" class="money-total"></dd></dl>
+      <p class="summary-note">Importes preliminares. Al confirmar se verifican precios, permisos, descuentos y stock antes de registrar la venta.</p>
+      <div class="dialog-actions"><button id="cancelar-venta" class="btn btn-outline-primary" type="button">Cancelar</button><button id="confirmar-venta" class="btn btn-primary" type="button">Confirmar venta</button></div>
+    </dialog>
+    <section id="comprobante" class="work-panel sale-receipt" aria-labelledby="comprobante-titulo" tabindex="-1" hidden>
+      <div class="panel-body">
+        <div class="receipt-heading"><div><p class="eyebrow">SECUREFINANCE ERP / COMPROBANTE INTERNO</p><h2 id="comprobante-titulo">Operación completada</h2></div><span class="status-badge status-success">REGISTRADA</span></div>
+        <dl class="receipt-information"><dt>Factura</dt><dd id="recibo-factura"></dd><dt>Cliente</dt><dd id="recibo-cliente"></dd><dt>NIT</dt><dd id="recibo-nit"></dd><dt>Cajero</dt><dd id="recibo-cajero"></dd><dt>Fecha</dt><dd id="recibo-fecha"></dd><dt>Motivo de descuentos</dt><dd id="recibo-motivo"></dd></dl>
+        <div class="table-responsive"><table class="table table-modern receipt-table"><caption>Detalle de la operación</caption><thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Descuento</th><th>Ahorro</th><th>Neto</th></tr></thead><tbody id="recibo-detalle"></tbody></table></div>
+        <dl class="sale-totals receipt-totals"><dt>Subtotal bruto</dt><dd id="recibo-subtotal"></dd><dt>Descuento</dt><dd id="recibo-descuento" class="discount-reduction"></dd><dt>Subtotal neto</dt><dd id="recibo-neto"></dd><dt>IVA (12%)</dt><dd id="recibo-iva"></dd><dt class="total-label">Total</dt><dd id="recibo-total" class="money-total"></dd></dl>
+        <p class="summary-note">Comprobante interno / académico. No constituye factura electrónica SAT.</p>
+        <div class="receipt-actions"><a class="btn btn-primary" href="/facturacion">Nueva venta</a><button id="imprimir-comprobante" class="btn btn-outline-primary" type="button">Imprimir comprobante</button></div>
+      </div>
+    </section>
     <a class="btn btn-outline-primary mt-3 d-none" id="nueva-venta" href="/facturacion">Nueva venta</a>
   </main>
 </body>

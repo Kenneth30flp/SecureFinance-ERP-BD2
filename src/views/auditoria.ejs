@@ -16,20 +16,30 @@
       <a href="/dashboard" ><span>00</span>Dashboard</a>
       <% if (usuario.permisos.includes('VENTAS_REGISTRAR')) { %><a href="/facturacion" ><span>01</span>Facturación</a><% } %>
       <% if (usuario.permisos.includes('AUDITORIA_CONSULTAR')) { %><a href="/auditoria" aria-current="page"><span>02</span>Auditoría</a><% } %>
+      <% if (usuario.permisos.includes('USUARIOS_ADMINISTRAR')) { %><a href="/usuarios"><span>03</span>Usuarios y Roles</a><% } %>
     </nav>
-    <div class="sidebar-account"><span class="nav-label">USUARIO ACTUAL</span><strong><%= usuario.nombreUsuario %></strong><a class="btn btn-nav" href="/logout">Cerrar sesión <span aria-hidden="true">&nearr;</span></a></div>
+    <div class="sidebar-account"><span class="nav-label">USUARIO ACTUAL</span><strong><%= usuario.nombreUsuario %></strong><a class="access-link" href="/cambiar-password">Cambiar contraseña</a><a class="btn btn-nav" href="/logout">Cerrar sesión <span aria-hidden="true">&nearr;</span></a></div>
     <span class="sidebar-foot">SECUREFINANCE / ERP</span>
   </aside>
 
   <main id="workspace" class="container audit-content page-content">
+    <% const jsonLegible = (valor) => { if (!valor) return 'Sin valor'; try { return JSON.stringify(JSON.parse(valor), null, 2); } catch { return String(valor); } }; %>
+    <% const fechaLegible = (valor) => { const fecha = new Date(valor); return valor && !Number.isNaN(fecha.getTime()) ? fecha.toLocaleString('es-GT', { timeZone: 'America/Guatemala' }) : '-'; }; %>
     <div class="page-header"><p class="eyebrow mb-2">CONTROL / 02 · Observabilidad</p>
     <h1 class="h2 fw-bold mb-2">AUDITORÍA</h1><p class="text-secondary">Control y trazabilidad del sistema</p></div>
 
+    <% if (error) { %><div class="alert desk-message alert-danger" data-marker="×" role="alert"><%= error %> <a href="/auditoria">Intentar nuevamente</a></div><% } else { %>
     <dl class="audit-metrics" aria-label="Registros mostrados"><div><dt>Accesos registrados</dt><dd><%= bitacoraAcceso.length %></dd></div><div><dt>Eventos DML</dt><dd><%= auditoriaDml.length %></dd></div><div><dt>Ventas mostradas</dt><dd><%= historicoVentas.length %></dd></div></dl>
+    <nav class="audit-subnav" aria-label="Vistas de auditoría">
+      <% [['acceso', '01', 'Bitácora de acceso'], ['dml', '02', 'Auditoría DML'], ['ventas', '03', 'Histórico de ventas']].forEach(([clave, indice, titulo]) => { %>
+        <a href="/auditoria?vista=<%= clave %>" <%- vista === clave ? 'aria-current="page"' : '' %>><span><%= indice %></span><%= titulo %><small class="tab-count" aria-label="Registros"><%= ({ acceso: bitacoraAcceso.length, dml: auditoriaDml.length, ventas: historicoVentas.length })[clave] %></small></a>
+      <% }); %>
+    </nav>
     <section class="filter-panel">
       <div class="panel-body">
-        <h2 class="h5 mb-3">Filtros</h2>
+        <h2 class="h5 mb-3">Filtros · <%= ({ acceso: 'Bitácora de acceso', dml: 'Auditoría DML', ventas: 'Histórico de ventas' })[vista] %></h2>
         <form method="GET" action="/auditoria" class="filter-grid">
+          <input type="hidden" name="vista" value="<%= vista %>">
           <div class="filter-field">
             <label class="form-label" for="fechaInicial">Fecha inicial</label>
             <input id="fechaInicial" class="form-control" type="date" name="fechaInicial" value="<%= filtros.fechaInicial || '' %>">
@@ -38,30 +48,51 @@
             <label class="form-label" for="fechaFinal">Fecha final</label>
             <input id="fechaFinal" class="form-control" type="date" name="fechaFinal" value="<%= filtros.fechaFinal || '' %>">
           </div>
+          <% if (vista === 'acceso') { %>
+          <div class="filter-field">
+            <label class="form-label" for="usuario">Usuario intentado</label>
+            <input id="usuario" class="form-control" type="text" name="usuario" maxlength="50" value="<%= filtros.usuario || '' %>">
+          </div>
+          <div class="filter-field">
+            <label class="form-label" for="resultado">Resultado</label>
+            <select id="resultado" class="form-select" name="resultado"><option value="">Todos</option>
+              <% ['EXITOSO', 'PASSWORD_INCORRECTA', 'USUARIO_INEXISTENTE', 'USUARIO_INACTIVO'].forEach((valor) => { %>
+                <option value="<%= valor %>" <%= filtros.resultado === valor ? 'selected' : '' %>><%= valor %></option>
+              <% }); %>
+            </select>
+          </div>
+          <% } else if (vista === 'dml') { %>
           <div class="filter-field">
             <label class="form-label" for="tabla">Tabla</label>
-            <input id="tabla" class="form-control" type="text" name="tabla" value="<%= filtros.tabla || '' %>">
+            <input id="tabla" class="form-control" type="text" name="tabla" maxlength="128" value="<%= filtros.tabla || '' %>">
           </div>
           <div class="filter-field">
             <label class="form-label" for="operacion">Operación</label>
-            <input id="operacion" class="form-control" type="text" name="operacion" value="<%= filtros.operacion || '' %>">
+            <select id="operacion" class="form-select" name="operacion"><option value="">Todas</option>
+              <% ['INSERT', 'UPDATE', 'DELETE'].forEach((valor) => { %><option value="<%= valor %>" <%= filtros.operacion === valor ? 'selected' : '' %>><%= valor %></option><% }); %>
+            </select>
           </div>
+          <% } else { %>
           <div class="filter-field">
             <label class="form-label" for="cliente">Cliente</label>
-            <input id="cliente" class="form-control" type="text" name="cliente" value="<%= filtros.cliente || '' %>">
+            <input id="cliente" class="form-control" type="text" name="cliente" maxlength="150" value="<%= filtros.cliente || '' %>">
           </div>
+          <% } %>
           <div class="filter-submit">
             <button class="btn btn-primary" type="submit">Aplicar filtros</button>
+            <a class="btn btn-outline-primary" href="/auditoria?vista=<%= vista %>">Limpiar filtros</a>
           </div>
         </form>
       </div>
     </section>
 
-    <section class="log-panel">
+    <p class="audit-context">Los filtros se aplican únicamente a la vista seleccionada. Fechas de filtro en UTC; horarios de Guatemala (UTC−6).</p>
+    <% if (vista === 'acceso') { %>
+    <section class="log-panel" id="vista-acceso">
       <div class="panel-body">
         <h2 class="h5 mb-3"><span class="section-index">01</span> BITÁCORA DE ACCESO</h2>
         <% if (bitacoraAcceso.length) { %>
-          <div class="table-responsive" tabindex="0" role="region" aria-label="Bitácora de acceso">
+          <div class="table-responsive audit-scroll" tabindex="0" role="region" aria-label="Bitácora de acceso">
             <table class="table table-modern align-middle">
               <thead>
                 <tr>
@@ -77,7 +108,7 @@
               <tbody>
                 <% bitacoraAcceso.forEach((registro) => { %>
                   <tr>
-                    <td class="timestamp"><%= registro.FechaHora %></td>
+                    <td class="timestamp"><%= fechaLegible(registro.FechaHora) %></td>
                     <td><%= registro.NombreUsuarioIntentado %></td>
                     <td><span class="status-badge <%= ({ EXITOSO: 'status-success', PASSWORD_INCORRECTA: 'status-danger', USUARIO_INACTIVO: 'status-warning', USUARIO_INEXISTENTE: 'status-neutral' })[registro.Resultado] || 'status-neutral' %>"><%= registro.Resultado %></span></td>
                     <td><%= registro.HostName || '-' %></td>
@@ -95,19 +126,22 @@
       </div>
     </section>
 
-    <section class="log-panel">
+    <% } else if (vista === 'dml') { %>
+    <section class="log-panel" id="vista-dml">
       <div class="panel-body">
         <h2 class="h5 mb-3"><span class="section-index">02</span> AUDITORÍA DML</h2>
         <% if (auditoriaDml.length) { %>
-          <div class="table-responsive" tabindex="0" role="region" aria-label="Registros de auditoría">
+          <div class="table-responsive audit-scroll" tabindex="0" role="region" aria-label="Registros DML">
             <table class="table table-modern align-middle">
               <thead>
                 <tr>
                   <th scope="col">Fecha y hora</th>
                   <th scope="col">Tabla afectada</th>
                   <th scope="col">Operación</th>
+                  <th scope="col">Identificador</th>
                   <th scope="col">Usuario SQL</th>
                   <th scope="col">Equipo</th>
+                  <th scope="col">Aplicación</th>
                   <th scope="col">Valor anterior</th>
                   <th scope="col">Valor nuevo</th>
                 </tr>
@@ -115,13 +149,15 @@
               <tbody>
                 <% auditoriaDml.forEach((registro) => { %>
                   <tr>
-                    <td class="timestamp"><%= registro.FechaHora %></td>
+                    <td class="timestamp"><%= fechaLegible(registro.FechaHora) %></td>
                     <td><%= registro.TablaAfectada || '-' %></td>
                     <td><span class="status-badge <%= ({ INSERT: 'status-success', UPDATE: 'status-info', DELETE: 'status-danger' })[registro.Operacion] || 'status-neutral' %>"><%= registro.Operacion || '-' %></span></td>
+                    <td class="record-id"><%= registro.IdentificadorRegistro || '-' %></td>
                     <td><%= registro.UsuarioSQL || '-' %></td>
                     <td><%= registro.HostName || '-' %></td>
-                    <td><pre class="json-value" tabindex="0" role="region" aria-label="Valor anterior"><code><%= registro.ValorAnterior || '-' %></code></pre></td>
-                    <td><pre class="json-value json-after" tabindex="0" role="region" aria-label="Valor nuevo"><code><%= registro.ValorNuevo || '-' %></code></pre></td>
+                    <td><%= registro.AppName || '-' %></td>
+                    <td><details class="json-disclosure"><summary>Valor anterior</summary><pre class="json-value" tabindex="0"><code><%= jsonLegible(registro.ValorAnterior) %></code></pre></details></td>
+                    <td><details class="json-disclosure"><summary>Valor nuevo</summary><pre class="json-value json-after" tabindex="0"><code><%= jsonLegible(registro.ValorNuevo) %></code></pre></details></td>
                   </tr>
                 <% }); %>
               </tbody>
@@ -133,11 +169,12 @@
       </div>
     </section>
 
-    <section class="log-panel">
+    <% } else { %>
+    <section class="log-panel" id="vista-ventas">
       <div class="panel-body">
         <h2 class="h5 mb-3"><span class="section-index">03</span> HISTÓRICO DE VENTAS</h2>
         <% if (historicoVentas.length) { %>
-          <div class="table-responsive" tabindex="0" role="region" aria-label="Registros de auditoría">
+          <div class="table-responsive audit-scroll" tabindex="0" role="region" aria-label="Histórico de ventas">
             <table class="table table-modern align-middle">
               <thead>
                 <tr>
@@ -145,7 +182,9 @@
                   <th scope="col">Fecha</th>
                   <th scope="col">Cliente</th>
                   <th scope="col">Usuario</th>
-                  <th scope="col" class="text-end">Subtotal</th>
+                  <th scope="col" class="text-end">Subtotal bruto</th>
+                  <th scope="col" class="text-end">Descuento</th>
+                  <th scope="col" class="text-end">Subtotal neto</th>
                   <th scope="col" class="text-end">IVA</th>
                   <th scope="col" class="text-end">Total</th>
                 </tr>
@@ -154,10 +193,12 @@
                 <% historicoVentas.forEach((registro) => { %>
                   <tr>
                     <td><%= registro.Factura || '-' %></td>
-                    <td class="timestamp"><%= registro.Fecha || '-' %></td>
+                    <td class="timestamp"><%= fechaLegible(registro.Fecha) %></td>
                     <td><%= registro.Cliente || '-' %></td>
                     <td><%= registro.Usuario || '-' %></td>
                     <td class="money-cell"><%= registro.Subtotal == null ? '-' : 'Q ' + registro.Subtotal %></td>
+                    <td class="money-cell discount-reduction"><%= registro.Descuento == null ? '-' : '- Q ' + registro.Descuento %></td>
+                    <td class="money-cell"><%= registro.SubtotalNeto == null ? '-' : 'Q ' + registro.SubtotalNeto %></td>
                     <td class="money-cell"><%= registro.IVA == null ? '-' : 'Q ' + registro.IVA %></td>
                     <td class="money-cell sale-history-total"><%= registro.Total == null ? '-' : 'Q ' + registro.Total %></td>
                   </tr>
@@ -170,6 +211,8 @@
         <% } %>
       </div>
     </section>
+    <% } %>
+    <% } %>
   </main>
 </body>
 </html>

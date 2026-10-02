@@ -322,3 +322,142 @@ a,button,input,select { transition: background-color .15s, border-color .15s; }
   .app-shell .sale-summary { position: static; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+
+.role-option { display: flex; align-items: center; gap: 14px; padding: 14px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.role-option input { accent-color: var(--copper-soft); width: 18px; height: 18px; }
+.role-option small { display: block; color: var(--slate); }
+.role-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 20px; }
+.access-link { display: block; margin-top: 12px; color: var(--copper-soft); font-size: .78rem; text-decoration: none; }
+.access-link:hover { color: var(--paper); text-decoration: underline; }
+.recovery-demo { padding: 14px 0; margin-bottom: 20px; border-block: 1px solid #516368; overflow-wrap: anywhere; }
+.password-help { margin: 10px 0 0; font-size: .75rem; color: #aab9bd; }
+.login-page .alert-success { color: #a2dbbd; background: #1c3931; border-color: #426f59; }
+
+/* Compact percentage input inside the existing sales desk. */
+.discount-entry { display: flex; align-items: center; gap: .35rem; min-width: 6rem; }
+.discount-entry input { width: 5rem; }
+.discount-reduction { color: var(--copper-soft); }
+
+/* Contextual observability navigation and bounded record tables. */
+.audit-subnav { display: flex; gap: 6px; padding: 6px; margin-bottom: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
+.audit-subnav a { flex: 1; padding: 12px 16px; color: var(--slate); text-decoration: none; font-size: .85rem; border: 1px solid transparent; border-radius: 3px; }
+.audit-subnav a span { margin-right: 10px; color: var(--copper-soft); font: .7rem Consolas, monospace; }
+.audit-subnav a[aria-current],.audit-subnav a:hover { color: var(--accent); background: #243b45; border-color: #49656e; }
+.audit-subnav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.audit-context { font-size: .75rem; color: var(--slate); margin: 12px 0; }
+.audit-content .filter-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.audit-content .filter-submit { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; }
+.audit-scroll { max-height: min(54vh, 620px); min-height: 100px; overflow: auto; scrollbar-color: #536f79 #14232c; }
+.audit-scroll thead th { position: sticky; top: 0; z-index: 1; }
+.audit-scroll td { overflow-wrap: anywhere; }
+.audit-scroll .timestamp { min-width: 130px; }
+.json-disclosure { min-width: 130px; }
+.json-disclosure summary { cursor: pointer; color: var(--accent); font: .75rem Consolas, monospace; }
+.app-shell .json-disclosure .json-value { margin-top: 10px; width: 260px; max-width: 35vw; max-height: 240px; white-space: pre; overflow: auto; font-size: .72rem; }
+.record-id { font-family: Consolas, monospace; max-width: 220px; }
+
+/* Sale preparation, confirmation and SQL-backed receipt. */
+.search-field { margin-bottom: 8px; }
+.client-picker { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.5fr); gap: 10px; }
+.client-picker .search-field { margin-bottom: 0; }
+#vista-dml .audit-scroll table { min-width: 1200px; }
+#vista-dml .audit-scroll td:nth-child(5) { min-width: 150px; white-space: nowrap; }
+#vista-dml .audit-scroll td:nth-child(6) { min-width: 130px; white-space: nowrap; }
+#vista-dml .audit-scroll td:nth-child(7) { min-width: 180px; white-space: nowrap; }
+.line-stock { display: block; margin-top: 7px; color: var(--slate); font: .65rem/1.5 Consolas, monospace; }
+.line-quantity { width: 4.4rem; min-width: 4.4rem; text-align: right; }
+.app-shell .sale-table { min-width: 660px; }
+.app-shell .sale-table > :is(thead,tbody) > tr > :is(th,td) { padding: 12px 8px; }
+.app-shell .sale-table td:first-child { min-width: 115px; max-width: 220px; overflow-wrap: anywhere; }
+.app-shell .sale-table :is(th,td):nth-child(n+3) { white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+.discount-reason { margin: 16px 0; padding-top: 16px; border-top: 1px solid var(--line); }
+.operation-dialog { width: min(540px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); overflow: auto; padding: 28px; color: var(--text); background: var(--surface); border: 1px solid #526e78; border-top: 3px solid var(--copper-soft); border-radius: 4px; box-shadow: 0 24px 80px #0009; }
+.operation-dialog::backdrop { background: #061017c9; backdrop-filter: blur(3px); }
+.dialog-heading h2 { font-size: 1.4rem; margin-bottom: 24px; }
+.receipt-label { text-transform: uppercase; color: var(--slate); font-size: .7rem; margin-bottom: 4px; }
+.confirmation-lines { padding: 14px 18px 14px 30px; margin-bottom: 22px; border-block: 1px solid var(--line); max-height: 180px; overflow: auto; font-size: .85rem; }
+.confirmation-lines li { padding: 4px 0; overflow-wrap: anywhere; }
+.dialog-actions,.receipt-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+.receipt-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+.receipt-information { display: grid; grid-template-columns: 180px minmax(0,1fr); gap: 8px 16px; font-size: .9rem; margin: 24px 0; }
+.receipt-information dt { color: var(--slate); font-weight: 500; }
+.receipt-information dd { overflow-wrap: anywhere; margin: 0; }
+.receipt-totals { margin: 24px 0 0 auto; width: min(100%, 390px); }
+.sale-receipt:focus { outline: 2px solid var(--accent); outline-offset: 3px; }
+.receipt-table :is(th,td):not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+[hidden] { display: none !important; }
+
+/* Final presentation: compact executive metrics and consistent feedback. */
+.dashboard-overview { margin: 20px 0 8px; }
+.overview-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.overview-heading h2 { color: var(--text); font-size: .9rem; margin: 0; letter-spacing: .01em; }
+.overview-heading p { color: var(--slate); font: .67rem Consolas, monospace; margin: 0; }
+.dashboard-kpis { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; margin: 0; }
+.kpi-card { min-width: 0; padding: 18px 20px; background: var(--surface); border: 1px solid var(--line); border-top: 2px solid #53757e; border-radius: 3px; }
+.kpi-card:first-child { border-top-color: var(--copper-soft); }
+.kpi-card dt { color: var(--slate); font-size: .65rem; font-weight: 650; text-transform: uppercase; letter-spacing: .045em; }
+.kpi-card dd { margin: 10px 0 4px; color: var(--accent); font-size: clamp(1.35rem,1.8vw,1.9rem); font-weight: 650; line-height: 1.2; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.kpi-caption { color: var(--slate); font-size: .68rem; }
+.dashboard-content .module-card { min-height: 230px; padding: 24px; }
+.dashboard-content .module-card h2 { margin-top: 16px; }
+.account-roles { display: block; color: var(--slate); font-size: .72rem; line-height: 1.5; overflow-wrap: anywhere; }
+.sidebar-account strong { overflow-wrap: anywhere; }
+.desk-message { position: relative; padding: 14px 16px 14px 44px; border: 1px solid #536873; border-left: 3px solid currentColor; border-radius: 3px; font-size: .82rem; line-height: 1.55; }
+.desk-message::before { content: attr(data-marker); position: absolute; left: 15px; top: 13px; font-size: 1rem; font-weight: 700; }
+.app-shell .alert-info,.login-page .alert-info { background: #223e49; color: #a3d8de; }
+.login-page .alert-danger { background: #3d292c; color: #f0b5ac; }
+.selected-client { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 12px; row-gap: 4px; margin-top: 12px; padding: 9px 12px; border-left: 2px solid var(--copper-soft); background: #1c2c35; font-size: .78rem; }
+.selected-client .receipt-label { margin: 0; font-size: .6rem; }
+.selected-client small { color: var(--slate); }
+.app-shell .sale-table .line-net { color: #b2dedd; font-weight: 650; }
+.stock-low-badge { display: inline-block; margin-top: 5px; padding: 2px 5px; border: 1px solid #826446; border-radius: 2px; color: var(--copper-soft); font: .56rem Consolas, monospace; letter-spacing: .04em; }
+.audit-subnav a[aria-current] { border-bottom: 2px solid var(--accent); font-weight: 650; }
+.tab-count { display: inline-block; margin-left: 10px; min-width: 24px; padding: 1px 6px; border: 1px solid #526873; border-radius: 2px; color: var(--slate); font: .65rem Consolas, monospace; text-align: center; }
+.audit-subnav a[aria-current] .tab-count { color: var(--accent); border-color: #6b929b; }
+.access-dialog { width: min(600px,calc(100vw - 32px)); }
+.access-identity { display: grid; grid-template-columns: 80px minmax(0,1fr); gap: 8px 16px; margin-bottom: 20px; font-size: .85rem; }
+.access-identity dt { color: var(--slate); font-weight: 500; }
+.access-identity dd { margin: 0; overflow-wrap: anywhere; }
+.access-dialog fieldset { max-height: 30vh; overflow-y: auto; border-block: 1px solid var(--line); margin-bottom: 18px; }
+.access-dialog legend { font-size: .75rem; text-transform: uppercase; color: var(--slate); padding-top: 12px; }
+.access-dialog .role-option { padding: 12px 8px; }
+.access-dialog .role-option:last-child { border-bottom: 0; }
+.access-dialog .role-option input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 1199.98px) { .dashboard-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 767.98px) {
+  .overview-heading { flex-direction: column; gap: 6px; }
+  .kpi-card { padding: 14px; }
+  .audit-subnav a { display: flex; align-items: center; }
+  .tab-count { margin-left: auto; }
+}
+@media (min-width: 1200px) and (max-width: 1499px) {
+  .sale-layout { grid-template-columns: minmax(0,1fr) 270px; gap: 18px; }
+  .sale-summary .panel-body { padding: 20px 16px; }
+  .work-panel .panel-body { padding: 16px; }
+}
+@media (max-width: 767.98px) {
+  .client-picker { grid-template-columns: minmax(0,1fr); }
+  .audit-subnav { flex-direction: column; }
+  .audit-subnav a { padding: 10px 12px; }
+  .audit-content .filter-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .receipt-information { grid-template-columns: 110px minmax(0,1fr); font-size: .8rem; }
+  .operation-dialog { padding: 20px; }
+}
+@media print {
+  @page { margin: 15mm; size: A4; }
+  html,body.app-shell { background: white !important; color: black !important; min-height: 0; }
+  .app-shell .sidebar,.app-shell .skip-link,.app-shell .page-header,#mensaje,#venta-form,#nueva-venta,dialog,.receipt-actions { display: none !important; }
+  .app-shell .container.page-content { width: 100%; max-width: none; margin: 0; padding: 0; }
+  .app-shell .sale-receipt { border: 0; background: white; color: black; outline: 0; }
+  .app-shell .sale-receipt .panel-body { padding: 0; }
+  .app-shell .sale-receipt :is(h2,dt,dd,p,small,.eyebrow,.discount-reduction) { color: black !important; }
+  .app-shell .sale-receipt .status-badge { display: none; }
+  .app-shell .sale-receipt .table-responsive { overflow: visible; }
+  .app-shell .sale-receipt .table-modern { width: 100%; font-size: 9pt; }
+  .app-shell .sale-receipt .table-modern :is(th,td,caption) { background: white !important; color: black !important; border-color: #bbb; padding: 6px; }
+  .receipt-table td:first-child { overflow-wrap: anywhere; }
+  .receipt-table tr { break-inside: avoid; }
+  .receipt-table thead { display: table-header-group; }
+  .receipt-totals,.receipt-information { break-inside: avoid; }
+  .app-shell .sale-totals .money-total { font-size: 18pt; }
+}

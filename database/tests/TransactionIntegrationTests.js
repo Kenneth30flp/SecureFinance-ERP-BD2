@@ -33,9 +33,65 @@ async function main() {
   try {
     await sql(`CREATE DATABASE [${database}];`, false);
     created = true;
+    // Upgrade a real pre-discount schema with a committed historical invoice.
+    // git show only reads the original schema; it does not change the checkout.
     for (const file of ['database/02_SecurityTables.sql', 'database/03_SecurityStoredProcedures.sql',
       'database/04_SecuritySeedData.sql', 'database/05_BusinessTables.sql',
-      'database/05_BusinessSeedData.sql', 'database/06_TransactionProcedures.sql']) await install(file);
+      'database/05_BusinessSeedData.sql', 'database/06_TransactionProcedures.sql',
+      'database/07_AuditCore.sql', 'database/08_AuditTriggers.sql']) {
+      const { stdout } = await execute('git', ['show', `HEAD:${file}`], { cwd: root, windowsHide: true });
+      await sql(stdout.replaceAll('[SecureFinanceERP]', `[${database}]`));
+    }
+    await sql(`DECLARE @Detalle dbo.TipoDetalleVenta;
+      DECLARE @Cliente INT = (SELECT MIN(ClienteId) FROM dbo.Cliente),
+        @Usuario INT = (SELECT MIN(UsuarioId) FROM dbo.Usuario WHERE Activo = 1),
+        @Producto INT = (SELECT MIN(ProductoId) FROM dbo.Producto);
+      INSERT @Detalle VALUES (@Producto, 1);
+      EXEC dbo.sp_ProcesarVentaTransaccional @Cliente, @Usuario, @Detalle;
+      SELECT * INTO dbo.TestFacturaAntes FROM dbo.Factura;
+      SELECT * INTO dbo.TestDetalleAntes FROM dbo.DetalleFactura;
+      SELECT * INTO dbo.TestCajaAntes FROM dbo.MovimientoCaja;
+      SELECT * INTO dbo.TestProductoAntes FROM dbo.Producto;
+      SELECT * INTO dbo.TestAuditoriaAntes FROM dbo.Bitacora_Transacciones;
+      CREATE USER securefinance_app WITHOUT LOGIN;`);
+    await install('database/12_SalesDiscounts.sql');
+    await install('database/12_SalesDiscounts.sql');
+    await install('database/13_OperationsDesk.sql');
+    await install('database/13_OperationsDesk.sql');
+    await install('database/14_DashboardSummary.sql');
+    await install('database/14_DashboardSummary.sql');
+    await sql(`IF EXISTS (SELECT FacturaId, ClienteId, UsuarioId, FechaHora, Subtotal, IVA, Total, Estado
+          FROM dbo.Factura EXCEPT SELECT * FROM dbo.TestFacturaAntes)
+        OR EXISTS (SELECT * FROM dbo.TestFacturaAntes EXCEPT SELECT FacturaId, ClienteId, UsuarioId,
+          FechaHora, Subtotal, IVA, Total, Estado FROM dbo.Factura)
+        OR EXISTS (SELECT DetalleFacturaId, FacturaId, ProductoId, Cantidad, PrecioUnitario, Subtotal
+          FROM dbo.DetalleFactura EXCEPT SELECT * FROM dbo.TestDetalleAntes)
+        OR EXISTS (SELECT * FROM dbo.TestCajaAntes EXCEPT SELECT * FROM dbo.MovimientoCaja)
+        OR EXISTS (SELECT * FROM dbo.TestProductoAntes EXCEPT SELECT * FROM dbo.Producto)
+        OR EXISTS (SELECT * FROM dbo.TestAuditoriaAntes EXCEPT SELECT * FROM dbo.Bitacora_Transacciones)
+        OR EXISTS (SELECT 1 FROM dbo.Factura WHERE DescuentoTotal <> 0 OR MotivoDescuento IS NOT NULL)
+        OR EXISTS (SELECT 1 FROM dbo.DetalleFactura WHERE DescuentoPorcentaje <> 0
+          OR DescuentoMonto <> 0 OR SubtotalNeto <> Subtotal)
+        THROW 52205, 'Migration changed historical data.', 1;
+      EXECUTE AS USER = 'securefinance_app';
+      DECLARE @D dbo.TipoDetalleVentaDescuento;
+      DECLARE @C INT = 1, @U INT = 1;
+      EXEC dbo.sp_ObtenerResumenDashboard @U;
+      IF HAS_PERMS_BY_NAME(N'dbo.Factura', N'OBJECT', N'SELECT') = 1 THROW 52207, 'Direct table access granted.', 1;
+      -- Empty sale reaches the procedure business validation, proving TVP grants.
+      BEGIN TRY
+        EXEC dbo.sp_ProcesarVentaTransaccional @C, @U, @D;
+        THROW 52206, 'Empty sale accepted.', 1;
+      END TRY BEGIN CATCH IF ERROR_NUMBER() <> 52001 THROW; END CATCH;
+      REVERT;`);
+    console.log('OK: migration of historical invoice, zero discounts, repeatability and application grants.');
+    await sql(`ALTER DATABASE [${database}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+      DROP DATABASE [${database}]; CREATE DATABASE [${database}];`, false);
+    for (const file of ['database/02_SecurityTables.sql', 'database/03_SecurityStoredProcedures.sql',
+      'database/04_SecuritySeedData.sql', 'database/05_BusinessTables.sql',
+      'database/05_BusinessSeedData.sql', 'database/06_TransactionProcedures.sql',
+      'database/07_AuditCore.sql', 'database/08_AuditTriggers.sql', 'database/12_SalesDiscounts.sql', 'database/12_SalesDiscounts.sql',
+      'database/13_OperationsDesk.sql', 'database/13_OperationsDesk.sql', 'database/14_DashboardSummary.sql', 'database/14_DashboardSummary.sql']) await install(file);
     console.log('OK: instalación SQL en base temporal aislada.');
     // Reejecutar scripts repetibles no restablece inventario ni duplica semillas.
     await sql("UPDATE dbo.Producto SET Stock = 49 WHERE Codigo = N'DEMO-TECLADO';");
@@ -45,7 +101,7 @@ async function main() {
       OR (SELECT Stock FROM dbo.Producto WHERE Codigo = N'DEMO-TECLADO') <> 49
       THROW 52200, 'Semillas no idempotentes.', 1;`);
     for (const file of ['database/tests/SecurityTests.sql', 'database/tests/AuthenticationTests.sql',
-      'database/tests/TransactionTests.sql']) {
+      'database/tests/TransactionTests.sql', 'database/tests/SalesDiscountTests.sql', 'database/tests/OperationsDeskTests.sql', 'database/tests/AuditTests.sql', 'database/tests/DashboardSummaryTests.sql']) {
       const output = await install(file);
       assert.match(output, /OK:/);
       console.log(`OK: ${file}`);
@@ -63,7 +119,7 @@ async function main() {
       EXEC dbo.sp_ListarClientes;
       EXEC dbo.sp_ListarProductosDisponibles;
       BEGIN TRANSACTION;
-      EXEC dbo.sp_ProcesarVentaTransaccional @Cliente, @Usuario, @Detalle;
+      EXEC dbo.sp_ProcesarVentaSinDescuento @Cliente, @Usuario, @Detalle;
       ROLLBACK TRANSACTION;
       BEGIN TRY
         SELECT * FROM dbo.Producto;
@@ -80,6 +136,23 @@ async function main() {
       REVERT;`);
     console.log('OK: EXECUTE/REFERENCES del TVP y SP; SELECT/UPDATE directos denegados.');
 
+    const discountedResult = await sql(`SET NOCOUNT ON;
+      BEGIN TRANSACTION;
+      DECLARE @Cliente INT = (SELECT MIN(ClienteId) FROM dbo.Cliente),
+        @Usuario INT = (SELECT MIN(UsuarioId) FROM dbo.Usuario WHERE Activo = 1), @Producto INT;
+      INSERT dbo.Producto (Codigo, Descripcion, Precio, Stock)
+      VALUES (CONVERT(NVARCHAR(36), NEWID()), N'Cable HDMI result test', 35.90, 10);
+      SET @Producto = SCOPE_IDENTITY();
+      EXECUTE AS USER = 'securefinance_app';
+      DECLARE @Detalle dbo.TipoDetalleVentaDescuento;
+      INSERT @Detalle VALUES (@Producto, 1, 10);
+      EXEC dbo.sp_ProcesarVentaTransaccional @Cliente, @Usuario, @Detalle;
+      REVERT;
+      ROLLBACK TRANSACTION;`);
+    assert.match(discountedResult, /FacturaId\s+FechaHora\s+Subtotal\s+Descuento\s+SubtotalNeto\s+IVA\s+Total/);
+    assert.match(discountedResult, /35\.90\s+3\.59\s+32\.31\s+3\.88\s+36\.19/);
+    console.log('OK: application TVP and authoritative SQL result, Cable HDMI total 36.19.');
+
     const output = await sql(`SET NOCOUNT ON;
       UPDATE dbo.Producto SET Stock = 1 WHERE Codigo IN (N'DEMO-TECLADO', N'DEMO-MOUSE');
       SELECT CONCAT('IDS:', (SELECT MIN(ClienteId) FROM dbo.Cliente), ':',
@@ -91,8 +164,8 @@ async function main() {
     const [, client, user, p1, p2] = ids;
     const sessionA = path.join(directory, 'concurrency-a.sql');
     await writeFile(sessionA, `USE [${database}]; SET NOCOUNT ON; SET XACT_ABORT ON;
-      DECLARE @Detalle dbo.TipoDetalleVenta;
-      INSERT @Detalle VALUES (${p2}, 1), (${p1}, 1);
+      DECLARE @Detalle dbo.TipoDetalleVentaDescuento;
+      INSERT @Detalle VALUES (${p2}, 1, 10), (${p1}, 1, 7.50);
       BEGIN TRANSACTION;
       EXEC dbo.sp_ProcesarVentaTransaccional ${client}, ${user}, @Detalle;
       RAISERROR ('STOCK_LOCKED', 10, 1) WITH NOWAIT;
@@ -120,8 +193,8 @@ async function main() {
     try {
       await locked;
       await Promise.all([completedA, sql(`SET NOCOUNT ON;
-        DECLARE @Detalle dbo.TipoDetalleVenta;
-        INSERT @Detalle VALUES (${p1}, 1), (${p2}, 1);
+        DECLARE @Detalle dbo.TipoDetalleVentaDescuento;
+        INSERT @Detalle VALUES (${p1}, 1, 0), (${p2}, 1, 100);
         BEGIN TRY
           EXEC dbo.sp_ProcesarVentaTransaccional ${client}, ${user}, @Detalle;
           THROW 52203, 'La segunda venta no debe disponer del mismo stock.', 1;
@@ -153,4 +226,4 @@ async function main() {
   }
 }
 
-main().catch((error) => { console.error(error.message); process.exitCode = 1; });
+main().catch((error) => { console.error(error.stdout || error.message); process.exitCode = 1; });

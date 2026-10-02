@@ -53,7 +53,7 @@ BEGIN
     SELECT N'Factura', 'INSERT', SUSER_SNAME(), HOST_NAME(), APP_NAME(),
            CONVERT(NVARCHAR(4000), i.FacturaId),
            NULL,
-           (SELECT i.FacturaId, i.ClienteId, i.UsuarioId, i.FechaHora, i.Subtotal, i.IVA, i.Total, i.Estado FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
+           (SELECT i.FacturaId, i.ClienteId, i.UsuarioId, i.FechaHora, i.Subtotal, i.DescuentoTotal, i.MotivoDescuento, i.IVA, i.Total, i.Estado FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
     FROM inserted AS i;
 END;
 GO

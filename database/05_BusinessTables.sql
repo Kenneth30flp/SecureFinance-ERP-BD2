@@ -1,6 +1,8 @@
 USE [SecureFinanceERP];
 GO
 SET XACT_ABORT ON;
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
 -- Instalación inicial, una sola vez después de 01-04. No reemplaza objetos.
 -- Fechas UTC; precios sin IVA. El ingreso de caja representa la venta cobrada.
 BEGIN TRY
@@ -35,11 +37,15 @@ BEGIN TRY
         UsuarioId INT NOT NULL CONSTRAINT FK_Factura_Usuario REFERENCES dbo.Usuario(UsuarioId),
         FechaHora DATETIME2(3) NOT NULL CONSTRAINT DF_Factura_Fecha DEFAULT SYSUTCDATETIME(),
         Subtotal DECIMAL(19,2) NOT NULL,
+        DescuentoTotal DECIMAL(19,2) NOT NULL CONSTRAINT DF_Factura_DescuentoTotal DEFAULT (0),
+        MotivoDescuento NVARCHAR(80) NULL,
         IVA DECIMAL(19,2) NOT NULL,
         Total DECIMAL(19,2) NOT NULL,
         Estado VARCHAR(15) NOT NULL CONSTRAINT DF_Factura_Estado DEFAULT ('EMITIDA'),
-        CONSTRAINT CK_Factura_Importes CHECK (Subtotal >= 0 AND IVA >= 0 AND Total = Subtotal + IVA),
-        CONSTRAINT CK_Factura_Estado CHECK (Estado = 'EMITIDA')
+        CONSTRAINT CK_Factura_Importes CHECK (Subtotal >= 0 AND DescuentoTotal BETWEEN 0 AND Subtotal AND IVA >= 0 AND Total = Subtotal - DescuentoTotal + IVA),
+        CONSTRAINT CK_Factura_Estado CHECK (Estado = 'EMITIDA'),
+        CONSTRAINT CK_Factura_MotivoDescuento CHECK (MotivoDescuento IS NULL OR MotivoDescuento IN
+            (N'Promoción', N'Cliente frecuente', N'Ajuste comercial', N'Autorización administrativa', N'Otro'))
     );
     CREATE INDEX IX_Factura_Cliente ON dbo.Factura(ClienteId, FechaHora);
     CREATE INDEX IX_Factura_Usuario ON dbo.Factura(UsuarioId);
@@ -50,6 +56,10 @@ BEGIN TRY
         Cantidad INT NOT NULL,
         PrecioUnitario DECIMAL(12,2) NOT NULL,
         Subtotal DECIMAL(19,2) NOT NULL,
+        DescuentoPorcentaje DECIMAL(5,2) NOT NULL CONSTRAINT DF_DetalleFactura_DescuentoPorcentaje DEFAULT (0),
+        DescuentoMonto DECIMAL(19,2) NOT NULL CONSTRAINT DF_DetalleFactura_DescuentoMonto DEFAULT (0),
+        SubtotalNeto AS (Subtotal - DescuentoMonto) PERSISTED,
+        CONSTRAINT CK_DetalleFactura_Descuento CHECK (DescuentoPorcentaje BETWEEN 0 AND 100 AND DescuentoMonto BETWEEN 0 AND Subtotal AND DescuentoMonto = ROUND(Subtotal * DescuentoPorcentaje / CONVERT(DECIMAL(5,2), 100), 2)),
         CONSTRAINT UQ_DetalleFactura_Producto UNIQUE (FacturaId, ProductoId),
         CONSTRAINT CK_DetalleFactura_Cantidad CHECK (Cantidad > 0),
         CONSTRAINT CK_DetalleFactura_Precio CHECK (PrecioUnitario >= 0),
@@ -68,6 +78,7 @@ BEGIN TRY
     );
     -- Sin PK/CHECK aquí: el SP devuelve errores de negocio precisos para duplicados/cantidades.
     CREATE TYPE dbo.TipoDetalleVenta AS TABLE (ProductoId INT NOT NULL, Cantidad INT NOT NULL);
+    CREATE TYPE dbo.TipoDetalleVentaDescuento AS TABLE (ProductoId INT NOT NULL, Cantidad INT NOT NULL, DescuentoPorcentaje DECIMAL(5,2) NOT NULL DEFAULT (0));
     COMMIT TRANSACTION;
 END TRY
 BEGIN CATCH

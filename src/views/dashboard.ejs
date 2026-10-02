@@ -16,12 +16,24 @@
       <a href="/dashboard" aria-current="page"><span>00</span>Dashboard</a>
       <% if (usuario.permisos.includes('VENTAS_REGISTRAR')) { %><a href="/facturacion" ><span>01</span>Facturación</a><% } %>
       <% if (usuario.permisos.includes('AUDITORIA_CONSULTAR')) { %><a href="/auditoria" ><span>02</span>Auditoría</a><% } %>
+      <% if (usuario.permisos.includes('USUARIOS_ADMINISTRAR')) { %><a href="/usuarios"><span>03</span>Usuarios y Roles</a><% } %>
     </nav>
-    <div class="sidebar-account"><span class="nav-label">USUARIO ACTUAL</span><strong><%= usuario.nombreUsuario %></strong><a class="btn btn-nav" href="/logout">Cerrar sesión <span aria-hidden="true">&nearr;</span></a></div>
+    <div class="sidebar-account"><span class="nav-label">USUARIO ACTUAL</span><strong><%= usuario.nombreUsuario %></strong><% if (resumen?.RolesActuales) { %><small class="account-roles"><%= resumen.RolesActuales %></small><% } %><a class="access-link" href="/cambiar-password">Cambiar contraseña</a><a class="btn btn-nav" href="/logout">Cerrar sesión <span aria-hidden="true">&nearr;</span></a></div>
     <span class="sidebar-foot">SECUREFINANCE / ERP</span>
   </aside>
   <main id="workspace" class="container dashboard-content page-content">
     <div class="page-header"><p class="eyebrow">SecureFinance / área de trabajo</p><h1>Centro de operaciones</h1><p>Bienvenido, <strong><%= usuario.nombreUsuario %></strong>. Tu escritorio de gestión financiera.</p></div>
+    <% const agrupar = (valor) => String(valor).replace(/\B(?=(\d{3})+(?!\d))/g, ','); %>
+    <% const dinero = (valor) => { const [entero, centavos] = valor.split('.'); return 'Q ' + agrupar(entero) + '.' + centavos; }; %>
+    <% if (advertencia) { %><div class="alert desk-message alert-warning" data-marker="!" role="status"><%= advertencia %></div><% } %>
+    <section class="dashboard-overview" aria-labelledby="resumen-operativo-title">
+      <div class="overview-heading"><h2 id="resumen-operativo-title">Pulso operativo</h2><p><%= resumen?.FechaOperacion || 'Resumen no disponible' %> · Jornada Guatemala / UTC−6</p></div>
+      <dl class="dashboard-kpis">
+        <% [['VentasDia', 'Ventas del día', 'Ventas registradas'], ['FacturasDia', 'Facturas emitidas hoy', 'Documentos emitidos'], ['ProductosStockBajo', 'Productos con stock bajo', 'Activos con stock ≤ 5'], ['EventosDMLDia', 'Eventos de auditoría hoy', 'Eventos DML registrados']].forEach(([campo, titulo, ayuda]) => { %>
+          <div class="kpi-card"><dt><%= titulo %></dt><dd><%= resumen?.[campo] == null ? '—' : campo === 'VentasDia' ? dinero(resumen[campo]) : agrupar(resumen[campo]) %></dd><span class="kpi-caption"><%= !resumen ? 'Temporalmente no disponible' : resumen[campo] == null ? 'Sin permiso de consulta' : ayuda %></span></div>
+        <% }); %>
+      </dl>
+    </section>
     <div class="session-strip"><span class="session-state">Sesión activa</span><span><strong><%= usuario.permisos.length %></strong> permisos asignados</span></div>
     <div class="module-grid">
     <% if (usuario.permisos.includes('VENTAS_REGISTRAR')) { %>

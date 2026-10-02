@@ -17,13 +17,29 @@ BEGIN
 
     -- Autenticación: los procedimientos internos se ejecutan por la cadena de propiedad dbo.
     GRANT EXECUTE ON OBJECT::dbo.sp_Login TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ObtenerResumenDashboard TO [securefinance_app];
     GRANT EXECUTE ON OBJECT::dbo.sp_ObtenerPermisosUsuario TO [securefinance_app];
+    -- Recuperación y cambio de contraseña: sin acceso directo a credenciales ni tokens.
+    GRANT EXECUTE ON OBJECT::dbo.sp_SolicitarRecuperacionPassword TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ValidarTokenRecuperacion TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_RestablecerPassword TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_CambiarPassword TO [securefinance_app];
 
     -- Ventas y parámetro de tabla (TVP).
     GRANT EXECUTE ON OBJECT::dbo.sp_ListarClientes TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ObtenerPoliticaVenta TO [securefinance_app];
     GRANT EXECUTE ON OBJECT::dbo.sp_ListarProductosDisponibles TO [securefinance_app];
     GRANT EXECUTE ON OBJECT::dbo.sp_ProcesarVentaTransaccional TO [securefinance_app];
     GRANT EXECUTE, REFERENCES ON TYPE::dbo.TipoDetalleVenta TO [securefinance_app];
+    GRANT EXECUTE, REFERENCES ON TYPE::dbo.TipoDetalleVentaDescuento TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ProcesarVentaSinDescuento TO [securefinance_app];
+
+    -- Usuarios y roles: procedimientos y TVP, sin acceso directo a tablas.
+    GRANT EXECUTE ON OBJECT::dbo.sp_ListarUsuariosAdministracion TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ListarRolesActivos TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ObtenerRolesUsuario TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ActualizarRolesUsuario TO [securefinance_app];
+    GRANT EXECUTE, REFERENCES ON TYPE::dbo.TipoRolUsuario TO [securefinance_app];
 
     -- Consultas de auditoría e histórico de ventas.
     GRANT EXECUTE ON OBJECT::dbo.sp_ConsultarBitacoraAcceso TO [securefinance_app];

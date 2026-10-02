@@ -8,6 +8,8 @@ const { getPool, closePool } = require('./src/config/database');
 
 const { createAuthService } = require('./src/services/authService');
 const { createAuthRoutes } = require('./src/routes/authRoutes');
+const { createDashboardService } = require('./src/services/dashboardService');
+const { createDashboardRoutes } = require('./src/routes/dashboardRoutes');
 
 const { createVentaService } = require('./src/services/ventaService');
 const { createVentaRoutes } = require('./src/routes/ventaRoutes');
@@ -15,11 +17,19 @@ const { createVentaRoutes } = require('./src/routes/ventaRoutes');
 const { createAuditoriaService } = require('./src/services/auditoriaService');
 const { createAuditoriaRoutes } = require('./src/routes/auditoriaRoutes');
 
+const { createUsuarioService } = require('./src/services/usuarioService');
+const { createUsuarioRoutes } = require('./src/routes/usuarioRoutes');
+const { createPasswordService } = require('./src/services/passwordService');
+const { createPasswordRoutes } = require('./src/routes/passwordRoutes');
+
 function createApp({
   secret = process.env.SESSION_SECRET,
   authService = createAuthService(),
+  dashboardService = createDashboardService(),
   ventaService = createVentaService(),
   auditoriaService = createAuditoriaService(),
+  usuarioService = createUsuarioService(),
+  passwordService = createPasswordService(),
   production = process.env.NODE_ENV === 'production',
 } = {}) {
   if (!secret || secret.trim().length < 32) {
@@ -58,12 +68,16 @@ function createApp({
 
   // Autenticación de Kenneth
   app.use(createAuthRoutes(authService));
+  app.use(createDashboardRoutes(dashboardService));
+  app.use(createPasswordRoutes(passwordService, { production }));
 
   // Facturación de Edward
   app.use(createVentaRoutes(ventaService));
 
   // Auditoría de José
   app.use(createAuditoriaRoutes(auditoriaService));
+
+  app.use(createUsuarioRoutes(usuarioService));
 
   app.get('/health', (req, res) =>
     res.json({ status: 'ok', phase: 3 })

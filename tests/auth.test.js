@@ -26,8 +26,8 @@ function fakePool(responses) {
     },
   };
 }
-const success = () => ({ recordset: [{ Codigo: 0, Resultado: 'EXITOSO', UsuarioId: 1,
-  NombreUsuario: '<script>demo</script>', Correo: 'demo@example.invalid', Activo: true, DebeCambiarPassword: true }] });
+const success = (debeCambiarPassword = true) => ({ recordset: [{ Codigo: 0, Resultado: 'EXITOSO', UsuarioId: 1,
+  NombreUsuario: '<script>demo</script>', Correo: 'demo@example.invalid', Activo: true, DebeCambiarPassword: debeCambiarPassword }] });
 const permissions = () => ({ recordset: [{ Codigo: 'AUDITORIA_CONSULTAR' }, { Codigo: 'VENTAS_REGISTRAR' }] });
 
 test('Servicio: parámetros tipados, procedimientos y datos permitidos', async () => {
@@ -52,7 +52,7 @@ test('Servicio: contrato inesperado se rechaza', async () => {
 test('HTTP: login, sesión, permisos escapados, errores y logout con SQL simulado', async (t) => {
   const responses = [];
   const pool = fakePool(responses);
-  const app = createApp({ secret: 'secreto-exclusivo-de-pruebas-locales-1234', production: false,
+  const app = createApp({ dashboardService: { obtenerResumen: async () => null }, secret: 'secreto-exclusivo-de-pruebas-locales-1234', production: false,
     authService: createAuthService(async () => pool) });
   const server = app.listen(0, '127.0.0.1');
   await once(server, 'listening');
@@ -86,7 +86,7 @@ test('HTTP: login, sesión, permisos escapados, errores y logout con SQL simulad
   assert.doesNotMatch(await response.text(), /detalle SQL privado/);
   assert.equal((await request('/dashboard')).headers.get('location'), '/login');
 
-  responses.push(success(), permissions());
+  responses.push(success(false), permissions());
   response = await post({ NombreUsuario: 'demo', Password: 'prueba' });
   assert.equal(response.status, 303);
   assert.equal(response.headers.get('location'), '/dashboard');

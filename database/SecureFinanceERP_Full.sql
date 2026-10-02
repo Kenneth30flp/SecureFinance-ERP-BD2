@@ -8,7 +8,6 @@
 -- Copia íntegra de los scripts modulares indicados en cada bloque, sin archivos de pruebas.
 
 -- =========================================================
--- 01. CREACIÓN DE BASE DE DATOS
 -- Fuente: database/01_CreateDatabase.sql
 -- =========================================================
 -- Ejecutar en SSMS con una cuenta autorizada para crear bases de datos.
@@ -20,9 +19,7 @@ BEGIN
 END;
 GO
 
-
 -- =========================================================
--- 02. SEGURIDAD, USUARIOS, ROLES Y PERMISOS
 -- Fuente: database/02_SecurityTables.sql
 -- =========================================================
 USE [SecureFinanceERP];
@@ -137,9 +134,7 @@ BEGIN CATCH
 END CATCH;
 GO
 
-
 -- =========================================================
--- 03. PROCEDIMIENTOS DE AUTENTICACIÓN
 -- Fuente: database/03_SecurityStoredProcedures.sql
 -- =========================================================
 USE [SecureFinanceERP];
@@ -275,9 +270,7 @@ BEGIN
 END;
 GO
 
-
 -- =========================================================
--- 04. SEMILLAS DE SEGURIDAD
 -- Fuente: database/04_SecuritySeedData.sql
 -- =========================================================
 USE [SecureFinanceERP];
@@ -322,19 +315,19 @@ BEGIN TRY
 
     DECLARE @UsuarioId INT, @Codigo INT;
     SELECT @UsuarioId = UsuarioId FROM dbo.Usuario WITH (UPDLOCK, HOLDLOCK)
-    WHERE NombreUsuario = N'admin_demo';
+    WHERE NombreUsuario = N'admin';
     IF @UsuarioId IS NULL
     BEGIN
         EXEC @Codigo = dbo.sp_RegistrarUsuario
-            @NombreUsuario = N'admin_demo', @Correo = N'admin.demo@example.invalid',
+            @NombreUsuario = N'admin', @Correo = N'admin.demo@example.invalid',
             @Password = N'Demo_Academica_2026!', @NombreCompleto = N'Administrador DEMO',
             @UsuarioId = @UsuarioId OUTPUT;
         IF @Codigo <> 0 OR @UsuarioId IS NULL
-            THROW 51100, 'No fue posible crear admin_demo. Revisar conflictos de usuario/correo.', 1;
+            THROW 51100, 'No fue posible crear admin. Revisar conflictos de usuario/correo.', 1;
     END
     ELSE IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WHERE UsuarioId = @UsuarioId
                         AND Correo = N'admin.demo@example.invalid' AND NombreCompleto = N'Administrador DEMO')
-        THROW 51101, 'admin_demo ya pertenece a otra identidad. No se asignaron privilegios.', 1;
+        THROW 51101, 'admin ya pertenece a otra identidad. No se asignaron privilegios.', 1;
 
     INSERT dbo.Usuario_Rol (UsuarioId, RolId)
     SELECT @UsuarioId, r.RolId FROM dbo.Rol AS r
@@ -350,14 +343,14 @@ BEGIN CATCH
 END CATCH;
 GO
 
-
 -- =========================================================
--- 05. TABLAS DE NEGOCIO Y TVP
 -- Fuente: database/05_BusinessTables.sql
 -- =========================================================
 USE [SecureFinanceERP];
 GO
 SET XACT_ABORT ON;
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
 -- Instalación inicial, una sola vez después de 01-04. No reemplaza objetos.
 -- Fechas UTC; precios sin IVA. El ingreso de caja representa la venta cobrada.
 BEGIN TRY
@@ -392,11 +385,15 @@ BEGIN TRY
         UsuarioId INT NOT NULL CONSTRAINT FK_Factura_Usuario REFERENCES dbo.Usuario(UsuarioId),
         FechaHora DATETIME2(3) NOT NULL CONSTRAINT DF_Factura_Fecha DEFAULT SYSUTCDATETIME(),
         Subtotal DECIMAL(19,2) NOT NULL,
+        DescuentoTotal DECIMAL(19,2) NOT NULL CONSTRAINT DF_Factura_DescuentoTotal DEFAULT (0),
+        MotivoDescuento NVARCHAR(80) NULL,
         IVA DECIMAL(19,2) NOT NULL,
         Total DECIMAL(19,2) NOT NULL,
         Estado VARCHAR(15) NOT NULL CONSTRAINT DF_Factura_Estado DEFAULT ('EMITIDA'),
-        CONSTRAINT CK_Factura_Importes CHECK (Subtotal >= 0 AND IVA >= 0 AND Total = Subtotal + IVA),
-        CONSTRAINT CK_Factura_Estado CHECK (Estado = 'EMITIDA')
+        CONSTRAINT CK_Factura_Importes CHECK (Subtotal >= 0 AND DescuentoTotal BETWEEN 0 AND Subtotal AND IVA >= 0 AND Total = Subtotal - DescuentoTotal + IVA),
+        CONSTRAINT CK_Factura_Estado CHECK (Estado = 'EMITIDA'),
+        CONSTRAINT CK_Factura_MotivoDescuento CHECK (MotivoDescuento IS NULL OR MotivoDescuento IN
+            (N'Promoción', N'Cliente frecuente', N'Ajuste comercial', N'Autorización administrativa', N'Otro'))
     );
     CREATE INDEX IX_Factura_Cliente ON dbo.Factura(ClienteId, FechaHora);
     CREATE INDEX IX_Factura_Usuario ON dbo.Factura(UsuarioId);
@@ -407,6 +404,10 @@ BEGIN TRY
         Cantidad INT NOT NULL,
         PrecioUnitario DECIMAL(12,2) NOT NULL,
         Subtotal DECIMAL(19,2) NOT NULL,
+        DescuentoPorcentaje DECIMAL(5,2) NOT NULL CONSTRAINT DF_DetalleFactura_DescuentoPorcentaje DEFAULT (0),
+        DescuentoMonto DECIMAL(19,2) NOT NULL CONSTRAINT DF_DetalleFactura_DescuentoMonto DEFAULT (0),
+        SubtotalNeto AS (Subtotal - DescuentoMonto) PERSISTED,
+        CONSTRAINT CK_DetalleFactura_Descuento CHECK (DescuentoPorcentaje BETWEEN 0 AND 100 AND DescuentoMonto BETWEEN 0 AND Subtotal AND DescuentoMonto = ROUND(Subtotal * DescuentoPorcentaje / CONVERT(DECIMAL(5,2), 100), 2)),
         CONSTRAINT UQ_DetalleFactura_Producto UNIQUE (FacturaId, ProductoId),
         CONSTRAINT CK_DetalleFactura_Cantidad CHECK (Cantidad > 0),
         CONSTRAINT CK_DetalleFactura_Precio CHECK (PrecioUnitario >= 0),
@@ -425,6 +426,7 @@ BEGIN TRY
     );
     -- Sin PK/CHECK aquí: el SP devuelve errores de negocio precisos para duplicados/cantidades.
     CREATE TYPE dbo.TipoDetalleVenta AS TABLE (ProductoId INT NOT NULL, Cantidad INT NOT NULL);
+    CREATE TYPE dbo.TipoDetalleVentaDescuento AS TABLE (ProductoId INT NOT NULL, Cantidad INT NOT NULL, DescuentoPorcentaje DECIMAL(5,2) NOT NULL DEFAULT (0));
     COMMIT TRANSACTION;
 END TRY
 BEGIN CATCH
@@ -433,9 +435,7 @@ BEGIN CATCH
 END CATCH;
 GO
 
-
 -- =========================================================
--- 06. SEMILLAS DE NEGOCIO
 -- Fuente: database/05_BusinessSeedData.sql
 -- =========================================================
 USE [SecureFinanceERP];
@@ -471,15 +471,38 @@ BEGIN CATCH
 END CATCH;
 GO
 
-
 -- =========================================================
--- 07. PROCEDIMIENTOS TRANSACCIONALES
 -- Fuente: database/06_TransactionProcedures.sql
 -- =========================================================
 USE [SecureFinanceERP];
 GO
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
+GO
+-- Política compartida por la preparación y el COMMIT. Sin roles del navegador.
+CREATE OR ALTER FUNCTION dbo.fn_ObtenerPoliticaVenta (@UsuarioId INT)
+RETURNS TABLE
+AS RETURN
+    SELECT CONVERT(BIT, COALESCE(MAX(CASE WHEN p.Codigo = N'VENTAS_REGISTRAR' THEN 1 ELSE 0 END), 0)) AS PuedeVender,
+        CONVERT(DECIMAL(5,2), CASE WHEN MAX(CASE WHEN r.Nombre = N'Administrador'
+            AND p.Codigo = N'VENTAS_REGISTRAR' THEN 1 ELSE 0 END) = 1 THEN 100 ELSE 10 END) AS MaxDescuento
+    FROM dbo.Usuario u WITH (HOLDLOCK)
+    INNER JOIN dbo.Usuario_Rol ur WITH (HOLDLOCK) ON ur.UsuarioId = u.UsuarioId
+    INNER JOIN dbo.Rol r WITH (HOLDLOCK) ON r.RolId = ur.RolId AND r.Activo = 1
+    INNER JOIN dbo.Rol_Permiso rp WITH (HOLDLOCK) ON rp.RolId = r.RolId
+    INNER JOIN dbo.Permiso p WITH (HOLDLOCK) ON p.PermisoId = rp.PermisoId AND p.Activo = 1
+    WHERE u.UsuarioId = @UsuarioId AND u.Activo = 1;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_ObtenerPoliticaVenta @UsuarioId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WHERE UsuarioId = @UsuarioId AND Activo = 1)
+        THROW 52007, 'El usuario no existe o está inactivo.', 1;
+    IF NOT EXISTS (SELECT 1 FROM dbo.fn_ObtenerPoliticaVenta(@UsuarioId) WHERE PuedeVender = 1)
+        THROW 52013, 'No tienes permiso para registrar ventas.', 1;
+    SELECT MaxDescuento FROM dbo.fn_ObtenerPoliticaVenta(@UsuarioId);
+END;
 GO
 CREATE OR ALTER PROCEDURE dbo.sp_ListarClientes
 AS
@@ -499,8 +522,9 @@ GO
 CREATE OR ALTER PROCEDURE dbo.sp_ProcesarVentaTransaccional
     @ClienteId INT,
     @UsuarioId INT,
-    @Detalle dbo.TipoDetalleVenta READONLY,
-    @FacturaId INT = NULL OUTPUT
+    @Detalle dbo.TipoDetalleVentaDescuento READONLY,
+    @FacturaId INT = NULL OUTPUT,
+    @MotivoDescuento NVARCHAR(80) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -517,17 +541,36 @@ BEGIN
         IF EXISTS (SELECT ProductoId FROM @Detalle GROUP BY ProductoId HAVING COUNT(*) > 1)
             THROW 52004, 'No se permiten productos repetidos.', 1;
 
-        DECLARE @Activo BIT;
-        SELECT @Activo = Activo FROM dbo.Cliente WITH (HOLDLOCK) WHERE ClienteId = @ClienteId;
+        IF EXISTS (SELECT 1 FROM @Detalle WHERE DescuentoPorcentaje IS NULL OR DescuentoPorcentaje < 0 OR DescuentoPorcentaje > 100)
+            THROW 52011, 'El descuento debe estar entre 0.00 y 100.00.', 1;
+
+        DECLARE @Activo BIT, @ClienteNombre NVARCHAR(150), @NIT NVARCHAR(25), @Cajero NVARCHAR(50);
+        SELECT @Activo = Activo, @ClienteNombre = Nombre, @NIT = NIT
+        FROM dbo.Cliente WITH (HOLDLOCK) WHERE ClienteId = @ClienteId;
         IF @Activo IS NULL THROW 52005, 'El cliente no existe.', 1;
         IF @Activo = 0 THROW 52006, 'El cliente está inactivo.', 1;
         IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WITH (HOLDLOCK) WHERE UsuarioId = @UsuarioId AND Activo = 1)
             THROW 52007, 'El usuario no existe o está inactivo.', 1;
+        DECLARE @MaxDescuento DECIMAL(5,2), @PuedeVender BIT;
+        SELECT @MaxDescuento = MaxDescuento, @PuedeVender = PuedeVender
+        FROM dbo.fn_ObtenerPoliticaVenta(@UsuarioId);
+        IF @PuedeVender = 0 THROW 52013, 'No tienes permiso para registrar ventas.', 1;
+        IF EXISTS (SELECT 1 FROM @Detalle WHERE DescuentoPorcentaje > @MaxDescuento)
+            THROW 52012, 'El descuento máximo autorizado para tu rol es 10%.', 1;
+        SET @MotivoDescuento = NULLIF(LTRIM(RTRIM(@MotivoDescuento)), N'');
+        IF @MotivoDescuento IS NOT NULL AND @MotivoDescuento NOT IN
+            (N'Promoción', N'Cliente frecuente', N'Ajuste comercial', N'Autorización administrativa', N'Otro')
+            THROW 52014, 'Selecciona un motivo de descuento válido.', 1;
+        IF NOT EXISTS (SELECT 1 FROM @Detalle WHERE DescuentoPorcentaje > 0) SET @MotivoDescuento = NULL;
+        SELECT @Cajero = NombreUsuario FROM dbo.Usuario WITH (HOLDLOCK) WHERE UsuarioId = @UsuarioId;
 
         DECLARE @Lineas TABLE (ProductoId INT PRIMARY KEY, Cantidad INT,
-            PrecioUnitario DECIMAL(12,2), Subtotal DECIMAL(19,2));
+            PrecioUnitario DECIMAL(12,2), Subtotal DECIMAL(19,2),
+            DescuentoPorcentaje DECIMAL(5,2), DescuentoMonto DECIMAL(19,2), SubtotalNeto DECIMAL(19,2),
+            Descripcion NVARCHAR(200));
         DECLARE @ProductoId INT = 0, @Siguiente INT, @Cantidad INT,
-                @Precio DECIMAL(12,2), @Stock INT;
+                @Precio DECIMAL(12,2), @Stock INT, @Porcentaje DECIMAL(5,2),
+                @Bruto DECIMAL(19,2), @MontoDescuento DECIMAL(19,2), @Descripcion NVARCHAR(200);
         -- Acceso puntual por PK en orden ascendente, independiente del orden del TVP.
         -- UPDLOCK + HOLDLOCK conserva precio/stock hasta COMMIT y serializa ventas
         -- del mismo producto. No se reintentan ventas automáticamente tras un timeout.
@@ -536,36 +579,50 @@ BEGIN
             SELECT @Siguiente = MIN(ProductoId) FROM @Detalle WHERE ProductoId > @ProductoId;
             IF @Siguiente IS NULL BREAK;
             SET @ProductoId = @Siguiente;
-            SELECT @Cantidad = Cantidad FROM @Detalle WHERE ProductoId = @ProductoId;
+            SELECT @Cantidad = Cantidad, @Porcentaje = DescuentoPorcentaje FROM @Detalle WHERE ProductoId = @ProductoId;
             SELECT @Precio = NULL, @Stock = NULL, @Activo = NULL;
-            SELECT @Precio = Precio, @Stock = Stock, @Activo = Activo
+            SELECT @Precio = Precio, @Stock = Stock, @Activo = Activo, @Descripcion = Descripcion
             FROM dbo.Producto WITH (UPDLOCK, HOLDLOCK) WHERE ProductoId = @ProductoId;
             IF @Precio IS NULL THROW 52008, 'Un producto no existe.', 1;
             IF @Activo = 0 THROW 52009, 'Un producto está inactivo.', 1;
             IF @Stock < @Cantidad THROW 52010, 'Stock insuficiente para uno de los productos.', 1;
-            INSERT @Lineas VALUES (@ProductoId, @Cantidad, @Precio,
-                @Precio * CONVERT(DECIMAL(10,0), @Cantidad));
+            SET @Bruto = @Precio * CONVERT(DECIMAL(10,0), @Cantidad);
+            SET @MontoDescuento = ROUND(@Bruto * @Porcentaje / CONVERT(DECIMAL(5,2), 100), 2);
+            INSERT @Lineas VALUES (@ProductoId, @Cantidad, @Precio, @Bruto,
+                @Porcentaje, @MontoDescuento, @Bruto - @MontoDescuento, @Descripcion);
             UPDATE dbo.Producto SET Stock = Stock - @Cantidad WHERE ProductoId = @ProductoId;
         END;
 
-        -- Punto de integración futuro con las funciones de José. Redondeo del IVA
-        -- sobre el subtotal global, a dos decimales; nunca FLOAT ni importes del cliente.
-        DECLARE @Subtotal DECIMAL(19,2), @IVA DECIMAL(19,2), @Total DECIMAL(19,2),
+        -- Descuento por línea e IVA sobre el neto global, redondeados a centavos.
+        -- ROUND: mitades hacia arriba para importes no negativos; solo DECIMAL.
+        DECLARE @Descuento DECIMAL(19,2), @SubtotalNeto DECIMAL(19,2),
+                @Subtotal DECIMAL(19,2), @IVA DECIMAL(19,2), @Total DECIMAL(19,2),
                 @FechaHora DATETIME2(3) = SYSUTCDATETIME();
-        SELECT @Subtotal = SUM(Subtotal) FROM @Lineas;
-        SET @IVA = ROUND(@Subtotal * CONVERT(DECIMAL(3,2), 0.12), 2);
-        SET @Total = @Subtotal + @IVA;
-        INSERT dbo.Factura (ClienteId, UsuarioId, FechaHora, Subtotal, IVA, Total)
-        VALUES (@ClienteId, @UsuarioId, @FechaHora, @Subtotal, @IVA, @Total);
+        SELECT @Subtotal = SUM(Subtotal), @Descuento = SUM(DescuentoMonto),
+            @SubtotalNeto = SUM(SubtotalNeto) FROM @Lineas;
+        SET @IVA = ROUND(@SubtotalNeto * CONVERT(DECIMAL(3,2), 0.12), 2);
+        SET @Total = @SubtotalNeto + @IVA;
+        INSERT dbo.Factura (ClienteId, UsuarioId, FechaHora, Subtotal, DescuentoTotal, IVA, Total, MotivoDescuento)
+        VALUES (@ClienteId, @UsuarioId, @FechaHora, @Subtotal, @Descuento, @IVA, @Total, @MotivoDescuento);
         SET @FacturaId = CONVERT(INT, SCOPE_IDENTITY());
-        INSERT dbo.DetalleFactura (FacturaId, ProductoId, Cantidad, PrecioUnitario, Subtotal)
-        SELECT @FacturaId, ProductoId, Cantidad, PrecioUnitario, Subtotal FROM @Lineas;
+        INSERT dbo.DetalleFactura (FacturaId, ProductoId, Cantidad, PrecioUnitario, Subtotal, DescuentoPorcentaje, DescuentoMonto)
+        SELECT @FacturaId, ProductoId, Cantidad, PrecioUnitario, Subtotal, DescuentoPorcentaje, DescuentoMonto FROM @Lineas;
         INSERT dbo.MovimientoCaja (FacturaId, Monto, FechaHora) VALUES (@FacturaId, @Total, @FechaHora);
         COMMIT TRANSACTION;
         -- Strings monetarios evitan pérdida de centavos al convertir DECIMAL(19,2) a JS Number.
         SELECT @FacturaId AS FacturaId, @FechaHora AS FechaHora,
             CONVERT(VARCHAR(21), @Subtotal) AS Subtotal,
-            CONVERT(VARCHAR(21), @IVA) AS IVA, CONVERT(VARCHAR(21), @Total) AS Total;
+            CONVERT(VARCHAR(21), @Descuento) AS Descuento,
+            CONVERT(VARCHAR(21), @SubtotalNeto) AS SubtotalNeto,
+            CONVERT(VARCHAR(21), @IVA) AS IVA, CONVERT(VARCHAR(21), @Total) AS Total,
+            @ClienteNombre AS Cliente, @NIT AS NIT, @Cajero AS Cajero, @MotivoDescuento AS MotivoDescuento;
+        SELECT ProductoId, Descripcion, Cantidad,
+            CONVERT(VARCHAR(21), PrecioUnitario) AS PrecioUnitario,
+            CONVERT(VARCHAR(21), Subtotal) AS Subtotal,
+            CONVERT(VARCHAR(6), DescuentoPorcentaje) AS DescuentoPorcentaje,
+            CONVERT(VARCHAR(21), DescuentoMonto) AS DescuentoMonto,
+            CONVERT(VARCHAR(21), SubtotalNeto) AS SubtotalNeto
+        FROM @Lineas ORDER BY ProductoId;
     END TRY
     BEGIN CATCH
         -- Sin SAVEPOINT: la venta debe revertirse completa. Si el llamador abrió
@@ -577,9 +634,21 @@ BEGIN
 END;
 GO
 
+-- Adaptador para integraciones que conservan el TVP anterior.
+CREATE OR ALTER PROCEDURE dbo.sp_ProcesarVentaSinDescuento
+    @ClienteId INT, @UsuarioId INT, @Detalle dbo.TipoDetalleVenta READONLY,
+    @FacturaId INT = NULL OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @Nuevo dbo.TipoDetalleVentaDescuento;
+    INSERT @Nuevo (ProductoId, Cantidad, DescuentoPorcentaje)
+    SELECT ProductoId, Cantidad, 0 FROM @Detalle;
+    EXEC dbo.sp_ProcesarVentaTransaccional @ClienteId, @UsuarioId, @Nuevo, @FacturaId OUTPUT;
+END;
+GO
 
 -- =========================================================
--- 08. AUDITORÍA, FUNCIONES Y PROCEDIMIENTOS DE CONSULTA
 -- Fuente: database/07_AuditCore.sql
 -- =========================================================
 USE [SecureFinanceERP];
@@ -677,7 +746,8 @@ AS
 RETURN
     SELECT f.FacturaId AS Factura, f.FechaHora AS Fecha,
            c.Nombre AS Cliente, u.NombreUsuario AS Usuario,
-           f.Subtotal, f.IVA, f.Total
+           f.Subtotal, f.IVA, f.Total, f.DescuentoTotal AS Descuento,
+           f.Subtotal - f.DescuentoTotal AS SubtotalNeto
     FROM dbo.Factura AS f
     INNER JOIN dbo.Cliente AS c ON c.ClienteId = f.ClienteId
     INNER JOIN dbo.Usuario AS u ON u.UsuarioId = f.UsuarioId
@@ -693,7 +763,7 @@ CREATE OR ALTER PROCEDURE dbo.sp_ConsultarHistoricoVentas
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT Factura, Fecha, Cliente, Usuario, Subtotal, IVA, Total
+    SELECT Factura, Fecha, Cliente, Usuario, Subtotal, IVA, Total, Descuento, SubtotalNeto
     FROM dbo.fn_ObtenerHistoricoVentas(@FechaInicial, @FechaFinal, @Cliente)
     ORDER BY Fecha DESC, Factura DESC;
 END;
@@ -738,9 +808,7 @@ BEGIN
 END;
 GO
 
-
 -- =========================================================
--- 09. TRIGGERS DE AUDITORÍA
 -- Fuente: database/08_AuditTriggers.sql
 -- =========================================================
 USE [SecureFinanceERP];
@@ -798,14 +866,303 @@ BEGIN
     SELECT N'Factura', 'INSERT', SUSER_SNAME(), HOST_NAME(), APP_NAME(),
            CONVERT(NVARCHAR(4000), i.FacturaId),
            NULL,
-           (SELECT i.FacturaId, i.ClienteId, i.UsuarioId, i.FechaHora, i.Subtotal, i.IVA, i.Total, i.Estado FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
+           (SELECT i.FacturaId, i.ClienteId, i.UsuarioId, i.FechaHora, i.Subtotal, i.DescuentoTotal, i.MotivoDescuento, i.IVA, i.Total, i.Estado FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
     FROM inserted AS i;
 END;
 GO
 
+-- =========================================================
+-- Fuente: database/11_UserAdministration.sql
+-- =========================================================
+USE [SecureFinanceERP];
+GO
+IF TYPE_ID(N'dbo.TipoRolUsuario') IS NULL
+    EXEC(N'CREATE TYPE dbo.TipoRolUsuario AS TABLE (RolId INT NOT NULL);');
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_ListarUsuariosAdministracion
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT u.UsuarioId, u.NombreUsuario, u.NombreCompleto, u.Correo, u.Activo,
+           (SELECT STRING_AGG(CONVERT(NVARCHAR(MAX), r.Nombre), N', ') WITHIN GROUP (ORDER BY r.Nombre)
+            FROM dbo.Usuario_Rol ur INNER JOIN dbo.Rol r ON r.RolId = ur.RolId
+            WHERE ur.UsuarioId = u.UsuarioId AND r.Activo = 1) AS Roles
+    FROM dbo.Usuario u ORDER BY u.NombreUsuario;
+END;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_ListarRolesActivos
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT RolId, Nombre, Descripcion FROM dbo.Rol WHERE Activo = 1 ORDER BY Nombre;
+END;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_ObtenerRolesUsuario @UsuarioId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WHERE UsuarioId = @UsuarioId)
+        THROW 53001, N'El usuario no existe.', 1;
+    SELECT r.RolId, r.Nombre, r.Descripcion
+    FROM dbo.Usuario_Rol ur INNER JOIN dbo.Rol r ON r.RolId = ur.RolId
+    WHERE ur.UsuarioId = @UsuarioId AND r.Activo = 1 ORDER BY r.Nombre;
+END;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_ActualizarRolesUsuario
+    @UsuarioId INT, @Roles dbo.TipoRolUsuario READONLY, @ActorUsuarioId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        -- Serializa todas las modificaciones del módulo, incluida la comprobación del último administrador.
+        DECLARE @LockResult INT;
+        EXEC @LockResult = sys.sp_getapplock @Resource = N'SecureFinanceERP.UsuarioRoles',
+            @LockMode = 'Exclusive', @LockOwner = 'Transaction', @LockTimeout = 10000;
+        IF @LockResult < 0 THROW 53005, N'No fue posible obtener el bloqueo de administración.', 1;
+        IF NOT EXISTS (
+            SELECT 1 FROM dbo.Usuario u WITH (UPDLOCK, HOLDLOCK)
+            INNER JOIN dbo.Usuario_Rol ur WITH (UPDLOCK, HOLDLOCK) ON ur.UsuarioId = u.UsuarioId
+            INNER JOIN dbo.Rol r WITH (UPDLOCK, HOLDLOCK) ON r.RolId = ur.RolId AND r.Activo = 1
+            INNER JOIN dbo.Rol_Permiso rp ON rp.RolId = r.RolId
+            INNER JOIN dbo.Permiso p ON p.PermisoId = rp.PermisoId AND p.Activo = 1
+            WHERE u.UsuarioId = @ActorUsuarioId AND u.Activo = 1 AND p.Codigo = N'USUARIOS_ADMINISTRAR'
+        ) THROW 53004, N'No tienes permiso para administrar usuarios.', 1;
+        IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WITH (UPDLOCK, HOLDLOCK) WHERE UsuarioId = @UsuarioId)
+            THROW 53001, N'El usuario no existe.', 1;
+        IF EXISTS (SELECT RolId FROM @Roles GROUP BY RolId HAVING COUNT(*) > 1)
+            OR EXISTS (SELECT 1 FROM @Roles t LEFT JOIN dbo.Rol r WITH (UPDLOCK, HOLDLOCK)
+                       ON r.RolId = t.RolId AND r.Activo = 1 WHERE r.RolId IS NULL OR t.RolId <= 0)
+            THROW 53002, N'Los roles deben ser únicos, existir y estar activos.', 1;
+        DECLARE @Administrador INT = (SELECT RolId FROM dbo.Rol WITH (UPDLOCK, HOLDLOCK)
+                                      WHERE Nombre = N'Administrador' AND Activo = 1);
+        IF EXISTS (SELECT 1 FROM dbo.Usuario_Rol WITH (UPDLOCK, HOLDLOCK)
+                   WHERE UsuarioId = @UsuarioId AND RolId = @Administrador)
+           AND EXISTS (SELECT 1 FROM dbo.Usuario WHERE UsuarioId = @UsuarioId AND Activo = 1)
+           AND NOT EXISTS (SELECT 1 FROM @Roles WHERE RolId = @Administrador)
+           AND NOT EXISTS (SELECT 1 FROM dbo.Usuario u WITH (UPDLOCK, HOLDLOCK)
+                           INNER JOIN dbo.Usuario_Rol ur WITH (UPDLOCK, HOLDLOCK) ON ur.UsuarioId = u.UsuarioId
+                           WHERE u.Activo = 1 AND u.UsuarioId <> @UsuarioId AND ur.RolId = @Administrador)
+            THROW 53003, N'No se puede quitar el rol Administrador al último administrador activo.', 1;
+        DECLARE @Anterior NVARCHAR(MAX) = (SELECT RolId FROM dbo.Usuario_Rol WHERE UsuarioId = @UsuarioId ORDER BY RolId FOR JSON PATH);
+        -- Conserva asignaciones de roles inactivos: no están disponibles para editar en este módulo.
+        DELETE ur FROM dbo.Usuario_Rol ur INNER JOIN dbo.Rol r ON r.RolId = ur.RolId
+        WHERE ur.UsuarioId = @UsuarioId AND r.Activo = 1
+          AND NOT EXISTS (SELECT 1 FROM @Roles t WHERE t.RolId = ur.RolId);
+        INSERT dbo.Usuario_Rol (UsuarioId, RolId)
+        SELECT @UsuarioId, t.RolId FROM @Roles t
+        WHERE NOT EXISTS (SELECT 1 FROM dbo.Usuario_Rol ur WHERE ur.UsuarioId = @UsuarioId AND ur.RolId = t.RolId);
+        DECLARE @Nuevo NVARCHAR(MAX) = (SELECT RolId FROM dbo.Usuario_Rol WHERE UsuarioId = @UsuarioId ORDER BY RolId FOR JSON PATH);
+        IF @Anterior <> @Nuevo
+            INSERT dbo.Bitacora_Transacciones (TablaAfectada, Operacion, IdentificadorRegistro, ValorAnterior, ValorNuevo)
+            VALUES (N'Usuario_Rol', 'UPDATE', CONCAT(N'UsuarioId=', @UsuarioId, N'; ActorUsuarioId=', @ActorUsuarioId), @Anterior, @Nuevo);
+        COMMIT TRANSACTION;
+        SELECT @UsuarioId AS UsuarioId, N'Roles actualizados correctamente.' AS Mensaje;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+END;
+GO
 
 -- =========================================================
--- 10. PERMISOS MÍNIMOS DE APLICACIÓN
+-- Fuente: database/12_PasswordRecovery.sql
+-- =========================================================
+USE [SecureFinanceERP];
+GO
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
+-- Migración repetible: reutiliza Usuario y Token_Recuperacion, sin cambiar el login.
+-- Contraseñas NVARCHAR: 8..128 unidades UTF-16, sin normalización ni truncamiento.
+CREATE OR ALTER PROCEDURE dbo.sp_SolicitarRecuperacionPassword
+    @UsuarioOCorreo NVARCHAR(MAX), @TokenHash VARBINARY(MAX)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+    IF @UsuarioOCorreo IS NULL OR DATALENGTH(@UsuarioOCorreo) NOT BETWEEN 2 AND 508
+       OR @TokenHash IS NULL OR DATALENGTH(@TokenHash) <> 64
+    BEGIN
+        SELECT CAST(0 AS BIT) AS Generado;
+        RETURN;
+    END;
+    DECLARE @UsuarioId INT;
+    -- Una coincidencia ambigua entre nombre/correo nunca selecciona otra cuenta.
+    IF (SELECT COUNT(*) FROM dbo.Usuario WHERE Activo = 1
+        AND (NombreUsuario = @UsuarioOCorreo OR Correo = @UsuarioOCorreo)) = 1
+        SELECT @UsuarioId = UsuarioId FROM dbo.Usuario WHERE Activo = 1
+          AND (NombreUsuario = @UsuarioOCorreo OR Correo = @UsuarioOCorreo);
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WITH (UPDLOCK, HOLDLOCK)
+                       WHERE UsuarioId = @UsuarioId AND Activo = 1)
+        BEGIN
+            COMMIT TRANSACTION;
+            SELECT CAST(0 AS BIT) AS Generado;
+            RETURN;
+        END;
+        UPDATE dbo.Token_Recuperacion SET Invalidado = 1
+        WHERE UsuarioId = @UsuarioId AND Invalidado = 0 AND FechaUso IS NULL;
+        DECLARE @Ahora DATETIME2(3) = SYSUTCDATETIME();
+        INSERT dbo.Token_Recuperacion (UsuarioId, TokenHash, FechaCreacion, FechaExpiracion)
+        VALUES (@UsuarioId, @TokenHash, @Ahora, DATEADD(MINUTE, 15, @Ahora));
+        COMMIT TRANSACTION;
+        -- Solo el backend conoce este resultado; producción nunca lo publica.
+        SELECT CAST(1 AS BIT) AS Generado;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+END;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_ValidarTokenRecuperacion @TokenHash VARBINARY(MAX)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT CAST(CASE WHEN DATALENGTH(@TokenHash) = 64 AND EXISTS (
+        SELECT 1 FROM dbo.Token_Recuperacion t INNER JOIN dbo.Usuario u ON u.UsuarioId = t.UsuarioId
+        WHERE t.TokenHash = @TokenHash AND u.Activo = 1 AND t.Invalidado = 0
+          AND t.FechaUso IS NULL AND t.FechaExpiracion > SYSUTCDATETIME()
+    ) THEN 1 ELSE 0 END AS BIT) AS Valido;
+END;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_RestablecerPassword
+    @TokenHash VARBINARY(MAX), @Password NVARCHAR(MAX)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+    IF @Password IS NULL OR DATALENGTH(@Password) NOT BETWEEN 16 AND 256
+       OR LEN(LTRIM(RTRIM(@Password))) = 0
+        THROW 54002, N'La contraseña debe tener entre 8 y 128 caracteres.', 1;
+    IF @TokenHash IS NULL OR DATALENGTH(@TokenHash) <> 64
+        THROW 54001, N'El enlace de recuperación no es válido o ha expirado.', 1;
+    DECLARE @UsuarioId INT = (SELECT UsuarioId FROM dbo.Token_Recuperacion WHERE TokenHash = @TokenHash);
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        -- Todos los escritores bloquean primero Usuario y después sus tokens.
+        IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WITH (UPDLOCK, HOLDLOCK)
+                       WHERE UsuarioId = @UsuarioId AND Activo = 1)
+            THROW 54001, N'El enlace de recuperación no es válido o ha expirado.', 1;
+        DECLARE @Ahora DATETIME2(3) = SYSUTCDATETIME();
+        IF NOT EXISTS (SELECT 1 FROM dbo.Token_Recuperacion WITH (UPDLOCK, HOLDLOCK)
+                       WHERE TokenHash = @TokenHash AND UsuarioId = @UsuarioId
+                         AND Invalidado = 0 AND FechaUso IS NULL AND FechaExpiracion > @Ahora)
+            THROW 54001, N'El enlace de recuperación no es válido o ha expirado.', 1;
+        DECLARE @Salt VARBINARY(32) = CRYPT_GEN_RANDOM(32);
+        UPDATE dbo.Usuario
+        SET Salt = @Salt,
+            PasswordHash = HASHBYTES('SHA2_512', CONVERT(VARBINARY(256), @Password) + @Salt),
+            FechaCambioPassword = @Ahora, DebeCambiarPassword = 0
+        WHERE UsuarioId = @UsuarioId;
+        UPDATE dbo.Token_Recuperacion SET FechaUso = @Ahora, Invalidado = 1 WHERE TokenHash = @TokenHash;
+        UPDATE dbo.Token_Recuperacion SET Invalidado = 1
+        WHERE UsuarioId = @UsuarioId AND Invalidado = 0;
+        COMMIT TRANSACTION;
+        SELECT CAST(1 AS BIT) AS Actualizado;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+END;
+GO
+CREATE OR ALTER PROCEDURE dbo.sp_CambiarPassword
+    @UsuarioId INT, @PasswordActual NVARCHAR(MAX), @Password NVARCHAR(MAX)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+    IF @Password IS NULL OR DATALENGTH(@Password) NOT BETWEEN 16 AND 256
+       OR LEN(LTRIM(RTRIM(@Password))) = 0
+        THROW 54002, N'La contraseña debe tener entre 8 y 128 caracteres.', 1;
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        DECLARE @SaltAnterior VARBINARY(32), @HashAnterior VARBINARY(64);
+        SELECT @SaltAnterior = Salt, @HashAnterior = PasswordHash
+        FROM dbo.Usuario WITH (UPDLOCK, HOLDLOCK) WHERE UsuarioId = @UsuarioId AND Activo = 1;
+        IF @HashAnterior IS NULL OR @PasswordActual IS NULL
+           OR DATALENGTH(@PasswordActual) NOT BETWEEN 1 AND 256
+           OR HASHBYTES('SHA2_512', CONVERT(VARBINARY(256), @PasswordActual) + @SaltAnterior) <> @HashAnterior
+            THROW 54003, N'La contraseña actual no es correcta.', 1;
+        DECLARE @Salt VARBINARY(32) = CRYPT_GEN_RANDOM(32);
+        UPDATE dbo.Usuario
+        SET Salt = @Salt,
+            PasswordHash = HASHBYTES('SHA2_512', CONVERT(VARBINARY(256), @Password) + @Salt),
+            FechaCambioPassword = SYSUTCDATETIME(), DebeCambiarPassword = 0
+        WHERE UsuarioId = @UsuarioId;
+        UPDATE dbo.Token_Recuperacion SET Invalidado = 1 WHERE UsuarioId = @UsuarioId AND Invalidado = 0;
+        COMMIT TRANSACTION;
+        SELECT CAST(1 AS BIT) AS Actualizado;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+END;
+GO
+
+-- =========================================================
+-- Fuente: database/14_DashboardSummary.sql
+-- =========================================================
+-- Migration and new-install module. Read-only summary; repeatable and atomic.
+USE [SecureFinanceERP];
+GO
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET XACT_ABORT ON;
+BEGIN TRY
+    BEGIN TRANSACTION;
+    EXEC sys.sp_executesql N'CREATE OR ALTER PROCEDURE dbo.sp_ObtenerResumenDashboard @UsuarioId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WHERE UsuarioId = @UsuarioId AND Activo = 1)
+        THROW 52701, ''El usuario no existe o está inactivo.'', 1;
+    -- Guatemala: UTC-6 sin cambio estacional. Las fechas persistidas siguen en UTC.
+    DECLARE @Dia DATE = CONVERT(DATE, DATEADD(HOUR, -6, SYSUTCDATETIME()));
+    DECLARE @Desde DATETIME2(3) = DATEADD(HOUR, 6, CONVERT(DATETIME2(3), @Dia)),
+        @Hasta DATETIME2(3), @Ventas BIT = 0, @Auditoria BIT = 0;
+    SET @Hasta = DATEADD(DAY, 1, @Desde);
+    SELECT @Ventas = CONVERT(BIT, COALESCE(MAX(CASE WHEN p.Codigo IN
+        (N''VENTAS_REGISTRAR'', N''AUDITORIA_CONSULTAR'') THEN 1 ELSE 0 END), 0)),
+        @Auditoria = CONVERT(BIT, COALESCE(MAX(CASE WHEN p.Codigo = N''AUDITORIA_CONSULTAR'' THEN 1 ELSE 0 END), 0))
+    FROM dbo.Usuario_Rol ur
+    INNER JOIN dbo.Rol r ON r.RolId = ur.RolId AND r.Activo = 1
+    INNER JOIN dbo.Rol_Permiso rp ON rp.RolId = r.RolId
+    INNER JOIN dbo.Permiso p ON p.PermisoId = rp.PermisoId AND p.Activo = 1
+    WHERE ur.UsuarioId = @UsuarioId;
+    SELECT
+        CASE WHEN @Ventas = 1 THEN CONVERT(VARCHAR(40),
+            (SELECT COALESCE(SUM(Total), CONVERT(DECIMAL(38,2), 0)) FROM dbo.Factura
+             WHERE FechaHora >= @Desde AND FechaHora < @Hasta)) END AS VentasDia,
+        CASE WHEN @Ventas = 1 THEN CONVERT(VARCHAR(20),
+            (SELECT COUNT_BIG(*) FROM dbo.Factura WHERE FechaHora >= @Desde AND FechaHora < @Hasta)) END AS FacturasDia,
+        CASE WHEN @Ventas = 1 THEN CONVERT(VARCHAR(20),
+            (SELECT COUNT_BIG(*) FROM dbo.Producto WHERE Activo = 1 AND Stock <= 5)) END AS ProductosStockBajo,
+        CASE WHEN @Auditoria = 1 THEN CONVERT(VARCHAR(20),
+            (SELECT COUNT_BIG(*) FROM dbo.Bitacora_Transacciones WHERE FechaHora >= @Desde AND FechaHora < @Hasta)) END AS EventosDMLDia,
+        CONVERT(VARCHAR(10), @Dia, 23) AS FechaOperacion,
+        (SELECT STRING_AGG(CONVERT(NVARCHAR(MAX), r.Nombre), N'', '') WITHIN GROUP (ORDER BY r.Nombre)
+         FROM dbo.Usuario_Rol ur INNER JOIN dbo.Rol r ON r.RolId = ur.RolId AND r.Activo = 1
+         WHERE ur.UsuarioId = @UsuarioId) AS RolesActuales;
+END;';
+    IF DATABASE_PRINCIPAL_ID(N'securefinance_app') IS NOT NULL
+        GRANT EXECUTE ON OBJECT::dbo.sp_ObtenerResumenDashboard TO [securefinance_app];
+    COMMIT TRANSACTION;
+    PRINT N'OK: Dashboard summary installed.';
+END TRY
+BEGIN CATCH
+    IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+    THROW;
+END CATCH;
+GO
+
+-- =========================================================
 -- Fuente: database/10_AppPermissions.sql
 -- =========================================================
 -- Referencia final de permisos mínimos. Ejecutar después de instalar todos los módulos.
@@ -827,13 +1184,29 @@ BEGIN
 
     -- Autenticación: los procedimientos internos se ejecutan por la cadena de propiedad dbo.
     GRANT EXECUTE ON OBJECT::dbo.sp_Login TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ObtenerResumenDashboard TO [securefinance_app];
     GRANT EXECUTE ON OBJECT::dbo.sp_ObtenerPermisosUsuario TO [securefinance_app];
+    -- Recuperación y cambio de contraseña: sin acceso directo a credenciales ni tokens.
+    GRANT EXECUTE ON OBJECT::dbo.sp_SolicitarRecuperacionPassword TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ValidarTokenRecuperacion TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_RestablecerPassword TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_CambiarPassword TO [securefinance_app];
 
     -- Ventas y parámetro de tabla (TVP).
     GRANT EXECUTE ON OBJECT::dbo.sp_ListarClientes TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ObtenerPoliticaVenta TO [securefinance_app];
     GRANT EXECUTE ON OBJECT::dbo.sp_ListarProductosDisponibles TO [securefinance_app];
     GRANT EXECUTE ON OBJECT::dbo.sp_ProcesarVentaTransaccional TO [securefinance_app];
     GRANT EXECUTE, REFERENCES ON TYPE::dbo.TipoDetalleVenta TO [securefinance_app];
+    GRANT EXECUTE, REFERENCES ON TYPE::dbo.TipoDetalleVentaDescuento TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ProcesarVentaSinDescuento TO [securefinance_app];
+
+    -- Usuarios y roles: procedimientos y TVP, sin acceso directo a tablas.
+    GRANT EXECUTE ON OBJECT::dbo.sp_ListarUsuariosAdministracion TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ListarRolesActivos TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ObtenerRolesUsuario TO [securefinance_app];
+    GRANT EXECUTE ON OBJECT::dbo.sp_ActualizarRolesUsuario TO [securefinance_app];
+    GRANT EXECUTE, REFERENCES ON TYPE::dbo.TipoRolUsuario TO [securefinance_app];
 
     -- Consultas de auditoría e histórico de ventas.
     GRANT EXECUTE ON OBJECT::dbo.sp_ConsultarBitacoraAcceso TO [securefinance_app];

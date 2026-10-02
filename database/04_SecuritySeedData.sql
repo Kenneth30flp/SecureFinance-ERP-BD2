@@ -40,19 +40,19 @@ BEGIN TRY
 
     DECLARE @UsuarioId INT, @Codigo INT;
     SELECT @UsuarioId = UsuarioId FROM dbo.Usuario WITH (UPDLOCK, HOLDLOCK)
-    WHERE NombreUsuario = N'admin_demo';
+    WHERE NombreUsuario = N'admin';
     IF @UsuarioId IS NULL
     BEGIN
         EXEC @Codigo = dbo.sp_RegistrarUsuario
-            @NombreUsuario = N'admin_demo', @Correo = N'admin.demo@example.invalid',
+            @NombreUsuario = N'admin', @Correo = N'admin.demo@example.invalid',
             @Password = N'Demo_Academica_2026!', @NombreCompleto = N'Administrador DEMO',
             @UsuarioId = @UsuarioId OUTPUT;
         IF @Codigo <> 0 OR @UsuarioId IS NULL
-            THROW 51100, 'No fue posible crear admin_demo. Revisar conflictos de usuario/correo.', 1;
+            THROW 51100, 'No fue posible crear admin. Revisar conflictos de usuario/correo.', 1;
     END
     ELSE IF NOT EXISTS (SELECT 1 FROM dbo.Usuario WHERE UsuarioId = @UsuarioId
                         AND Correo = N'admin.demo@example.invalid' AND NombreCompleto = N'Administrador DEMO')
-        THROW 51101, 'admin_demo ya pertenece a otra identidad. No se asignaron privilegios.', 1;
+        THROW 51101, 'admin ya pertenece a otra identidad. No se asignaron privilegios.', 1;
 
     INSERT dbo.Usuario_Rol (UsuarioId, RolId)
     SELECT @UsuarioId, r.RolId FROM dbo.Rol AS r
