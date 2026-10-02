@@ -84,7 +84,7 @@ test('HTTP auditoría: redirige sin sesión, 403 sin permiso y 200 con permiso',
   const pool = fakePool([bitacoraAcceso(), auditoriaDml(), historicoVentas()]);
   const service = createAuditoriaService(async () => pool);
 
-  const app = createApp({
+  const app = createApp({ dashboardService: { obtenerResumen: async () => null },
     secret: 'secreto-exclusivo-de-pruebas-locales-1234',
     production: false,
     authService: {
@@ -130,11 +130,13 @@ test('HTTP auditoría: redirige sin sesión, 403 sin permiso y 200 con permiso',
   assert.ok(dashboardHtml.includes('href="/auditoria"'));
   const html = await response.text();
   assert.match(html, /BITÁCORA DE ACCESO/);
-  assert.match(html, /AUDITORÍA DML/);
-  assert.match(html, /HISTÓRICO DE VENTAS/);
+  assert.match(html, /Auditoría DML/);
+  assert.match(html, /Histórico de ventas/);
+  assert.match(html, /id="vista-acceso"/);
+  assert.doesNotMatch(html, /id="vista-dml"|id="vista-ventas"/);
   assert.doesNotMatch(html, /PasswordHash|TokenHash|db_owner/);
 
-  const noPermissionApp = createApp({
+  const noPermissionApp = createApp({ dashboardService: { obtenerResumen: async () => null },
     secret: 'secreto-exclusivo-de-pruebas-locales-1234',
     production: false,
     authService: {
@@ -219,4 +221,45 @@ test('Servicio: sin filtros envia NULL y propaga errores de SQL', async () => {
   const error = Object.assign(new Error('fn_ObtenerHistoricoVentas no existe'), {number: 208});
   const failed = createAuditoriaService(async () => fakePool([error]));
   await assert.rejects(failed.getHistoricoVentas(), error);
+});
+
+test('HTTP auditoría: una vista, filtros contextuales, JSON seguro y neto real del histórico', async (t) => {
+  const calls = [];
+  const app = createApp({ dashboardService: { obtenerResumen: async () => null }, secret: 'secreto-exclusivo-pruebas-observabilidad-12345', production: false,
+    authService: { login: async () => ({ codigo: 0, usuario: { usuarioId: 1, nombreUsuario: 'auditor', permisos: ['AUDITORIA_CONSULTAR'] } }) },
+    auditoriaService: {
+      getBitacoraAcceso: async (filters) => { calls.push(['acceso', filters]); return bitacoraAcceso().recordset; },
+      getAuditoriaDml: async (filters) => { calls.push(['dml', filters]); return [{ ...auditoriaDml().recordset[0], AppName: 'ERP', IdentificadorRegistro: '7', ValorNuevo: '{"Nombre":"<img src=x>"}' }]; },
+      getHistoricoVentas: async (filters) => { calls.push(['ventas', filters]); return [{ ...historicoVentas().recordset[0], Descuento: '10.00', SubtotalNeto: '90.00' }]; },
+    },
+  });
+  const server = app.listen(0, '127.0.0.1'); await once(server, 'listening');
+  t.after(() => new Promise((resolve) => { server.close(resolve); server.closeAllConnections(); }));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const login = await fetch(base + '/login', { method: 'POST', redirect: 'manual', body: new URLSearchParams({ NombreUsuario: 'auditor', Password: 'prueba' }) });
+  const cookie = login.headers.get('set-cookie').split(';')[0];
+  for (const vista of ['acceso', 'dml', 'ventas']) {
+    calls.length = 0;
+    const response = await fetch(base + '/auditoria?vista=' + vista + '&fechaInicial=2026-01-01&usuario=admin&tabla=Producto&cliente=Ana', { headers: { cookie } });
+    assert.equal(response.status, 200); const html = await response.text();
+    assert.equal((html.match(/class="log-panel"/g) || []).length, 1);
+    assert.match(html, new RegExp('id="vista-' + vista + '"'));
+    assert.match(html, /Limpiar filtros/);
+    const activo = calls.find(([tipo]) => tipo === vista)[1];
+    assert.equal(activo.fechaInicial, '2026-01-01');
+    const campo = { acceso: 'usuario', dml: 'tabla', ventas: 'cliente' }[vista];
+    assert.ok(activo[campo]);
+    assert.ok(calls.filter(([tipo]) => tipo !== vista).every(([,filters]) => Object.keys(filters).length === 0));
+    if (vista === 'dml') {
+      assert.match(html, /json-disclosure/); assert.match(html, /&lt;img src=x&gt;/);
+      assert.doesNotMatch(html, /<img src=x>/); assert.match(html, /Identificador/);
+    }
+    if (vista === 'ventas') { assert.match(html, /Subtotal neto/); assert.match(html, /Q 90.00/); }
+    assert.doesNotMatch(html, /href="\/facturacion"|href="\/usuarios"/);
+  }
+  const before = calls.length;
+  for (const query of ['fechaInicial=bad', 'fechaInicial=2026-02-30', 'fechaInicial=2026-02-01&fechaFinal=2026-01-01', 'cliente=x&cliente=y&vista=ventas']) {
+    assert.equal((await fetch(base + '/auditoria?' + query, { headers: { cookie } })).status, 400);
+  }
+  assert.equal(calls.length, before);
 });

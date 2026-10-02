@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Usuarios y Roles | SecureFinance ERP</title>
+  <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="app-shell">
+<a class="skip-link" href="#workspace">Ir al contenido</a>
+  <aside class="sidebar">
+    <a class="brand-title" href="/dashboard"><svg class="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M23 8H9v15h14v17H7M30 40V8h13M30 23h11" stroke="currentColor" stroke-width="4"/><path d="M7 31h9M37 33h6" stroke="var(--copper-soft)" stroke-width="3"/></svg><span>SecureFinance<small>ERP / Operations desk</small></span></a>
+    <p class="nav-label">ÁREA DE TRABAJO</p>
+    <nav class="desk-nav" aria-label="Principal">
+      <a href="/dashboard" ><span>00</span>Dashboard</a>
+      <% if (usuario.permisos.includes('VENTAS_REGISTRAR')) { %><a href="/facturacion" ><span>01</span>Facturación</a><% } %>
+      <% if (usuario.permisos.includes('AUDITORIA_CONSULTAR')) { %><a href="/auditoria"><span>02</span>Auditoría</a><% } %>
+      <% if (usuario.permisos.includes('USUARIOS_ADMINISTRAR')) { %><a href="/usuarios" aria-current="page"><span>03</span>Usuarios y Roles</a><% } %>
+    </nav>
+    <div class="sidebar-account"><span class="nav-label">USUARIO ACTUAL</span><strong><%= usuario.nombreUsuario %></strong><% const cuentaActual = usuarios.find(u => u.UsuarioId === usuario.usuarioId); if (cuentaActual?.Roles) { %><small class="account-roles"><%= cuentaActual.Roles %></small><% } %><a class="access-link" href="/cambiar-password">Cambiar contraseña</a><a class="btn btn-nav" href="/logout">Cerrar sesión <span aria-hidden="true">&nearr;</span></a></div>
+    <span class="sidebar-foot">SECUREFINANCE / ERP</span>
+  </aside>
+
+  <main id="workspace" class="container page-content">
+    <div class="page-header"><p class="eyebrow">CONTROL / 03 · Accesos</p><h1>USUARIOS Y ROLES</h1><p>Administración de accesos del sistema</p></div>
+    <div id="roles-message" role="status" aria-live="polite" hidden></div>
+    <section class="log-panel"><div class="panel-body"><h2><span class="section-index">01</span> USUARIOS DEL SISTEMA</h2>
+      <div class="table-responsive" tabindex="0" role="region" aria-label="Usuarios del sistema"><table class="table table-modern align-middle">
+        <thead><tr><th>Usuario</th><th>Nombre</th><th>Correo</th><th>Estado</th><th>Roles</th><th>Acción</th></tr></thead>
+        <tbody><% usuarios.forEach(u => { %><tr>
+          <td><%= u.NombreUsuario %></td><td><%= u.NombreCompleto %></td><td><%= u.Correo %></td>
+          <td><span class="status-badge <%= u.Activo ? 'status-success' : 'status-neutral' %>"><%= u.Activo ? 'Activo' : 'Inactivo' %></span></td>
+          <td><%= u.Roles || 'Sin roles activos' %></td><td><button type="button" class="btn btn-outline-primary btn-sm" aria-haspopup="dialog" aria-controls="roles-panel" data-user-id="<%= u.UsuarioId %>" data-user-name="<%= u.NombreUsuario %>" data-user-fullname="<%= u.NombreCompleto %>" data-user-active="<%= u.Activo ? 'Activo' : 'Inactivo' %>">Administrar roles</button></td>
+        </tr><% }); %></tbody>
+      </table></div><% if (!usuarios.length) { %><p class="empty-state">No hay usuarios.</p><% } %>
+    </div></section>
+    <dialog id="roles-panel" class="operation-dialog access-dialog" aria-labelledby="roles-title">
+      <div class="dialog-heading"><p class="eyebrow">CONTROL / ADMINISTRACIÓN DE ACCESO</p><h2 id="roles-title" tabindex="-1">Administrar acceso</h2></div>
+      <dl class="access-identity"><dt>Usuario</dt><dd id="selected-user"></dd><dt>Nombre</dt><dd id="selected-fullname"></dd><dt>Estado</dt><dd id="selected-state"></dd></dl>
+      <div id="roles-dialog-message" role="alert" hidden></div>
+      <form id="roles-form" data-csrf="<%= csrf %>"><fieldset><legend>Roles disponibles</legend>
+        <% roles.forEach(r => { %><label class="role-option"><input type="checkbox" name="Roles" value="<%= r.RolId %>"><span><strong><%= r.Nombre %></strong><small><%= r.Descripcion || '' %></small></span></label><% }); %>
+      </fieldset><div class="alert desk-message alert-info" data-marker="i" role="note">Los permisos se actualizarán en la próxima sesión.</div>
+      <div class="role-actions"><button id="cancel-roles" type="button" class="btn btn-outline-primary">Cancelar</button><button id="save-roles" type="submit" class="btn btn-primary">Guardar cambios</button></div></form>
+    </dialog>
+  </main><script src="/js/messages.js" defer></script><script src="/js/usuarios.js" defer></script>
+</body></html>

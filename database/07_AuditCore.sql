@@ -93,7 +93,8 @@ AS
 RETURN
     SELECT f.FacturaId AS Factura, f.FechaHora AS Fecha,
            c.Nombre AS Cliente, u.NombreUsuario AS Usuario,
-           f.Subtotal, f.IVA, f.Total
+           f.Subtotal, f.IVA, f.Total, f.DescuentoTotal AS Descuento,
+           f.Subtotal - f.DescuentoTotal AS SubtotalNeto
     FROM dbo.Factura AS f
     INNER JOIN dbo.Cliente AS c ON c.ClienteId = f.ClienteId
     INNER JOIN dbo.Usuario AS u ON u.UsuarioId = f.UsuarioId
@@ -109,7 +110,7 @@ CREATE OR ALTER PROCEDURE dbo.sp_ConsultarHistoricoVentas
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT Factura, Fecha, Cliente, Usuario, Subtotal, IVA, Total
+    SELECT Factura, Fecha, Cliente, Usuario, Subtotal, IVA, Total, Descuento, SubtotalNeto
     FROM dbo.fn_ObtenerHistoricoVentas(@FechaInicial, @FechaFinal, @Cliente)
     ORDER BY Fecha DESC, Factura DESC;
 END;

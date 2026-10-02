@@ -25,7 +25,7 @@ function createAuthController(authService) {
         await new Promise((resolve, reject) => req.session.regenerate((error) => error ? reject(error) : resolve()));
         req.session.usuario = result.usuario;
         await new Promise((resolve, reject) => req.session.save((error) => error ? reject(error) : resolve()));
-        return res.redirect(303, '/dashboard');
+        return res.redirect(303, result.usuario.debeCambiarPassword ? '/cambiar-password' : '/dashboard');
       } catch {
         // No exponer errores del driver, parámetros ni credenciales.
         if (req.session) {
@@ -34,9 +34,6 @@ function createAuthController(authService) {
         res.clearCookie('securefinance.sid', { path: '/' });
         return renderLogin(res, 503, 'No fue posible iniciar sesión. Inténtalo nuevamente.');
       }
-    },
-    dashboard(req, res) {
-      return res.render('dashboard', { usuario: req.session.usuario });
     },
     logout(req, res) {
       req.session.destroy((error) => {

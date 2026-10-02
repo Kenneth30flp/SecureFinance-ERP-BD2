@@ -78,7 +78,7 @@ BEGIN TRY
 
         BEGIN TRY
             -- No INSERT EXEC: SQL Server no permite ROLLBACK dentro de INSERT EXEC.
-            EXEC dbo.sp_ProcesarVentaTransaccional @ClienteEntrada, @UsuarioEntrada, @Detalle, @Factura OUTPUT;
+            EXEC dbo.sp_ProcesarVentaSinDescuento @ClienteEntrada, @UsuarioEntrada, @Detalle, @Factura OUTPUT;
         END TRY
         BEGIN CATCH
             SET @Error = ERROR_NUMBER();

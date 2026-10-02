@@ -10,12 +10,12 @@ const { sql } = require('../src/config/database');
 const clientes = [{ ClienteId: 1, NIT: 'DEMO-1', Nombre: '<script>cliente</script>' }];
 const productos = [{ ProductoId: 3, Codigo: 'P1', Descripcion: '<img src=x onerror=alert(1)>', Precio: 10.25, Stock: 10 },
   { ProductoId: 4, Codigo: 'P2', Descripcion: 'Segundo', Precio: 3.10, Stock: 8 }];
-const venta = { FacturaId: 7, FechaHora: '2026-09-23T12:00:00Z', Subtotal: '29.80', IVA: '3.58', Total: '33.38' };
+const venta = { FacturaId: 7, FechaHora: '2026-09-23T12:00:00Z', Subtotal: '29.80', Descuento: '0.00', SubtotalNeto: '29.80', IVA: '3.58', Total: '33.38', Detalle: [] };
 
 function fakePool() {
   const calls = [];
   return {
-    calls, error: null,
+    calls, error: null, maxDescuento: 100,
     request() {
       const inputs = [];
       const pool = this;
@@ -24,7 +24,7 @@ function fakePool() {
         async execute(procedure) {
           calls.push({ procedure, inputs });
           if (pool.error) throw pool.error;
-          return { recordset: procedure.endsWith('ListarClientes') ? clientes
+          return { recordset: procedure.endsWith('ObtenerPoliticaVenta') ? [{ MaxDescuento: pool.maxDescuento }] : procedure.endsWith('ListarClientes') ? clientes
             : procedure.endsWith('ListarProductosDisponibles') ? productos : [venta] };
         },
       };
@@ -46,11 +46,15 @@ test('Servicio de ventas: listas y TVP tipado con una o varias líneas', async (
     assert.equal(name, 'Detalle');
     assert.ok(table instanceof sql.Table);
     assert.equal(table.schema, 'dbo');
-    assert.equal(table.name, 'TipoDetalleVenta');
+    assert.equal(table.name, 'TipoDetalleVentaDescuento');
     assert.deepEqual(table.columns.map(({ name: column, type, nullable }) => [column, type, nullable]),
-      [['ProductoId', sql.Int, false], ['Cantidad', sql.Int, false]]);
-    assert.deepEqual([...table.rows], lineas.map(({ ProductoId, Cantidad }) => [ProductoId, Cantidad]));
-    assert.equal(call.inputs.length, 3);
+      [['ProductoId', sql.Int, false], ['Cantidad', sql.Int, false], ['DescuentoPorcentaje', table.columns[2].type, false]]);
+    assert.equal(table.columns[2].type, sql.Decimal);
+    assert.equal(table.columns[2].precision, 5);
+    assert.equal(table.columns[2].scale, 2);
+    assert.deepEqual([...table.rows], lineas.map(({ ProductoId, Cantidad, DescuentoPorcentaje = 0 }) => [ProductoId, Cantidad, DescuentoPorcentaje]));
+    assert.equal(call.inputs.length, 4);
+    assert.deepEqual(call.inputs[3], ['MotivoDescuento', sql.NVarChar(80), null]);
   }
   assert.deepEqual(pool.calls.slice(0, 2).map((call) => call.procedure),
     ['dbo.sp_ListarClientes', 'dbo.sp_ListarProductosDisponibles']);
@@ -60,7 +64,7 @@ test('Servicio de ventas: listas y TVP tipado con una o varias líneas', async (
 
 async function fixture(t, permisos = ['VENTAS_REGISTRAR']) {
   const pool = fakePool();
-  const app = createApp({ secret: 'secreto-exclusivo-de-pruebas-ventas-123456', production: false,
+  const app = createApp({ dashboardService: { obtenerResumen: async () => null }, secret: 'secreto-exclusivo-de-pruebas-ventas-123456', production: false,
     ventaService: createVentaService(async () => pool),
     authService: { async login() { return { codigo: 0, usuario: { usuarioId: 42, nombreUsuario: 'Cajero prueba', permisos } }; } },
   });
@@ -94,6 +98,65 @@ async function fixture(t, permisos = ['VENTAS_REGISTRAR']) {
   };
 }
 const entrada = () => ({ ClienteId: 1, Detalle: [{ ProductoId: 3, Cantidad: 2 }, { ProductoId: 4, Cantidad: 3 }] });
+
+test('HTTP: porcentajes decimales válidos y rechazo previo al SQL de descuentos inválidos', async (t) => {
+  const f = await fixture(t);
+  await f.login(); await f.pagina();
+  for (const porcentaje of [0, 10, '7.50', '100.00']) {
+    const body = entrada();
+    body.Detalle[0].DescuentoPorcentaje = porcentaje;
+    body.Detalle[0].DescuentoMonto = 999;
+    body.Detalle[0].SubtotalNeto = 0;
+    assert.equal((await f.post(body)).status, 201);
+    assert.deepEqual([...f.pool.calls.at(-1).inputs[2][1].rows], [[3, 2, Number(porcentaje)], [4, 3, 0]]);
+  }
+  const before = f.pool.calls.length;
+  for (const porcentaje of [-1, 100.01, null, true, {}, [], '', '1e2', ' 10', '10.001']) {
+    const body = entrada(); body.Detalle[0].DescuentoPorcentaje = porcentaje;
+    assert.equal((await f.post(body)).status, 400);
+  }
+  assert.equal(f.pool.calls.length, before);
+  f.pool.error = Object.assign(new Error('private'), { number: 52011 });
+  assert.equal((await f.post(entrada())).status, 400);
+});
+
+test('HTTP: política real del Cajero, motivos opcionales y roles manipulados ignorados', async (t) => {
+  const f = await fixture(t); f.pool.maxDescuento = 10;
+  await f.login(); const { html } = await f.pagina();
+  assert.match(html, /data-max-descuento="10"/);
+  for (const porcentaje of [0, '7.50', 10]) {
+    const body = entrada(); body.Detalle[0].DescuentoPorcentaje = porcentaje;
+    assert.equal((await f.post(body)).status, 201);
+  }
+  const before = f.pool.calls.filter((c) => c.procedure === 'dbo.sp_ProcesarVentaTransaccional').length;
+  for (const porcentaje of [10.01, 25, 100]) {
+    const body = entrada(); body.Detalle[0].DescuentoPorcentaje = porcentaje;
+    body.RolId = 1; body.UsuarioId = 1; body.MaxDescuento = 100;
+    const response = await f.post(body);
+    assert.equal(response.status, 400); assert.match((await response.json()).error, /máximo.*10%/);
+  }
+  assert.equal(f.pool.calls.filter((c) => c.procedure === 'dbo.sp_ProcesarVentaTransaccional').length, before);
+  assert.ok(f.pool.calls.filter((c) => c.procedure === 'dbo.sp_ObtenerPoliticaVenta').every((c) => c.inputs[0][2] === 42));
+  const body = entrada(); body.Detalle[0].DescuentoPorcentaje = 10; body.MotivoDescuento = 'Cliente frecuente';
+  assert.equal((await f.post(body)).status, 201);
+  assert.deepEqual(f.pool.calls.at(-1).inputs[3], ['MotivoDescuento', sql.NVarChar(80), 'Cliente frecuente']);
+  body.Detalle[0].DescuentoPorcentaje = 0;
+  assert.equal((await f.post(body)).status, 201);
+  assert.equal(f.pool.calls.at(-1).inputs[3][2], null);
+  for (const motivo of ['', {}, 'x'.repeat(81), '<script>']) {
+    body.MotivoDescuento = motivo; assert.equal((await f.post(body)).status, 400);
+  }
+  f.pool.error = Object.assign(new Error('private'), { number: 52013 });
+  assert.equal((await f.post(entrada())).status, 403);
+  assert.equal((await f.request('/facturacion')).status, 403);
+});
+
+test('Servicio: comprobante conserva el segundo recordset autoritativo de SQL', async () => {
+  const detalle = [{ ProductoId: 3, Cantidad: 2, PrecioUnitario: '35.90', DescuentoMonto: '17.95', SubtotalNeto: '53.85' }];
+  const pool = { request: () => ({ input() { return this; }, execute: async () => ({ recordset: [venta], recordsets: [[venta], detalle] }) }) };
+  const service = createVentaService(async () => pool);
+  assert.deepEqual((await service.procesarVenta(1, 42, [{ ProductoId: 3, Cantidad: 2 }])).Detalle, detalle);
+});
 
 test('HTTP: ambas rutas requieren sesión y no ejecutan SQL anónimo', async (t) => {
   const f = await fixture(t);
@@ -132,11 +195,11 @@ test('HTTP: formulario, listados, escape HTML, enlace y venta multiproducto', as
   assert.deepEqual(await result.json(), { venta });
   const inputs = f.pool.calls.at(-1).inputs;
   assert.deepEqual(inputs[1], ['UsuarioId', sql.Int, 42]);
-  assert.deepEqual([...inputs[2][1].rows], [[3, 2], [4, 3]]);
-  assert.equal(inputs.length, 3);
+  assert.deepEqual([...inputs[2][1].rows], [[3, 2, 0], [4, 3, 0]]);
+  assert.equal(inputs.length, 4);
   const single = await f.post({ ClienteId: '1', Detalle: [{ ProductoId: '3', Cantidad: '1' }] });
   assert.equal(single.status, 201);
-  assert.deepEqual([...f.pool.calls.at(-1).inputs[2][1].rows], [[3, 1]]);
+  assert.deepEqual([...f.pool.calls.at(-1).inputs[2][1].rows], [[3, 1, 0]]);
 });
 
 test('HTTP: rechaza CSRF ausente, inválido y de otra sesión antes de llamar SQL', async (t) => {
@@ -174,7 +237,7 @@ test('HTTP: mensajes seguros para stock y cada error de negocio; SQL interno nun
   for (const number of [52001, 52002, 52003, 52004, 52005, 52006, 52007, 52008, 52009, 52010, 2627, 1205, undefined]) {
     f.pool.error = Object.assign(new Error('PASSWORD=secreto;Server=privado'), { number });
     const response = await f.post(entrada());
-    assert.equal(response.status, number === 52010 ? 409 : number >= 52001 && number <= 52009 ? 400 : 503);
+    assert.equal(response.status, number === 52007 ? 403 : number === 52010 ? 409 : number >= 52001 && number <= 52009 ? 400 : 503);
     const text = await response.text();
     assert.doesNotMatch(text, /PASSWORD|secreto|privado|Server/);
     if (number === 52010) assert.match(text, /Stock insuficiente/);

@@ -79,7 +79,7 @@ BEGIN TRY
        OR EXISTS (SELECT 1 FROM dbo.fn_ObtenerHistoricoVentas(@Despues,NULL,@Tag))
        OR EXISTS (SELECT 1 FROM dbo.fn_ObtenerHistoricoVentas(NULL,NULL,N'inexistente-' + @Tag))
         THROW 51011, 'Filtros del historico incorrectos.', 1;
-    DECLARE @Historico TABLE (Factura INT, Fecha DATETIME2(3), Cliente NVARCHAR(150), Usuario NVARCHAR(50), Subtotal DECIMAL(19,2), IVA DECIMAL(19,2), Total DECIMAL(19,2));
+    DECLARE @Historico TABLE (Factura INT, Fecha DATETIME2(3), Cliente NVARCHAR(150), Usuario NVARCHAR(50), Subtotal DECIMAL(19,2), IVA DECIMAL(19,2), Total DECIMAL(19,2), Descuento DECIMAL(19,2), SubtotalNeto DECIMAL(19,2));
     INSERT @Historico EXEC dbo.sp_ConsultarHistoricoVentas @FechaInicial=@Fecha, @FechaFinal=@Fecha, @Cliente=@Tag;
     IF (SELECT COUNT(*) FROM @Historico WHERE Factura=@FacturaId AND Total=112) <> 1
         THROW 51012, 'SP historico incorrecto.', 1;
@@ -95,7 +95,7 @@ BEGIN TRY
           AND ((b.TablaAfectada = N'Producto' AND j.[key] NOT IN
                 ('ProductoId','Codigo','Descripcion','Precio','Stock','Activo'))
             OR (b.TablaAfectada = N'Factura' AND j.[key] NOT IN
-                ('FacturaId','ClienteId','UsuarioId','FechaHora','Subtotal','IVA','Total','Estado'))))
+                ('FacturaId','ClienteId','UsuarioId','FechaHora','Subtotal','DescuentoTotal','MotivoDescuento','IVA','Total','Estado'))))
         THROW 51015, 'Se capturaron columnas no permitidas.', 1;
     IF EXISTS (SELECT 1 FROM dbo.fn_ConsultarAuditoria(NULL,NULL,N'Cliente','UPDATE') WHERE BitacoraTransaccionId > @Inicio)
         THROW 51016, 'El filtro de tabla de auditoria es incorrecto.', 1;
