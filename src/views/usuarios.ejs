@@ -6,37 +6,27 @@
   <title>Usuarios y Roles | SecureFinance ERP</title>
   <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/visual.js" defer></script>
 </head>
-<body class="app-shell">
+<body class="app-shell usuarios-workspace">
 <a class="skip-link" href="#workspace">Ir al contenido</a>
-  <aside class="sidebar">
-    <a class="brand-title" href="/dashboard"><svg class="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M23 8H9v15h14v17H7M30 40V8h13M30 23h11" stroke="currentColor" stroke-width="4"/><path d="M7 31h9M37 33h6" stroke="var(--copper-soft)" stroke-width="3"/></svg><span>SecureFinance<small>ERP / Operations desk</small></span></a>
-    <p class="nav-label">ÁREA DE TRABAJO</p>
-    <nav class="desk-nav" aria-label="Principal">
-      <a href="/dashboard" ><span>00</span>Dashboard</a>
-      <% if (usuario.permisos.includes('VENTAS_REGISTRAR')) { %><a href="/facturacion" ><span>01</span>Facturación</a><% } %>
-      <% if (usuario.permisos.includes('AUDITORIA_CONSULTAR')) { %><a href="/auditoria"><span>02</span>Auditoría</a><% } %>
-      <% if (usuario.permisos.includes('USUARIOS_ADMINISTRAR')) { %><a href="/usuarios" aria-current="page"><span>03</span>Usuarios y Roles</a><% } %>
-    </nav>
-    <div class="sidebar-account"><span class="nav-label">USUARIO ACTUAL</span><strong><%= usuario.nombreUsuario %></strong><% const cuentaActual = usuarios.find(u => u.UsuarioId === usuario.usuarioId); if (cuentaActual?.Roles) { %><small class="account-roles"><%= cuentaActual.Roles %></small><% } %><a class="access-link" href="/cambiar-password">Cambiar contraseña</a><a class="btn btn-nav" href="/logout">Cerrar sesión <span aria-hidden="true">&nearr;</span></a></div>
-    <span class="sidebar-foot">SECUREFINANCE / ERP</span>
-  </aside>
+  <%- include('partials/navigation', { actual: 'usuarios', rolesCuenta: usuarios.find(u => u.UsuarioId === usuario.usuarioId)?.Roles || '' }) %>
 
-  <main id="workspace" class="container page-content">
-    <div class="page-header"><p class="eyebrow">CONTROL / 03 · Accesos</p><h1>USUARIOS Y ROLES</h1><p>Administración de accesos del sistema</p></div>
+  <main tabindex="-1" id="workspace" class="container page-content">
+    <div class="page-header"><p class="eyebrow">Identity governance center</p><h1>Gobierno de accesos</h1><p>Identidades, roles y alcance de acceso del sistema</p></div>
     <div id="roles-message" role="status" aria-live="polite" hidden></div>
-    <section class="log-panel"><div class="panel-body"><h2><span class="section-index">01</span> USUARIOS DEL SISTEMA</h2>
+    <div class="governance-layout"><aside class="governance-brief"><span class="governance-emblem"><%- include('partials/icon',{nombre:'shield'}) %></span><h2>Contexto de acceso</h2><dl class="governance-context"><div><dt>Cuenta actual</dt><dd><%= usuario.nombreUsuario %></dd></div><div><dt>Roles</dt><dd><%= usuarios.find(u => u.UsuarioId === usuario.usuarioId)?.Roles || 'Sin roles activos' %></dd></div><div><dt>Permisos asignados</dt><dd><%= usuario.permisos.length %></dd></div></dl><div class="governance-note"><%- include('partials/icon',{nombre:'key'}) %><p>Los permisos asignados se aplican en la próxima sesión.</p></div></aside><section class="log-panel"><div class="panel-body"><h2>Directorio de identidades</h2>
       <div class="table-responsive" tabindex="0" role="region" aria-label="Usuarios del sistema"><table class="table table-modern align-middle">
-        <thead><tr><th>Usuario</th><th>Nombre</th><th>Correo</th><th>Estado</th><th>Roles</th><th>Acción</th></tr></thead>
+        <thead><tr><th scope="col">Usuario</th><th scope="col">Nombre</th><th scope="col">Correo</th><th scope="col">Estado</th><th scope="col">Roles</th><th scope="col">Acción</th></tr></thead>
         <tbody><% usuarios.forEach(u => { %><tr>
-          <td><%= u.NombreUsuario %></td><td><%= u.NombreCompleto %></td><td><%= u.Correo %></td>
+          <td><div class="table-identity"><span class="identity-avatar" aria-hidden="true"><%= u.NombreUsuario.slice(0,2).toUpperCase() %></span><strong><%= u.NombreUsuario %></strong></div></td><td><%= u.NombreCompleto %></td><td><%= u.Correo %></td>
           <td><span class="status-badge <%= u.Activo ? 'status-success' : 'status-neutral' %>"><%= u.Activo ? 'Activo' : 'Inactivo' %></span></td>
           <td><%= u.Roles || 'Sin roles activos' %></td><td><button type="button" class="btn btn-outline-primary btn-sm" aria-haspopup="dialog" aria-controls="roles-panel" data-user-id="<%= u.UsuarioId %>" data-user-name="<%= u.NombreUsuario %>" data-user-fullname="<%= u.NombreCompleto %>" data-user-active="<%= u.Activo ? 'Activo' : 'Inactivo' %>">Administrar roles</button></td>
         </tr><% }); %></tbody>
       </table></div><% if (!usuarios.length) { %><p class="empty-state">No hay usuarios.</p><% } %>
-    </div></section>
+    </div></section></div>
     <dialog id="roles-panel" class="operation-dialog access-dialog" aria-labelledby="roles-title">
-      <div class="dialog-heading"><p class="eyebrow">CONTROL / ADMINISTRACIÓN DE ACCESO</p><h2 id="roles-title" tabindex="-1">Administrar acceso</h2></div>
+      <div class="dialog-heading"><span class="dialog-emblem"><%- include('partials/icon',{nombre:'users'}) %></span><p class="eyebrow">Administración / Identidad y acceso</p><h2 id="roles-title" tabindex="-1">Administrar acceso</h2></div>
       <dl class="access-identity"><dt>Usuario</dt><dd id="selected-user"></dd><dt>Nombre</dt><dd id="selected-fullname"></dd><dt>Estado</dt><dd id="selected-state"></dd></dl>
       <div id="roles-dialog-message" role="alert" hidden></div>
       <form id="roles-form" data-csrf="<%= csrf %>"><fieldset><legend>Roles disponibles</legend>

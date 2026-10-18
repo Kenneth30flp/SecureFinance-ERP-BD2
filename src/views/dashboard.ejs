@@ -6,23 +6,14 @@
   <title>Dashboard | SecureFinance ERP</title>
   <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/visual.js" defer></script>
 </head>
-<body class="app-shell">
+<body class="app-shell dashboard-workspace">
 <a class="skip-link" href="#workspace">Ir al contenido</a>
-  <aside class="sidebar">
-    <a class="brand-title" href="/dashboard"><svg class="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M23 8H9v15h14v17H7M30 40V8h13M30 23h11" stroke="currentColor" stroke-width="4"/><path d="M7 31h9M37 33h6" stroke="var(--copper-soft)" stroke-width="3"/></svg><span>SecureFinance<small>ERP / Operations desk</small></span></a>
-    <p class="nav-label">ÁREA DE TRABAJO</p>
-    <nav class="desk-nav" aria-label="Principal">
-      <a href="/dashboard" aria-current="page"><span>00</span>Dashboard</a>
-      <% if (usuario.permisos.includes('VENTAS_REGISTRAR')) { %><a href="/facturacion" ><span>01</span>Facturación</a><% } %>
-      <% if (usuario.permisos.includes('AUDITORIA_CONSULTAR')) { %><a href="/auditoria" ><span>02</span>Auditoría</a><% } %>
-      <% if (usuario.permisos.includes('USUARIOS_ADMINISTRAR')) { %><a href="/usuarios"><span>03</span>Usuarios y Roles</a><% } %>
-    </nav>
-    <div class="sidebar-account"><span class="nav-label">USUARIO ACTUAL</span><strong><%= usuario.nombreUsuario %></strong><% if (resumen?.RolesActuales) { %><small class="account-roles"><%= resumen.RolesActuales %></small><% } %><a class="access-link" href="/cambiar-password">Cambiar contraseña</a><a class="btn btn-nav" href="/logout">Cerrar sesión <span aria-hidden="true">&nearr;</span></a></div>
-    <span class="sidebar-foot">SECUREFINANCE / ERP</span>
-  </aside>
-  <main id="workspace" class="container dashboard-content page-content">
-    <div class="page-header"><p class="eyebrow">SecureFinance / área de trabajo</p><h1>Centro de operaciones</h1><p>Bienvenido, <strong><%= usuario.nombreUsuario %></strong>. Tu escritorio de gestión financiera.</p></div>
+  <%- include('partials/navigation', { actual: 'dashboard', rolesCuenta: resumen?.RolesActuales || '' }) %>
+  <main tabindex="-1" id="workspace" class="container dashboard-content page-content">
+    <div class="page-header"><p class="eyebrow">Financial operations command center</p><h1>Centro de operaciones</h1><p>Bienvenido, <strong><%= usuario.nombreUsuario %></strong>. Tu escritorio de gestión financiera.</p></div>
+    <div class="session-strip"><span class="session-state">Sesión activa</span><span><strong><%= usuario.permisos.length %></strong> permisos asignados</span></div>
     <% const agrupar = (valor) => String(valor).replace(/\B(?=(\d{3})+(?!\d))/g, ','); %>
     <% const dinero = (valor) => { const [entero, centavos] = valor.split('.'); return 'Q ' + agrupar(entero) + '.' + centavos; }; %>
     <% if (advertencia) { %><div class="alert desk-message alert-warning" data-marker="!" role="status"><%= advertencia %></div><% } %>
@@ -30,19 +21,18 @@
       <div class="overview-heading"><h2 id="resumen-operativo-title">Pulso operativo</h2><p><%= resumen?.FechaOperacion || 'Resumen no disponible' %> · Jornada Guatemala / UTC−6</p></div>
       <dl class="dashboard-kpis">
         <% [['VentasDia', 'Ventas del día', 'Ventas registradas'], ['FacturasDia', 'Facturas emitidas hoy', 'Documentos emitidos'], ['ProductosStockBajo', 'Productos con stock bajo', 'Activos con stock ≤ 5'], ['EventosDMLDia', 'Eventos de auditoría hoy', 'Eventos DML registrados']].forEach(([campo, titulo, ayuda]) => { %>
-          <div class="kpi-card"><dt><%= titulo %></dt><dd><%= resumen?.[campo] == null ? '—' : campo === 'VentasDia' ? dinero(resumen[campo]) : agrupar(resumen[campo]) %></dd><span class="kpi-caption"><%= !resumen ? 'Temporalmente no disponible' : resumen[campo] == null ? 'Sin permiso de consulta' : ayuda %></span></div>
+          <div class="kpi-card"><dt><%= titulo %></dt><dd><%= resumen?.[campo] == null ? '—' : campo === 'VentasDia' ? dinero(resumen[campo]) : agrupar(resumen[campo]) %></dd><dd class="kpi-caption"><%= !resumen ? 'Temporalmente no disponible' : resumen[campo] == null ? 'Sin permiso de consulta' : ayuda %></dd></div>
         <% }); %>
       </dl>
     </section>
-    <div class="session-strip"><span class="session-state">Sesión activa</span><span><strong><%= usuario.permisos.length %></strong> permisos asignados</span></div>
-    <div class="module-grid">
+    <div class="command-secondary"><section class="operations-directory" aria-label="Operaciones disponibles"><div class="directory-heading"><h2>Entra en operación</h2><p>Herramientas habilitadas para tu cuenta.</p></div><div class="module-grid">
     <% if (usuario.permisos.includes('VENTAS_REGISTRAR')) { %>
-      <a class="module-card module-sales" href="/facturacion"><span class="module-icon" aria-hidden="true">01</span><span class="eyebrow">OPERATIONS / 01</span><h2>Facturación</h2><p>Prepara la venta. Verifica las existencias. Procesa la operación.<span class="module-ledger" aria-hidden="true"><span>VENTA</span><span>CAJA</span><span>EXISTENCIAS</span></span></p><span class="module-action">Registrar venta <span aria-hidden="true">&rarr;</span></span></a>
+      <a class="module-card module-sales" href="/facturacion"><span class="module-icon"><%- include('partials/icon',{nombre:'receipt'}) %></span><span class="eyebrow">Ventas y caja</span><h2>Facturación</h2><p>Prepara la venta. Verifica las existencias. Procesa la operación.</p><span class="module-action">Registrar venta <span aria-hidden="true">&rarr;</span></span></a>
     <% } %>
     <% if (usuario.permisos.includes('AUDITORIA_CONSULTAR')) { %>
-      <a class="module-card module-audit" href="/auditoria"><span class="module-icon" aria-hidden="true">02</span><span class="eyebrow">CONTROL / 02</span><h2>Auditoría</h2><p>Accesos, cambios y eventos.<br>La trazabilidad de cada operación.</p><span class="module-action">Consultar auditoría <span aria-hidden="true">&rarr;</span></span></a>
+      <a class="module-card module-audit" href="/auditoria"><span class="module-icon"><%- include('partials/icon',{nombre:'shield'}) %></span><span class="eyebrow">Control y trazabilidad</span><h2>Auditoría</h2><p>Accesos, cambios y eventos.<br>La trazabilidad de cada operación.</p><span class="module-action">Consultar auditoría <span aria-hidden="true">&rarr;</span></span></a>
     <% } %>
-    </div>
+    </div></section>
     <section class="access-profile" aria-labelledby="permisos-title">
       <div class="profile-body">
         <h2 class="h5 mb-3" id="permisos-title">Perfil de acceso</h2>
@@ -57,7 +47,7 @@
           <p class="text-secondary mb-0">No tienes permisos activos asignados.</p>
         <% } %>
       </div>
-    </section>
+    </section></div>
   </main>
 </body>
 </html>

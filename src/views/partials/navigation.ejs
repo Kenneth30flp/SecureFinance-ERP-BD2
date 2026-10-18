@@ -1,0 +1,14 @@
+<aside class="sidebar" aria-label="Módulos del sistema">
+  <a class="rail-brand" href="/dashboard" aria-label="SecureFinance ERP, dashboard"><span aria-hidden="true">SF<span class="brand-dot"></span></span></a>
+  <nav class="desk-nav" aria-label="Principal">
+    <% [['dashboard','/dashboard','dashboard','Inicio',null],['facturacion','/facturacion','receipt','Ventas','VENTAS_REGISTRAR'],['auditoria','/auditoria','shield','Auditoría','AUDITORIA_CONSULTAR'],['usuarios','/usuarios','users','Accesos','USUARIOS_ADMINISTRAR']].forEach(([clave,ruta,icono,label,permiso]) => { if (!permiso || usuario.permisos.includes(permiso)) { %>
+      <a href="<%= ruta %>" <%- actual === clave ? 'aria-current="page"' : '' %> aria-label="<%= ({dashboard:'Dashboard',facturacion:'Facturación',auditoria:'Auditoría',usuarios:'Usuarios y Roles'})[clave] %>"><%- include('icon',{nombre:icono}) %><span><%= label %></span></a>
+    <% } }); %>
+  </nav>
+  <div class="rail-account"><span class="account-avatar" aria-hidden="true"><%= usuario.nombreUsuario.slice(0,2).toUpperCase() %></span><a class="rail-security" href="/cambiar-password" aria-label="Cambiar contraseña"><%- include('icon',{nombre:'key'}) %></a><a class="rail-security" href="/logout" aria-label="Cerrar sesión"><%- include('icon',{nombre:'logout'}) %></a></div>
+</aside>
+<header class="workspace-topbar">
+  <%- include('brand',{destino:'/dashboard'}) %>
+  <div class="topbar-context"><span>Espacio de trabajo</span><strong><%= ({dashboard:'Panorama financiero',facturacion:'Mesa de transacciones',auditoria:'Control y trazabilidad',usuarios:'Gobierno de accesos'})[actual] %></strong></div>
+  <details class="account-menu"><summary aria-label="Cuenta de <%= usuario.nombreUsuario %>"><span class="account-avatar" aria-hidden="true"><%= usuario.nombreUsuario.slice(0,2).toUpperCase() %></span><span><strong><%= usuario.nombreUsuario %></strong><small><%= rolesCuenta || 'Cuenta de usuario' %></small></span><%- include('icon',{nombre:'chevron'}) %></summary><div class="account-popover"><p>Tu cuenta</p><a href="/cambiar-password"><%- include('icon',{nombre:'key'}) %>Cambiar contraseña</a><a href="/logout"><%- include('icon',{nombre:'logout'}) %>Cerrar sesión</a></div></details>
+</header>
