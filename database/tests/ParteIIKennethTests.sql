@@ -13,7 +13,8 @@ IF LEFT(DB_NAME(),LEN(N'SecureFinanceERP_ParteII_Test_'))<>N'SecureFinanceERP_Pa
 IF @@TRANCOUNT<>0 THROW 54900,'Ejecutar sin transaccion exterior.',1;
 IF DATABASE_PRINCIPAL_ID('securefinance_app') IS NULL THROW 54900,'Falta usuario de pruebas y script 20.',1;
 DECLARE @Caso INT=1,@Esperado NVARCHAR(100),@Error INT,@MensajeError NVARCHAR(4000),@Actor INT,@Rol INT,@Prov INT,@P INT,@C INT,@F INT,@N INT,@Permitido INT,@DescripcionCaso NVARCHAR(120),
- @Tag NVARCHAR(32),@SKU NVARCHAR(40),@NitInicial NVARCHAR(25),@NitNuevo NVARCHAR(25),@Op UNIQUEIDENTIFIER,@V BINARY(8),@Detalle dbo.TipoDetalleVentaDescuento;
+ @Tag NVARCHAR(32),@SKU NVARCHAR(40),@NitInicial NVARCHAR(25),@NitNuevo NVARCHAR(25),@Op UNIQUEIDENTIFIER,@AperturaPrueba UNIQUEIDENTIFIER,@V BINARY(8),@Detalle dbo.TipoDetalleVentaDescuento;
+DECLARE @IntegracionActiva BIT=CASE WHEN OBJECT_ID('dbo.sp_AbrirKardexInventario','P') IS NULL THEN 0 ELSE 1 END;
 DECLARE @Descripciones TABLE(Id INT PRIMARY KEY,Descripcion NVARCHAR(120));
 INSERT @Descripciones VALUES (1,N'Proveedor registrado'),(2,N'SKU unico'),(3,N'Costo no negativo'),(4,N'Ingreso compra'),(5,N'Egreso y saldo'),(6,N'Stock negativo'),(7,N'Rollback posterior a stock'),(8,N'Reintento identico'),(9,N'Reintento conflictivo'),(10,N'Cambio NIT'),(11,N'NIT duplicado'),(12,N'Inactivacion y factura'),(13,N'Identidad de emision'),(14,N'DML set based y no-op'),(15,N'Permisos minimos'),(16,N'Compatibilidad Parte I'),(17,N'Cliente inactivo no vende'),(18,N'Concurrencia optimista'),(19,N'Fotografia insegura'),(20,N'FK proveedor'),(21,N'RBAC actor'),(22,N'Kardex bloqueado antes de apertura'),(23,N'Kardex inmutable'),(24,N'Snapshot inmutable'),(25,N'NIT vacio'),(26,N'Devolucion preparada'),(27,N'Factura anterior sin reconstruccion'),(28,N'Egreso por venta');
 CREATE TABLE #ResultadosKenneth(Id INT PRIMARY KEY,Descripcion NVARCHAR(120),Resultado VARCHAR(4),ErrorEsperado INT NULL,MensajeError NVARCHAR(4000) NULL);
@@ -30,11 +31,19 @@ BEGIN
   INSERT dbo.Usuario(NombreUsuario,NombreCompleto,Correo,PasswordHash,Salt) VALUES(@Tag,N'Actor pruebas',@Tag+N'@example.invalid',CRYPT_GEN_RANDOM(64),CRYPT_GEN_RANDOM(32)); SET @Actor=SCOPE_IDENTITY();
   INSERT dbo.Rol(Nombre) VALUES(@Tag); SET @Rol=SCOPE_IDENTITY();
   INSERT dbo.Usuario_Rol(UsuarioId,RolId) VALUES(@Actor,@Rol);
-  INSERT dbo.Rol_Permiso(RolId,PermisoId) SELECT @Rol,PermisoId FROM dbo.Permiso WHERE Codigo IN (N'INVENTARIO_REGISTRAR',N'INVENTARIO_AJUSTAR',N'INVENTARIO_CONSULTAR',N'PRODUCTOS_ADMINISTRAR',N'PRODUCTOS_CONSULTAR',N'PROVEEDORES_ADMINISTRAR',N'PROVEEDORES_CONSULTAR',N'CLIENTES_ACTUALIZAR_NIT',N'CLIENTES_INACTIVAR',N'CLIENTES_CONSULTAR',N'VENTAS_REGISTRAR');
+  INSERT dbo.Rol_Permiso(RolId,PermisoId) SELECT @Rol,PermisoId FROM dbo.Permiso WHERE Codigo IN (N'INVENTARIO_REGISTRAR',N'INVENTARIO_AJUSTAR',N'INVENTARIO_CONSULTAR',N'PRODUCTOS_ADMINISTRAR',N'PRODUCTOS_CONSULTAR',N'PROVEEDORES_ADMINISTRAR',N'PROVEEDORES_CONSULTAR',N'CLIENTES_ACTUALIZAR_NIT',N'CLIENTES_INACTIVAR',N'CLIENTES_CONSULTAR',N'VENTAS_REGISTRAR',N'INVENTARIO_APERTURAR');
   EXEC dbo.sp_RegistrarProveedor @ActorUsuarioId=@Actor,@NIT=@NitInicial,@Nombre=N'Proveedor de prueba',@ProveedorId=@Prov OUTPUT;
   EXEC dbo.sp_RegistrarProducto @ActorUsuarioId=@Actor,@Codigo=@SKU,@Descripcion=N'Producto de prueba',@Precio=10,@PrecioCosto=5,@ProveedorId=@Prov,@ProductoId=@P OUTPUT;
   INSERT dbo.Cliente(NIT,Nombre) VALUES(@NitInicial,N'Cliente prueba'); SET @C=SCOPE_IDENTITY();
-  UPDATE dbo.ConfiguracionInventario SET Habilitado=1 WHERE ConfiguracionId=1;
+  IF @IntegracionActiva=1
+  BEGIN
+   -- El fixture de saldo previo nace ANTES de su apertura; no se altera el libro.
+   IF @Caso=16 UPDATE dbo.Producto SET Stock=5 WHERE ProductoId=@P;
+   SET @AperturaPrueba=NEWID();
+   EXEC dbo.sp_AbrirKardexInventario @AperturaPrueba,@Actor,@Tag,N'Apertura fixture';
+   EXEC dbo.sp_HabilitarKardexInventario @AperturaPrueba,@Actor;
+  END
+  ELSE UPDATE dbo.ConfiguracionInventario SET Habilitado=1 WHERE ConfiguracionId=1;
   IF @Caso=1
   BEGIN
    SET @Esperado=NULL;
@@ -145,7 +154,8 @@ BEGIN
   BEGIN
    SET @Esperado=NULL;
    -- Compatibilidad Parte I
-   UPDATE dbo.Producto SET Stock=5 WHERE ProductoId=@P; INSERT @Detalle(ProductoId,Cantidad,DescuentoPorcentaje) VALUES(@P,2,10); EXEC dbo.sp_ProcesarVentaTransaccional @ClienteId=@C,@UsuarioId=@Actor,@Detalle=@Detalle,@FacturaId=@F OUTPUT; IF NOT EXISTS(SELECT 1 FROM dbo.Factura WHERE FacturaId=@F AND Subtotal=20 AND DescuentoTotal=2 AND IVA=2.16 AND Total=20.16) OR NOT EXISTS(SELECT 1 FROM dbo.MovimientoCaja WHERE FacturaId=@F AND Monto=20.16) OR (SELECT Stock FROM dbo.Producto WHERE ProductoId=@P)<>3 THROW 54900,'Regresion venta Parte I.',1; IF EXISTS(SELECT 1 FROM dbo.Kardex_Inventario WHERE ProductoId=@P) THROW 54900,'Integracion prematura de venta.',1;
+   UPDATE dbo.Producto SET Stock=5 WHERE ProductoId=@P; INSERT @Detalle(ProductoId,Cantidad,DescuentoPorcentaje) VALUES(@P,2,10); EXEC dbo.sp_ProcesarVentaTransaccional @ClienteId=@C,@UsuarioId=@Actor,@Detalle=@Detalle,@FacturaId=@F OUTPUT; IF NOT EXISTS(SELECT 1 FROM dbo.Factura WHERE FacturaId=@F AND Subtotal=20 AND DescuentoTotal=2 AND IVA=2.16 AND Total=20.16) OR NOT EXISTS(SELECT 1 FROM dbo.MovimientoCaja WHERE FacturaId=@F AND Monto=20.16) OR (SELECT Stock FROM dbo.Producto WHERE ProductoId=@P)<>3 THROW 54900,'Regresion venta Parte I.',1; IF @IntegracionActiva=0 AND EXISTS(SELECT 1 FROM dbo.Kardex_Inventario WHERE ProductoId=@P) THROW 54900,'Integracion prematura de venta.',1;
+   IF @IntegracionActiva=1 AND (SELECT COUNT(*) FROM dbo.Kardex_Inventario WHERE ProductoId=@P AND TipoMovimiento='VENTA' AND Cantidad=2 AND StockAnterior=5 AND StockResultante=3)<>1 THROW 54900,'Venta integrada sin una salida exacta.',1;
   END;
   IF @Caso=17
   BEGIN
