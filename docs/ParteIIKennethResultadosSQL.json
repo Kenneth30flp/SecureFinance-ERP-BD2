@@ -1,0 +1,343 @@
+{
+  "date": "2026-10-18",
+  "server": "localhost,1433",
+  "authentication": "Windows integrated",
+  "branch": "feature/parte-ii-kenneth",
+  "baseCommit": "ec6899a",
+  "database": "SecureFinanceERP_ParteII_Test_1792366006342_76351025",
+  "isolation": {
+    "newDatabaseOnly": true,
+    "guardPerBatch": true,
+    "runToken": true,
+    "dropDatabaseUsed": false,
+    "fullSourceModified": false,
+    "originalWrites": false,
+    "retainedForInspection": true
+  },
+  "migrations": {
+    "files": [
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "passes": 2,
+    "duplicateObjects": false,
+    "modulesRefreshed": 49
+  },
+  "tests": [
+    {
+      "id": 1,
+      "description": "Proveedor registrado",
+      "result": "PASS",
+      "expectedError": null,
+      "errorMessage": null
+    },
+    {
+      "id": 2,
+      "description": "SKU unico",
+      "result": "PASS",
+      "expectedError": 2627,
+      "errorMessage": "Violation of UNIQUE KEY constraint 'UQ_Producto_Codigo'. Cannot insert duplicate key in object 'dbo.Producto'. The duplicate key value is (7386DE97350249D18E5D61A5F866A750)."
+    },
+    {
+      "id": 3,
+      "description": "Costo no negativo",
+      "result": "PASS",
+      "expectedError": 54102,
+      "errorMessage": "Datos de producto invalidos."
+    },
+    {
+      "id": 4,
+      "description": "Ingreso compra",
+      "result": "PASS",
+      "expectedError": null,
+      "errorMessage": null
+    },
+    {
+      "id": 5,
+      "description": "Egreso y saldo",
+      "result": "PASS",
+      "expectedError": null,
+      "errorMessage": null
+    },
+    {
+      "id": 6,
+      "description": "Stock negativo",
+      "result": "PASS",
+      "expectedError": 54113,
+      "errorMessage": "Stock insuficiente o fuera de rango."
+    },
+    {
+      "id": 7,
+      "description": "Rollback posterior a stock",
+      "result": "PASS",
+      "expectedError": 547,
+      "errorMessage": "The INSERT statement conflicted with the CHECK constraint \"CK_Kardex_PruebaRollback\". The conflict occurred in database \"SecureFinanceERP_ParteII_Test_1792366006342_76351025\", table \"dbo.Kardex_Inventario\", column 'Motivo'."
+    },
+    {
+      "id": 8,
+      "description": "Reintento identico",
+      "result": "PASS",
+      "expectedError": null,
+      "errorMessage": null
+    },
+    {
+      "id": 9,
+      "description": "Reintento conflictivo",
+      "result": "PASS",
+      "expectedError": 54112,
+      "errorMessage": "Clave idempotente reutilizada con datos distintos."
+    },
+    {
+      "id": 10,
+      "description": "Cambio NIT",
+      "result": "PASS",
+      "expectedError": null,
+      "errorMessage": null
+    },
+    {
+      "id": 11,
+      "description": "NIT duplicado",
+      "result": "PASS",
+      "expectedError": 2627,
+      "errorMessage": "Violation of UNIQUE KEY constraint 'UQ_Cliente_NIT'. Cannot insert duplicate key in object 'dbo.Cliente'. The duplicate key value is (BA8820DAF0A4441BC9A23185)."
+    },
+    {
+      "id": 12,
+      "description": "Inactivacion y factura",
+      "result": "PASS",
+      "expectedError": null,
+      "errorMessage": null
+    },
+    {
+      "id": 13,
+      "description": "Identidad de emision",
+      "result": "PASS",
+      "expectedError": null,
+      "errorMessage": null
+    },
+    {
+      "id": 14,
+      "description": "DML set based y no-op",
+      "result": "PASS",
+      "expectedError": null,
+      "errorMessage": null
+    },
+    {
+      "id": 15,
+      "description": "Permisos minimos",
+      "result": "PASS",
+      "expectedError": null,
+      "errorMessage": null
+    },
+    {
+      "id": 16,
+      "description": "Compatibilidad Parte I",
+      "result": "PASS",
+      "expectedError": null,
+      "errorMessage": null
+    },
+    {
+      "id": 17,
+      "description": "Cliente inactivo no vende",
+      "result": "PASS",
+      "expectedError": 52006,
+      "errorMessage": "El cliente está inactivo."
+    },
+    {
+      "id": 18,
+      "description": "Concurrencia optimista",
+      "result": "PASS",
+      "expectedError": 54103,
+      "errorMessage": "Cliente inexistente o version obsoleta."
+    },
+    {
+      "id": 19,
+      "description": "Fotografia insegura",
+      "result": "PASS",
+      "expectedError": 54102,
+      "errorMessage": "Fotografia: solo UUID canonico en minusculas y extension jpg/png."
+    },
+    {
+      "id": 20,
+      "description": "FK proveedor",
+      "result": "PASS",
+      "expectedError": 547,
+      "errorMessage": "The UPDATE statement conflicted with the FOREIGN KEY constraint \"FK_Producto_Proveedor\". The conflict occurred in database \"SecureFinanceERP_ParteII_Test_1792366006342_76351025\", table \"dbo.Proveedor\", column 'ProveedorId'."
+    },
+    {
+      "id": 21,
+      "description": "RBAC actor",
+      "result": "PASS",
+      "expectedError": 54101,
+      "errorMessage": "Usuario inactivo o permiso insuficiente."
+    },
+    {
+      "id": 22,
+      "description": "Kardex bloqueado antes de apertura",
+      "result": "PASS",
+      "expectedError": 54110,
+      "errorMessage": "Kardex deshabilitado: requiere apertura e integracion aprobadas."
+    },
+    {
+      "id": 23,
+      "description": "Kardex inmutable",
+      "result": "PASS",
+      "expectedError": 54201,
+      "errorMessage": "Kardex inmutable; utilice un movimiento compensatorio autorizado."
+    },
+    {
+      "id": 24,
+      "description": "Snapshot inmutable",
+      "result": "PASS",
+      "expectedError": 54202,
+      "errorMessage": "Identidad de emision inmutable."
+    },
+    {
+      "id": 25,
+      "description": "NIT vacio",
+      "result": "PASS",
+      "expectedError": 54102,
+      "errorMessage": "NIT invalido; use letras y numeros sin separadores."
+    },
+    {
+      "id": 26,
+      "description": "Devolucion preparada",
+      "result": "PASS",
+      "expectedError": null,
+      "errorMessage": null
+    },
+    {
+      "id": 27,
+      "description": "Factura anterior sin reconstruccion",
+      "result": "PASS",
+      "expectedError": null,
+      "errorMessage": null
+    },
+    {
+      "id": 28,
+      "description": "Egreso por venta",
+      "result": "PASS",
+      "expectedError": null,
+      "errorMessage": null
+    }
+  ],
+  "supplemental": [
+    {
+      "id": "S1",
+      "description": "Consultas Kardex y clientes inactivos con resultados comprobados",
+      "result": "PASS"
+    },
+    {
+      "id": "S2",
+      "description": "DML directo de securefinance_app rechazado",
+      "result": "PASS",
+      "expectedError": 229
+    },
+    {
+      "id": "S3",
+      "description": "Actor activo sin permiso de inventario rechazado",
+      "result": "PASS",
+      "expectedError": 54101
+    },
+    {
+      "id": "S4",
+      "description": "CHECK PrecioCosto rechaza DML negativo",
+      "result": "PASS",
+      "expectedError": 547
+    }
+  ],
+  "legacyAudit": "PASS",
+  "original": {
+    "match": true,
+    "before": {
+      "Producto": "86AA711A5571E436168A07990113C9D3BCEDCAEF1F4F9397B7A8318DF0F377DD",
+      "Factura": "37E0DFBBFFF4749986EAED3E7555CA4FCB238327BE7D1C6DB73B01F69DC26E14",
+      "DetalleFactura": "F2A1E9F8D773D86037E6FD18702EC1950F5185050DCCDBC49DEE5B21B848CF40",
+      "MovimientoCaja": "074DD7250E544D8365E9B4923ED31A840D60A20B6AE85024ECF0462B2DDDE979",
+      "Usuario_Rol": "1499104EDB1B7E8F372617C520D98485BD35C274F7F765603E49F4D3C650F715",
+      "Rol_Permiso": "626DAB9EABAC04B6FAE392AB7C7D191E7AF77FAB28F53B6A060D205FCA4A771E",
+      "Modulos": "4C0CD36E1629DB55BC3858E5834899FE3580A88C93DA92EA500417B1B6C14C55"
+    },
+    "after": {
+      "Producto": {
+        "rows": 4,
+        "sha256": "86AA711A5571E436168A07990113C9D3BCEDCAEF1F4F9397B7A8318DF0F377DD"
+      },
+      "Factura": {
+        "rows": 14,
+        "sha256": "37E0DFBBFFF4749986EAED3E7555CA4FCB238327BE7D1C6DB73B01F69DC26E14"
+      },
+      "DetalleFactura": {
+        "rows": 19,
+        "sha256": "F2A1E9F8D773D86037E6FD18702EC1950F5185050DCCDBC49DEE5B21B848CF40"
+      },
+      "MovimientoCaja": {
+        "rows": 14,
+        "sha256": "074DD7250E544D8365E9B4923ED31A840D60A20B6AE85024ECF0462B2DDDE979"
+      },
+      "Usuario_Rol": {
+        "rows": 5,
+        "sha256": "1499104EDB1B7E8F372617C520D98485BD35C274F7F765603E49F4D3C650F715"
+      },
+      "Rol_Permiso": {
+        "rows": 5,
+        "sha256": "626DAB9EABAC04B6FAE392AB7C7D191E7AF77FAB28F53B6A060D205FCA4A771E"
+      },
+      "Modulos": {
+        "rows": 29,
+        "sha256": "4C0CD36E1629DB55BC3858E5834899FE3580A88C93DA92EA500417B1B6C14C55"
+      }
+    },
+    "kardex": "NO_INSTALADO",
+    "configuration": "NO_INSTALADO",
+    "finalMatch": true
+  },
+  "isolatedFinalState": {
+    "modules": 49,
+    "triggers": 11,
+    "providers": 0,
+    "kardexRows": 0,
+    "kardexEnabled": 0,
+    "initialInvoiceFixture": 1
+  },
+  "node": {
+    "check": "PASS",
+    "tests": 43,
+    "fail": 0,
+    "ui": "PASS outside sandbox"
+  },
+  "failuresCorrected": [
+    {
+      "code": 1046,
+      "cause": "Subquery in PRINT CONCAT in test reporting",
+      "fix": "Use scalar description variable"
+    },
+    {
+      "code": 3930,
+      "cause": "REVERT before rollback of uncommittable impersonated test transaction",
+      "fix": "ROLLBACK before REVERT in test cleanup"
+    },
+    {
+      "code": 1934,
+      "cause": "Standalone test connection lacked explicit QUOTED_IDENTIFIER ON",
+      "fix": "Declare indexed-column SET options explicitly in SQL test suites"
+    }
+  ],
+  "retainedDatabases": [
+    "SecureFinanceERP_ParteII_Test_1792365382576_313642141",
+    "SecureFinanceERP_ParteII_Test_1792365906886_506275306",
+    "SecureFinanceERP_ParteII_Test_1792365969648_960956203",
+    "SecureFinanceERP_ParteII_Test_1792366006342_76351025"
+  ],
+  "pending": [
+    "Two-session simultaneous concurrency tests",
+    "Approved inventory opening and replacement of existing sale stock update",
+    "Production deployment approval"
+  ],
+  "commitCreated": false,
+  "pushed": false
+}

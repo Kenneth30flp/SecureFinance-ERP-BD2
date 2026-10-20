@@ -6,38 +6,23 @@
   <title>Auditoría | SecureFinance ERP</title>
   <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/visual.js" defer></script>
 </head>
-<body class="app-shell">
+<body class="app-shell auditoria-workspace">
 <a class="skip-link" href="#workspace">Ir al contenido</a>
-  <aside class="sidebar">
-    <a class="brand-title" href="/dashboard"><svg class="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M23 8H9v15h14v17H7M30 40V8h13M30 23h11" stroke="currentColor" stroke-width="4"/><path d="M7 31h9M37 33h6" stroke="var(--copper-soft)" stroke-width="3"/></svg><span>SecureFinance<small>ERP / Operations desk</small></span></a>
-    <p class="nav-label">ÁREA DE TRABAJO</p>
-    <nav class="desk-nav" aria-label="Principal">
-      <a href="/dashboard" ><span>00</span>Dashboard</a>
-      <% if (usuario.permisos.includes('VENTAS_REGISTRAR')) { %><a href="/facturacion" ><span>01</span>Facturación</a><% } %>
-      <% if (usuario.permisos.includes('AUDITORIA_CONSULTAR')) { %><a href="/auditoria" aria-current="page"><span>02</span>Auditoría</a><% } %>
-      <% if (usuario.permisos.includes('USUARIOS_ADMINISTRAR')) { %><a href="/usuarios"><span>03</span>Usuarios y Roles</a><% } %>
-    </nav>
-    <div class="sidebar-account"><span class="nav-label">USUARIO ACTUAL</span><strong><%= usuario.nombreUsuario %></strong><a class="access-link" href="/cambiar-password">Cambiar contraseña</a><a class="btn btn-nav" href="/logout">Cerrar sesión <span aria-hidden="true">&nearr;</span></a></div>
-    <span class="sidebar-foot">SECUREFINANCE / ERP</span>
-  </aside>
+  <%- include('partials/navigation', { actual: 'auditoria', rolesCuenta: '' }) %>
 
-  <main id="workspace" class="container audit-content page-content">
+  <main tabindex="-1" id="workspace" class="container audit-content page-content">
     <% const jsonLegible = (valor) => { if (!valor) return 'Sin valor'; try { return JSON.stringify(JSON.parse(valor), null, 2); } catch { return String(valor); } }; %>
     <% const fechaLegible = (valor) => { const fecha = new Date(valor); return valor && !Number.isNaN(fecha.getTime()) ? fecha.toLocaleString('es-GT', { timeZone: 'America/Guatemala' }) : '-'; }; %>
-    <div class="page-header"><p class="eyebrow mb-2">CONTROL / 02 · Observabilidad</p>
-    <h1 class="h2 fw-bold mb-2">AUDITORÍA</h1><p class="text-secondary">Control y trazabilidad del sistema</p></div>
+    <div class="page-header"><p class="eyebrow mb-2">Compliance operations center</p>
+    <h1 class="h2 fw-bold mb-2">Control y trazabilidad</h1><p class="text-secondary">Control y trazabilidad del sistema</p></div>
 
     <% if (error) { %><div class="alert desk-message alert-danger" data-marker="×" role="alert"><%= error %> <a href="/auditoria">Intentar nuevamente</a></div><% } else { %>
     <dl class="audit-metrics" aria-label="Registros mostrados"><div><dt>Accesos registrados</dt><dd><%= bitacoraAcceso.length %></dd></div><div><dt>Eventos DML</dt><dd><%= auditoriaDml.length %></dd></div><div><dt>Ventas mostradas</dt><dd><%= historicoVentas.length %></dd></div></dl>
-    <nav class="audit-subnav" aria-label="Vistas de auditoría">
-      <% [['acceso', '01', 'Bitácora de acceso'], ['dml', '02', 'Auditoría DML'], ['ventas', '03', 'Histórico de ventas']].forEach(([clave, indice, titulo]) => { %>
-        <a href="/auditoria?vista=<%= clave %>" <%- vista === clave ? 'aria-current="page"' : '' %>><span><%= indice %></span><%= titulo %><small class="tab-count" aria-label="Registros"><%= ({ acceso: bitacoraAcceso.length, dml: auditoriaDml.length, ventas: historicoVentas.length })[clave] %></small></a>
-      <% }); %>
-    </nav>
-    <section class="filter-panel">
+<div class="audit-workspace">    <aside class="filter-panel" aria-label="Filtros de auditoría">
       <div class="panel-body">
-        <h2 class="h5 mb-3">Filtros · <%= ({ acceso: 'Bitácora de acceso', dml: 'Auditoría DML', ventas: 'Histórico de ventas' })[vista] %></h2>
+        <h2 class="h5 mb-3"><%- include('partials/icon',{nombre:'filter'}) %>Filtros · <%= ({ acceso: 'Bitácora de acceso', dml: 'Auditoría DML', ventas: 'Histórico de ventas' })[vista] %></h2>
         <form method="GET" action="/auditoria" class="filter-grid">
           <input type="hidden" name="vista" value="<%= vista %>">
           <div class="filter-field">
@@ -84,13 +69,17 @@
           </div>
         </form>
       </div>
-    </section>
+        <p class="audit-context">Los filtros se aplican únicamente a la vista seleccionada. Fechas de filtro en UTC; horarios de Guatemala (UTC−6).</p></aside><div class="audit-records">    <nav class="audit-subnav" aria-label="Vistas de auditoría">
+      <% [['acceso', '01', 'Bitácora de acceso'], ['dml', '02', 'Auditoría DML'], ['ventas', '03', 'Histórico de ventas']].forEach(([clave, indice, titulo]) => { %>
+        <a href="/auditoria?vista=<%= clave %>" <%- vista === clave ? 'aria-current="page"' : '' %>><%- include('partials/icon',{nombre: clave === 'acceso' ? 'key' : clave === 'dml' ? 'activity' : 'receipt'}) %><%= titulo %><small class="tab-count" aria-label="Registros"><%= ({ acceso: bitacoraAcceso.length, dml: auditoriaDml.length, ventas: historicoVentas.length })[clave] %></small></a>
+      <% }); %>
+    </nav>
 
-    <p class="audit-context">Los filtros se aplican únicamente a la vista seleccionada. Fechas de filtro en UTC; horarios de Guatemala (UTC−6).</p>
+
     <% if (vista === 'acceso') { %>
     <section class="log-panel" id="vista-acceso">
       <div class="panel-body">
-        <h2 class="h5 mb-3"><span class="section-index">01</span> BITÁCORA DE ACCESO</h2>
+        <h2 class="h5 mb-3">BITÁCORA DE ACCESO</h2>
         <% if (bitacoraAcceso.length) { %>
           <div class="table-responsive audit-scroll" tabindex="0" role="region" aria-label="Bitácora de acceso">
             <table class="table table-modern align-middle">
@@ -110,7 +99,7 @@
                   <tr>
                     <td class="timestamp"><%= fechaLegible(registro.FechaHora) %></td>
                     <td><%= registro.NombreUsuarioIntentado %></td>
-                    <td><span class="status-badge <%= ({ EXITOSO: 'status-success', PASSWORD_INCORRECTA: 'status-danger', USUARIO_INACTIVO: 'status-warning', USUARIO_INEXISTENTE: 'status-neutral' })[registro.Resultado] || 'status-neutral' %>"><%= registro.Resultado %></span></td>
+                    <td><span class="status-badge <%= ({ EXITOSO: 'status-success', PASSWORD_INCORRECTA: 'status-danger', USUARIO_INACTIVO: 'status-warning', USUARIO_INEXISTENTE: 'status-danger' })[registro.Resultado] || 'status-neutral' %>"><%= registro.Resultado %></span></td>
                     <td><%= registro.HostName || '-' %></td>
                     <td><%= registro.AppName || '-' %></td>
                     <td><%= registro.UsuarioSQL || '-' %></td>
@@ -129,7 +118,7 @@
     <% } else if (vista === 'dml') { %>
     <section class="log-panel" id="vista-dml">
       <div class="panel-body">
-        <h2 class="h5 mb-3"><span class="section-index">02</span> AUDITORÍA DML</h2>
+        <h2 class="h5 mb-3">AUDITORÍA DML</h2>
         <% if (auditoriaDml.length) { %>
           <div class="table-responsive audit-scroll" tabindex="0" role="region" aria-label="Registros DML">
             <table class="table table-modern align-middle">
@@ -172,7 +161,7 @@
     <% } else { %>
     <section class="log-panel" id="vista-ventas">
       <div class="panel-body">
-        <h2 class="h5 mb-3"><span class="section-index">03</span> HISTÓRICO DE VENTAS</h2>
+        <h2 class="h5 mb-3">HISTÓRICO DE VENTAS</h2>
         <% if (historicoVentas.length) { %>
           <div class="table-responsive audit-scroll" tabindex="0" role="region" aria-label="Histórico de ventas">
             <table class="table table-modern align-middle">
@@ -212,6 +201,7 @@
       </div>
     </section>
     <% } %>
+    </div></div>
     <% } %>
   </main>
 </body>

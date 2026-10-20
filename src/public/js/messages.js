@@ -6,6 +6,8 @@ window.SecureFinanceMessages = Object.freeze({
     target.className = 'alert desk-message alert-' + type;
     target.setAttribute('data-marker', markers[type]);
     target.setAttribute('role', type === 'danger' || type === 'warning' ? 'alert' : 'status');
+    target.setAttribute('aria-live', type === 'danger' || type === 'warning' ? 'assertive' : 'polite');
+    target.setAttribute('aria-atomic', 'true');
     target.textContent = text;
     target.hidden = false;
   },

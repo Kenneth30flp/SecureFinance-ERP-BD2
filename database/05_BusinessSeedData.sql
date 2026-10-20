@@ -2,6 +2,17 @@ USE [SecureFinanceERP];
 GO
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
+-- No sample business records unless explicitly enabled in this SQL session.
+IF COALESCE(TRY_CONVERT(BIT, SESSION_CONTEXT(N'SecureFinance.AllowAcademicSeed')),0) <> 1
+BEGIN
+    PRINT N'SKIP: academic business seed not enabled.';
+    RETURN;
+END;
+-- Never seed a database with issued invoices, even with an opt-in flag.
+IF EXISTS (SELECT 1 FROM dbo.Factura)
+    THROW 54950, 'Academic seed is blocked on databases with invoices.', 1;
+IF OBJECT_ID(N'dbo.Kardex_Inventario',N'U') IS NOT NULL
+    EXEC sys.sp_executesql N'IF EXISTS(SELECT 1 FROM dbo.Kardex_Inventario) THROW 54950, ''Academic seed is blocked on databases with Kardex.'', 1;';
 -- Ficticios. Reejecutar no repone stock ni cambia precios/estados existentes.
 BEGIN TRY
     BEGIN TRANSACTION;

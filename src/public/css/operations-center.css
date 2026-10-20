@@ -1,0 +1,46 @@
+/* Financial Operations Center. Scoped to the dashboard; existing dark tokens. */
+.operations-center { max-width:1800px; padding:30px 32px 40px; }
+.oc-heading { display:flex; align-items:center; justify-content:space-between; gap:24px; padding-bottom:26px; border-bottom:var(--border-soft); }
+.oc-heading h1 { font-size:clamp(1.7rem,2.6vw,2.7rem); margin-bottom:10px; }
+.oc-heading p { color:var(--color-muted); margin-bottom:0; }
+.oc-period { display:grid; gap:4px; text-align:right; flex-shrink:0; font-variant-numeric:tabular-nums; }
+.oc-period span,.oc-period small { color:var(--color-muted); font-size:.8rem; }
+.oc-period strong { font-size:1.15rem; }
+.oc-grid { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:28px 36px; padding-top:26px; }
+.oc-grid > section { min-width:0; }
+.oc-day { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto; gap:12px 28px; align-items:center; background:var(--color-white); border-left:3px solid var(--color-blue); padding:20px 24px; margin-top:24px; }
+.oc-day > .oc-section-heading { grid-column:1/-1; margin-bottom:0; }
+.oc-section-heading { display:flex; justify-content:space-between; align-items:baseline; gap:16px; margin-bottom:16px; }
+.oc-section-heading h2 { font-size:1.05rem; margin:0; }
+.oc-section-heading > span { font-size:.8rem; color:var(--color-muted); }
+.oc-sales { padding-block:8px; }
+.oc-sales > span { color:var(--color-muted); }
+.oc-sales > strong { display:block; font-size:clamp(1.8rem,2.7vw,2.8rem); line-height:1.2; margin-block:8px; letter-spacing:-.04em; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.oc-sales.is-zero > strong { font-size:1.8rem; font-weight:600; }
+.oc-sales p { font-size:.85rem; color:var(--color-muted); max-width:36em; }
+.oc-day-bottom { display:flex; gap:24px; padding-left:24px; border-left:var(--border-soft); }
+.oc-day-bottom > div { display:grid; gap:6px; flex:1; }
+.oc-day-bottom span { font-size:.85rem; color:var(--color-muted); }
+.oc-day-bottom strong { font-size:1.5rem; font-variant-numeric:tabular-nums; }
+.oc-day-bottom a { font-size:.85rem; }
+.oc-primary { display:flex; align-items:center; gap:12px; background:#3458d4; color:#fff; padding:13px 16px; border-radius:4px; font-weight:600; text-decoration:none; }
+.oc-primary:hover { background:#2949b5; color:#fff; }.oc-primary > span { margin-left:auto; }
+.oc-operation-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 24px; }
+.oc-operation-list > a { display:flex; align-items:center; gap:12px; padding:12px 4px; min-height:72px; border-bottom:var(--border-soft); color:var(--color-text); text-decoration:none; }
+.oc-operation-list > a:hover { background:var(--color-soft); }.oc-operation-icon { color:var(--color-blue-hover); }
+.oc-operation-list strong,.oc-operation-list small { display:block; }.oc-operation-list strong { font-size:1rem; margin-bottom:4px; }
+.oc-operation-list small { font-size:.83rem; color:var(--color-muted); line-height:1.5; }.oc-arrow { margin-left:auto; color:var(--color-muted); }
+.oc-supply { padding-right:24px; border-right:var(--border-soft); }
+.oc-inventory-state { color:var(--color-teal-text) !important; }
+.oc-inventory-state.is-disabled { color:var(--color-warning) !important; }
+.oc-stock-summary.is-clear strong { font-size:1rem; font-weight:500; }
+.oc-stock-summary.is-clear span { color:var(--color-muted); }
+.oc-attention { border-left:3px solid var(--color-warning); padding:10px 14px; margin:16px 0; color:var(--color-muted); font-size:.9rem; }
+.oc-attention strong { display:block; color:var(--color-warning); margin-bottom:5px; }
+.oc-stock-summary { display:flex; flex-wrap:wrap; align-items:baseline; gap:12px 32px; margin-bottom:14px; }.oc-stock-summary p { margin:0; font-size:.85rem; color:var(--color-muted); }.oc-stock-summary strong { color:var(--color-text); font-size:1.5rem; margin-right:8px; }.oc-stock-summary span { color:var(--color-warning); }
+.oc-table-scroll { max-width:100%; overflow:auto; }.oc-stock-table { width:100%; font-size:.9rem; min-width:600px; }.oc-stock-table th,.oc-stock-table td { padding:14px 12px; border-bottom:var(--border-soft); }.oc-stock-table thead th { color:var(--color-muted); font-weight:500; }.oc-stock-table tbody th { font-weight:600; }.oc-stock-table small { display:block; color:var(--color-muted); font-weight:400; margin-top:4px; }.oc-stock-table caption { caption-side:top; color:var(--color-muted); font-size:.8rem; }.oc-stock-table td { font-variant-numeric:tabular-nums; }.oc-critical { color:var(--color-warning); }
+.oc-text-link { display:inline-block; padding-block:14px; font-size:.9rem; }.oc-empty { padding:18px 0; margin:0; color:var(--color-muted); line-height:1.7; }.oc-warning { background:var(--color-warning-bg); border-left:3px solid var(--color-warning); padding:14px 18px; margin:20px 0; }
+.oc-account { border-top:var(--border-soft); margin-top:22px; padding-top:16px; }.oc-account summary { cursor:pointer; padding-block:12px; font-weight:600; }.oc-account summary span { color:var(--color-muted); font-size:.85rem; font-weight:400; margin-left:14px; }.oc-account p { color:var(--color-muted); }.oc-permissions { display:flex; flex-wrap:wrap; gap:8px 20px; padding-left:20px; color:var(--color-muted); font-size:.85rem; overflow-wrap:anywhere; }
+@media(max-width:1100px){.oc-day { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }.oc-primary { grid-column:1/-1; justify-content:center; }}
+@media(max-width:1000px){.oc-grid { grid-template-columns:minmax(0,1fr); }.oc-supply { padding:0 0 20px; border-right:0; border-bottom:var(--border-soft); }.operations-center { padding-inline:24px; }}
+@media(max-width:600px){.operations-center { padding:24px 16px; }.oc-heading { align-items:start; flex-direction:column; gap:16px; }.oc-period { text-align:left; }.oc-day { grid-template-columns:minmax(0,1fr); padding:18px; gap:14px; }.oc-section-heading { flex-wrap:wrap; gap:8px; }.oc-operation-list { grid-template-columns:minmax(0,1fr); }.oc-day-bottom { flex-wrap:wrap; gap:20px; padding:12px 0; border-left:0; border-top:var(--border-soft); }.oc-day-bottom > div { min-width:110px; }.oc-sales > strong { font-size:2rem; }}

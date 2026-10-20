@@ -38,6 +38,9 @@ BEGIN TRY
     WHERE NOT EXISTS (SELECT 1 FROM dbo.Rol_Permiso WITH (UPDLOCK, HOLDLOCK)
                       WHERE RolId = r.RolId AND PermisoId = p.PermisoId);
 
+    -- Academic identities are opt-in; core roles and permissions above are not demo data.
+    IF TRY_CONVERT(BIT, SESSION_CONTEXT(N'SecureFinance.AllowAcademicSeed')) = 1
+    BEGIN
     DECLARE @UsuarioId INT, @Codigo INT;
     SELECT @UsuarioId = UsuarioId FROM dbo.Usuario WITH (UPDLOCK, HOLDLOCK)
     WHERE NombreUsuario = N'admin';
@@ -59,8 +62,9 @@ BEGIN TRY
     WHERE r.Nombre = N'Administrador'
       AND NOT EXISTS (SELECT 1 FROM dbo.Usuario_Rol WITH (UPDLOCK, HOLDLOCK)
                       WHERE UsuarioId = @UsuarioId AND RolId = r.RolId);
+    END;
     COMMIT TRANSACTION;
-    PRINT N'OK: semillas DEMO disponibles; datos existentes conservados.';
+    PRINT N'OK: seguridad base configurada; identidades existentes conservadas.';
 END TRY
 BEGIN CATCH
     IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;

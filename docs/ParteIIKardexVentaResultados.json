@@ -1,0 +1,710 @@
+{
+  "database": "SecureFinanceERP_ParteII_Test_Kardex_65c03d7b4cf943e09fa7d8751e04869f",
+  "server": "localhost,1433",
+  "results": [
+    {
+      "id": "F1",
+      "description": "Proveedor registrado|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "F2",
+      "description": "SKU unico|ErrorEsperado=2627",
+      "result": "PASS"
+    },
+    {
+      "id": "F3",
+      "description": "Costo no negativo|ErrorEsperado=54102",
+      "result": "PASS"
+    },
+    {
+      "id": "F4",
+      "description": "Ingreso compra|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "F5",
+      "description": "Egreso y saldo|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "F6",
+      "description": "Stock negativo|ErrorEsperado=54113",
+      "result": "PASS"
+    },
+    {
+      "id": "F7",
+      "description": "Rollback posterior a stock|ErrorEsperado=547",
+      "result": "PASS"
+    },
+    {
+      "id": "F8",
+      "description": "Reintento identico|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "F9",
+      "description": "Reintento conflictivo|ErrorEsperado=54112",
+      "result": "PASS"
+    },
+    {
+      "id": "F10",
+      "description": "Cambio NIT|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "F11",
+      "description": "NIT duplicado|ErrorEsperado=2627",
+      "result": "PASS"
+    },
+    {
+      "id": "F12",
+      "description": "Inactivacion y factura|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "F13",
+      "description": "Identidad de emision|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "F14",
+      "description": "DML set based y no-op|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "F15",
+      "description": "Permisos minimos|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "F16",
+      "description": "Compatibilidad Parte I|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "F17",
+      "description": "Cliente inactivo no vende|ErrorEsperado=52006",
+      "result": "PASS"
+    },
+    {
+      "id": "F18",
+      "description": "Concurrencia optimista|ErrorEsperado=54103",
+      "result": "PASS"
+    },
+    {
+      "id": "F19",
+      "description": "Fotografia insegura|ErrorEsperado=54102",
+      "result": "PASS"
+    },
+    {
+      "id": "F20",
+      "description": "FK proveedor|ErrorEsperado=547",
+      "result": "PASS"
+    },
+    {
+      "id": "F21",
+      "description": "RBAC actor|ErrorEsperado=54101",
+      "result": "PASS"
+    },
+    {
+      "id": "F22",
+      "description": "Kardex bloqueado antes de apertura|ErrorEsperado=54110",
+      "result": "PASS"
+    },
+    {
+      "id": "F23",
+      "description": "Kardex inmutable|ErrorEsperado=54201",
+      "result": "PASS"
+    },
+    {
+      "id": "F24",
+      "description": "Snapshot inmutable|ErrorEsperado=54202",
+      "result": "PASS"
+    },
+    {
+      "id": "F25",
+      "description": "NIT vacio|ErrorEsperado=54102",
+      "result": "PASS"
+    },
+    {
+      "id": "F26",
+      "description": "Devolucion preparada|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "F27",
+      "description": "Factura anterior sin reconstruccion|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "F28",
+      "description": "Egreso por venta|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "FS1",
+      "description": "ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "FS2",
+      "description": "ErrorEsperado=229",
+      "result": "PASS"
+    },
+    {
+      "id": "FS3",
+      "description": "ErrorEsperado=54101",
+      "result": "PASS"
+    },
+    {
+      "id": "FS4",
+      "description": "ErrorEsperado=547",
+      "result": "PASS"
+    },
+    {
+      "id": "FAUDIT",
+      "description": "Auditoria e historico heredados",
+      "result": "PASS"
+    },
+    {
+      "id": "I01",
+      "description": "Migracion 21 repetible sin apertura ni duplicados",
+      "result": "PASS",
+      "evidence": {
+        "repeated": true,
+        "openingNotExecuted": true
+      }
+    },
+    {
+      "id": "R1",
+      "description": "Proveedor registrado|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "R2",
+      "description": "SKU unico|ErrorEsperado=2627",
+      "result": "PASS"
+    },
+    {
+      "id": "R3",
+      "description": "Costo no negativo|ErrorEsperado=54102",
+      "result": "PASS"
+    },
+    {
+      "id": "R4",
+      "description": "Ingreso compra|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "R5",
+      "description": "Egreso y saldo|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "R6",
+      "description": "Stock negativo|ErrorEsperado=54113",
+      "result": "PASS"
+    },
+    {
+      "id": "R7",
+      "description": "Rollback posterior a stock|ErrorEsperado=547",
+      "result": "PASS"
+    },
+    {
+      "id": "R8",
+      "description": "Reintento identico|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "R9",
+      "description": "Reintento conflictivo|ErrorEsperado=54112",
+      "result": "PASS"
+    },
+    {
+      "id": "R10",
+      "description": "Cambio NIT|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "R11",
+      "description": "NIT duplicado|ErrorEsperado=2627",
+      "result": "PASS"
+    },
+    {
+      "id": "R12",
+      "description": "Inactivacion y factura|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "R13",
+      "description": "Identidad de emision|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "R14",
+      "description": "DML set based y no-op|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "R15",
+      "description": "Permisos minimos|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "R16",
+      "description": "Compatibilidad Parte I|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "R17",
+      "description": "Cliente inactivo no vende|ErrorEsperado=52006",
+      "result": "PASS"
+    },
+    {
+      "id": "R18",
+      "description": "Concurrencia optimista|ErrorEsperado=54103",
+      "result": "PASS"
+    },
+    {
+      "id": "R19",
+      "description": "Fotografia insegura|ErrorEsperado=54102",
+      "result": "PASS"
+    },
+    {
+      "id": "R20",
+      "description": "FK proveedor|ErrorEsperado=547",
+      "result": "PASS"
+    },
+    {
+      "id": "R21",
+      "description": "RBAC actor|ErrorEsperado=54101",
+      "result": "PASS"
+    },
+    {
+      "id": "R22",
+      "description": "Kardex bloqueado antes de apertura|ErrorEsperado=54110",
+      "result": "PASS"
+    },
+    {
+      "id": "R23",
+      "description": "Kardex inmutable|ErrorEsperado=54201",
+      "result": "PASS"
+    },
+    {
+      "id": "R24",
+      "description": "Snapshot inmutable|ErrorEsperado=54202",
+      "result": "PASS"
+    },
+    {
+      "id": "R25",
+      "description": "NIT vacio|ErrorEsperado=54102",
+      "result": "PASS"
+    },
+    {
+      "id": "R26",
+      "description": "Devolucion preparada|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "R27",
+      "description": "Factura anterior sin reconstruccion|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "R28",
+      "description": "Egreso por venta|ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "RS1",
+      "description": "ErrorEsperado=ninguno",
+      "result": "PASS"
+    },
+    {
+      "id": "RS2",
+      "description": "ErrorEsperado=229",
+      "result": "PASS"
+    },
+    {
+      "id": "RS3",
+      "description": "ErrorEsperado=54101",
+      "result": "PASS"
+    },
+    {
+      "id": "RS4",
+      "description": "ErrorEsperado=547",
+      "result": "PASS"
+    },
+    {
+      "id": "RAUDIT",
+      "description": "Auditoria e historico heredados",
+      "result": "PASS"
+    },
+    {
+      "id": "I02",
+      "description": "Apertura conserva todas las existencias previas",
+      "result": "PASS",
+      "evidence": {
+        "products": 5,
+        "stockNotAdded": true
+      }
+    },
+    {
+      "id": "I03",
+      "description": "Apertura repetible y referencia inequivoca",
+      "result": "PASS",
+      "evidence": {
+        "duplicated": false
+      }
+    },
+    {
+      "id": "I04",
+      "description": "Habilitacion explicita posterior a conciliacion",
+      "result": "PASS",
+      "evidence": {
+        "Habilitado": true,
+        "IntegracionVersion": 2
+      }
+    },
+    {
+      "id": "I05",
+      "description": "Ejemplo apertura 20 y venta 3: saldo 17",
+      "result": "PASS",
+      "evidence": {
+        "Stock": 17,
+        "Apertura": 20,
+        "Anterior": 20
+      }
+    },
+    {
+      "id": "M01",
+      "description": "Adaptador sin descuento",
+      "result": "PASS",
+      "evidence": {
+        "FacturaId": 18,
+        "Subtotal": "71.80",
+        "Descuento": "0.00",
+        "Neto": "71.80",
+        "IVA": "8.62",
+        "Total": "80.42",
+        "Caja": "80.42",
+        "Movimientos": 1
+      }
+    },
+    {
+      "id": "M02",
+      "description": "Cajero descuento maximo 10%",
+      "result": "PASS",
+      "evidence": {
+        "FacturaId": 19,
+        "Subtotal": "71.80",
+        "Descuento": "7.18",
+        "Neto": "64.62",
+        "IVA": "7.75",
+        "Total": "72.37",
+        "Caja": "72.37",
+        "Movimientos": 1
+      }
+    },
+    {
+      "id": "M03",
+      "description": "Administrador descuento 25%",
+      "result": "PASS",
+      "evidence": {
+        "FacturaId": 20,
+        "Subtotal": "71.80",
+        "Descuento": "17.95",
+        "Neto": "53.85",
+        "IVA": "6.46",
+        "Total": "60.31",
+        "Caja": "60.31",
+        "Movimientos": 1
+      }
+    },
+    {
+      "id": "M04",
+      "description": "Administrador descuento maximo 100%",
+      "result": "PASS",
+      "evidence": {
+        "FacturaId": 21,
+        "Subtotal": "71.80",
+        "Descuento": "71.80",
+        "Neto": "0.00",
+        "IVA": "0.00",
+        "Total": "0.00",
+        "Caja": "0.00",
+        "Movimientos": 1
+      }
+    },
+    {
+      "id": "M05",
+      "description": "Cajero no puede exceder 10%",
+      "result": "PASS",
+      "evidence": {
+        "Error": 52012,
+        "FacturaId": null,
+        "Transacciones": 0
+      }
+    },
+    {
+      "id": "M06",
+      "description": "Descuento fuera de 0..100 rechazado",
+      "result": "PASS",
+      "evidence": {
+        "Error": 52011,
+        "FacturaId": null,
+        "Transacciones": 0
+      }
+    },
+    {
+      "id": "M07",
+      "description": "IVA global y redondeo por linea con varios productos",
+      "result": "PASS",
+      "evidence": {
+        "FacturaId": 22,
+        "Subtotal": "102.55",
+        "Descuento": "21.03",
+        "Neto": "81.52",
+        "IVA": "9.78",
+        "Total": "91.30",
+        "Caja": "91.30",
+        "Movimientos": 2
+      }
+    },
+    {
+      "id": "I06",
+      "description": "Contrato Node: exactamente dos recordsets y moneda como string",
+      "result": "PASS",
+      "evidence": {
+        "recordsets": 2,
+        "moneyType": "System.String"
+      }
+    },
+    {
+      "id": "B01",
+      "description": "Rollback completo despues de factura",
+      "result": "PASS",
+      "evidence": {
+        "Error": 54801,
+        "FacturaId": null,
+        "Transacciones": 0
+      }
+    },
+    {
+      "id": "B02",
+      "description": "Rollback completo despues de detalle",
+      "result": "PASS",
+      "evidence": {
+        "Error": 54802,
+        "FacturaId": null,
+        "Transacciones": 0
+      }
+    },
+    {
+      "id": "B03",
+      "description": "Rollback completo despues de actualizar inventario",
+      "result": "PASS",
+      "evidence": {
+        "Error": 54803,
+        "FacturaId": null,
+        "Transacciones": 0
+      }
+    },
+    {
+      "id": "B04",
+      "description": "Rollback completo despues de insertar Kardex",
+      "result": "PASS",
+      "evidence": {
+        "Error": 54804,
+        "FacturaId": null,
+        "Transacciones": 0
+      }
+    },
+    {
+      "id": "B05",
+      "description": "Rollback completo antes de insertar caja",
+      "result": "PASS",
+      "evidence": {
+        "Error": 54805,
+        "FacturaId": null,
+        "Transacciones": 0
+      }
+    },
+    {
+      "id": "B06",
+      "description": "Rollback completo error de auditoria",
+      "result": "PASS",
+      "evidence": {
+        "Error": 54806,
+        "FacturaId": null,
+        "Transacciones": 0
+      }
+    },
+    {
+      "id": "I07",
+      "description": "Movimiento idempotente no repite salida",
+      "result": "PASS",
+      "evidence": {
+        "extraStockChange": 0
+      }
+    },
+    {
+      "id": "I08",
+      "description": "Venta completa sin clave de solicitud NO es idempotente",
+      "result": "PASS",
+      "evidence": {
+        "first": 31,
+        "second": 32,
+        "limitationConfirmed": true
+      }
+    },
+    {
+      "id": "C01",
+      "description": "Dos conexiones simultaneas venden la ultima unidad",
+      "result": "PASS",
+      "evidence": {
+        "Exitos": 1,
+        "Rechazos": 1,
+        "Sesiones": 2,
+        "Facturas": 1,
+        "Caja": 1,
+        "SaldosCero": 1,
+        "Salidas": 1,
+        "Waiter": 61,
+        "Blocker": 62,
+        "WaitType": "LCK_M_U"
+      }
+    },
+    {
+      "id": "C02",
+      "description": "Dos conexiones con productos en orden inverso sin deadlock",
+      "result": "PASS",
+      "evidence": {
+        "Exitos": 2,
+        "Rechazos": 0,
+        "Sesiones": 2,
+        "Facturas": 2,
+        "Caja": 2,
+        "SaldosCero": 2,
+        "Salidas": 4,
+        "Waiter": 61,
+        "Blocker": 62,
+        "WaitType": "LCK_M_U"
+      }
+    },
+    {
+      "id": "I09",
+      "description": "Conciliacion global de aperturas y movimientos",
+      "result": "PASS",
+      "evidence": {
+        "Productos": 25,
+        "Diferencias": 0
+      }
+    },
+    {
+      "id": "I10",
+      "description": "Reinstalar 21 con libro activo no altera saldos ni apertura",
+      "result": "PASS",
+      "evidence": {
+        "stockAndLedgerUnchanged": true
+      }
+    },
+    {
+      "id": "I11",
+      "description": "Segundo corte distinto rechazado sin cambiar el libro",
+      "result": "PASS",
+      "evidence": {
+        "Error": 54403
+      }
+    },
+    {
+      "id": "I12",
+      "description": "Cuenta SQL de aplicacion no puede ejecutar apertura",
+      "result": "PASS",
+      "evidence": {
+        "Error": 229
+      }
+    },
+    {
+      "id": "I13",
+      "description": "Venta no confirma una transaccion exterior",
+      "result": "PASS",
+      "evidence": {
+        "TransaccionesAntesRollback": 1,
+        "FacturasPersistentes": 0
+      }
+    },
+    {
+      "id": "I14",
+      "description": "Factura anterior al corte no vuelve a descontar stock",
+      "result": "PASS",
+      "evidence": {
+        "Error": 54409
+      }
+    }
+  ],
+  "retained": true,
+  "originalDatabaseWritten": false,
+  "logs": "C:\\Users\\kenne\\AppData\\Local\\Temp\\securefinance-kardex-sales-OUlaz7",
+  "previousAttempts": [
+    {
+      "database": "SecureFinanceERP_ParteII_Test_Kardex_f34071eaeb694d2f98c2fd31a248ed6d",
+      "status": "FAIL",
+      "error": "setup: exit 1\nChanged database context to 'SecureFinanceERP_ParteII_Test_Kardex_f34071eaeb694d2f98c2fd31a248ed6d'.\r\nMsg 1934, Level 16, State 1, Server 9U8ICS2VLMRUE, Line 7\r\nINSERT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for use with indexed views and/or indexes on computed columns and/or filtered indexes and/or query notifications and/or XML data type methods and/or spatial index operations.\r\n",
+      "logs": "C:\\Users\\kenne\\AppData\\Local\\Temp\\securefinance-kardex-sales-aFSdaw",
+      "summary": {
+        "pass": 67,
+        "fail": 0
+      }
+    },
+    {
+      "database": "SecureFinanceERP_ParteII_Test_Kardex_cb10d94d60954ec1a49db67169e29707",
+      "status": "FAIL",
+      "error": "reader-contract: exit 1\nC:\\Users\\kenne\\OneDrive\\Desktop\\CLASES\\SEMESTRE 2 2026\\Base de Datos 2\\proyecto \r\nSecureFinance-ERP-BD2\\SecureFinance-ERP-BD2\\database\\tests\\ReadKardexSaleContract.ps1 : Palabra clave no admitida: \r\n'DataSource'.\r\n    + CategoryInfo          : OperationStopped: (:) [ReadKardexSaleContract.ps1], ArgumentException\r\n    + FullyQualifiedErrorId : System.ArgumentException,ReadKardexSaleContract.ps1\r\n \r\n",
+      "logs": "C:\\Users\\kenne\\AppData\\Local\\Temp\\securefinance-kardex-sales-dHhVbN",
+      "summary": {
+        "pass": 78,
+        "fail": 1
+      }
+    },
+    {
+      "database": "SecureFinanceERP_ParteII_Test_Kardex_6f7fe5acf4bd4d678d2b631e960d0873",
+      "status": "PASS",
+      "error": null,
+      "logs": "C:\\Users\\kenne\\AppData\\Local\\Temp\\securefinance-kardex-sales-pTlMVF",
+      "summary": {
+        "pass": 94,
+        "fail": 0
+      }
+    }
+  ],
+  "opening": "bc5181c2-5440-4d12-a2da-cc75fbc617a0",
+  "summary": {
+    "pass": 95,
+    "fail": 0
+  },
+  "foundationCommit": "cc6e734",
+  "branch": "feature/parte-ii-kenneth",
+  "repositoryChecks": {
+    "check": "PASS",
+    "nodeTests": {
+      "pass": 43,
+      "fail": 0
+    },
+    "ui": "PASS",
+    "diffCheck": "PASS"
+  },
+  "finalOperationalReconciliation": {
+    "result": "PASS",
+    "products": 26,
+    "differences": 0,
+    "testTriggersRemaining": 0,
+    "sqlModules": 53
+  },
+  "originalVerification": {
+    "result": "PASS",
+    "method": "ReadOriginalState.sql: igualdad exacta antes/despues de conteos y SHA256 de Producto, Factura, DetalleFactura, MovimientoCaja, Usuario_Rol, Rol_Permiso y Modulos; Kardex y ConfiguracionInventario NO_INSTALADO",
+    "originalDatabaseWritten": false
+  }
+}

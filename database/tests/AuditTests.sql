@@ -87,13 +87,16 @@ BEGIN TRY
         AND (UsuarioSQL <> SUSER_SNAME() OR HostName <> HOST_NAME() OR AppName <> APP_NAME()
              OR NULLIF(UsuarioSQL,N'') IS NULL OR NULLIF(HostName,N'') IS NULL OR NULLIF(AppName,N'') IS NULL))
         THROW 51013, 'Metadatos de conexion incorrectos.', 1;
-    -- Cada JSON nuevo contiene exclusivamente las columnas permitidas.
+    -- Cada JSON contiene exclusivamente las columnas permitidas para su version.
+    -- Parte II amplia la imagen de Producto sin permitir secretos u otras columnas.
     IF EXISTS (SELECT 1 FROM dbo.Bitacora_Transacciones b
         CROSS APPLY (VALUES (b.ValorAnterior),(b.ValorNuevo)) v(JsonTexto)
         CROSS APPLY OPENJSON(v.JsonTexto) j
         WHERE b.BitacoraTransaccionId > @Inicio
           AND ((b.TablaAfectada = N'Producto' AND j.[key] NOT IN
-                ('ProductoId','Codigo','Descripcion','Precio','Stock','Activo'))
+                ('ProductoId','Codigo','Descripcion','Precio','Stock','Activo')
+                AND NOT (COL_LENGTH('dbo.Producto','PrecioCosto') IS NOT NULL AND j.[key] IN
+                    ('FechaCreacion','ProveedorId','PrecioCosto','Fotografia','StockMinimo','PuntoReorden','GarantiaMeses')))
             OR (b.TablaAfectada = N'Factura' AND j.[key] NOT IN
                 ('FacturaId','ClienteId','UsuarioId','FechaHora','Subtotal','DescuentoTotal','MotivoDescuento','IVA','Total','Estado'))))
         THROW 51015, 'Se capturaron columnas no permitidas.', 1;
