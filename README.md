@@ -85,15 +85,17 @@ Tras autenticar, Node consulta `sp_ObtenerPermisosUsuario`, regenera la sesión 
 
 ## Semillas DEMO
 
-Las credenciales finales de la base académica son:
+Las instalaciones nuevas omiten las identidades y registros académicos por defecto.
+Los roles y permisos base se conservan. Para un laboratorio **nuevo y aislado**,
+el responsable debe habilitar explícitamente `SecureFinance.AllowAcademicSeed`
+con `sys.sp_set_session_context` en la misma conexión antes del instalador.
+El seed comercial rechaza bases con facturas o Kardex, incluso con ese opt-in.
+No habilitarlo en `SecureFinanceERP` existente. No ejecutar el Full como migración.
+Una instalación empresarial requiere cuentas, identidad fiscal y catálogos legítimos
+provistos por su responsable; no se crean sustitutos ficticios automáticamente.
+Los ejecutores de pruebas aisladas habilitan sus fixtures expresamente.
 
-| Usuario | Contraseña |
-|---|---|
-| `admin` | `Demo_Academica_2026!` |
-| `cajero` | `Cajero_Demo_2026!` |
-| `auditor` | `Auditor_Demo_2026!` |
-
-El seed de seguridad crea únicamente `admin`, con correo `admin.demo@example.invalid` y `DebeCambiarPassword = 1`. Los usuarios `cajero` y `auditor` ya están configurados en la base académica actual. Esta sincronización de nombres no cambia contraseñas ni accesos históricos; las pruebas usan sus propias contraseñas temporales.
+Las cuentas empresariales deben aprovisionarse con datos y secretos propios del entorno. No se publican credenciales operativas. Los fixtures de laboratorio se habilitan solamente por opt-in y exigen cambio de contraseña; nunca deben utilizarse en producción.
 
 | Rol | Permisos RBAC |
 |---|---|
@@ -105,7 +107,7 @@ Las semillas de seguridad conservan los usuarios existentes; no restablecen su c
 
 ## Ventas, auditoría e interfaz
 
-`/dashboard` muestra la sesión y sus permisos. `/facturacion` requiere `VENTAS_REGISTRAR` y permite ventas con varios productos. `POST /facturacion/procesar` recibe cliente y detalle con token CSRF; obtiene el usuario exclusivamente de la sesión. SQL calcula importes y registra factura, detalles, ingreso de caja y descuentos de stock en una transacción ACID. Un error revierte toda la venta. Los precios son sin IVA; se calcula el 12% sobre el subtotal global, redondeado a centavos. Node invoca el procedimiento en autocommit, sin reintentar automáticamente resultados inciertos.
+`/dashboard` muestra la jornada financiera, abastecimiento y operaciones autorizadas; los permisos se consultan en Mi cuenta. `/facturacion` requiere `VENTAS_REGISTRAR` y permite ventas con varios productos. `POST /facturacion/procesar` recibe cliente y detalle con token CSRF; obtiene el usuario exclusivamente de la sesión. SQL calcula importes y registra factura, detalles, ingreso de caja y descuentos de stock en una transacción ACID. Un error revierte toda la venta. Los precios son sin IVA; se calcula el 12% sobre el subtotal global, redondeado a centavos. Node invoca el procedimiento en autocommit, sin reintentar automáticamente resultados inciertos.
 
 `/auditoria` requiere `AUDITORIA_CONSULTAR` y ofrece bitácora de accesos, auditoría de transacciones e histórico de ventas con filtros. Los triggers registran cambios de precio o stock y eliminaciones de productos, e inserciones de facturas, con valores anteriores/nuevos según la operación. La autenticación se registra exclusivamente en `Bitacora_Acceso`. El núcleo incluye las funciones de IVA, subtotal, consulta de auditoría e histórico de ventas y sus procedimientos de consulta.
 
@@ -135,3 +137,7 @@ También existe `npm run test:sql -- ".\SQLEXPRESS"`: requiere `sqlcmd`, autenti
 6. Con precios DEMO originales, vender dos teclados y tres mouse: subtotal **Q 476.75**, IVA **Q 57.21**, total **Q 533.96**. Con la cuenta de desarrollo verificar una factura, dos detalles, un ingreso de caja, stock reducido en 2 y 3, auditoría de factura/productos e histórico. Una venta con stock insuficiente debe revertirse íntegramente.
 
 Las comprobaciones estáticas y los mocks no sustituyen estas verificaciones en SQL Server.
+
+## Entrega Parte II de Kenneth
+
+Consulta [la guía de integración del equipo](docs/IntegracionEquipoKenneth.md) para el orden 15–23, permisos, procedimientos, fotografías y pruebas. El Full prepara Parte I para instalaciones nuevas; no sustituye las migraciones incrementales ni debe ejecutarse sobre una base existente.

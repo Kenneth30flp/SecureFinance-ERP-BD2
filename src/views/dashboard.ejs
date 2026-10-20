@@ -1,53 +1,30 @@
 <!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard | SecureFinance ERP</title>
-  <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="/css/styles.css">
-  <script src="/js/visual.js" defer></script>
-</head>
-<body class="app-shell dashboard-workspace">
-<a class="skip-link" href="#workspace">Ir al contenido</a>
-  <%- include('partials/navigation', { actual: 'dashboard', rolesCuenta: resumen?.RolesActuales || '' }) %>
-  <main tabindex="-1" id="workspace" class="container dashboard-content page-content">
-    <div class="page-header"><p class="eyebrow">Financial operations command center</p><h1>Centro de operaciones</h1><p>Bienvenido, <strong><%= usuario.nombreUsuario %></strong>. Tu escritorio de gestión financiera.</p></div>
-    <div class="session-strip"><span class="session-state">Sesión activa</span><span><strong><%= usuario.permisos.length %></strong> permisos asignados</span></div>
-    <% const agrupar = (valor) => String(valor).replace(/\B(?=(\d{3})+(?!\d))/g, ','); %>
-    <% const dinero = (valor) => { const [entero, centavos] = valor.split('.'); return 'Q ' + agrupar(entero) + '.' + centavos; }; %>
-    <% if (advertencia) { %><div class="alert desk-message alert-warning" data-marker="!" role="status"><%= advertencia %></div><% } %>
-    <section class="dashboard-overview" aria-labelledby="resumen-operativo-title">
-      <div class="overview-heading"><h2 id="resumen-operativo-title">Pulso operativo</h2><p><%= resumen?.FechaOperacion || 'Resumen no disponible' %> · Jornada Guatemala / UTC−6</p></div>
-      <dl class="dashboard-kpis">
-        <% [['VentasDia', 'Ventas del día', 'Ventas registradas'], ['FacturasDia', 'Facturas emitidas hoy', 'Documentos emitidos'], ['ProductosStockBajo', 'Productos con stock bajo', 'Activos con stock ≤ 5'], ['EventosDMLDia', 'Eventos de auditoría hoy', 'Eventos DML registrados']].forEach(([campo, titulo, ayuda]) => { %>
-          <div class="kpi-card"><dt><%= titulo %></dt><dd><%= resumen?.[campo] == null ? '—' : campo === 'VentasDia' ? dinero(resumen[campo]) : agrupar(resumen[campo]) %></dd><dd class="kpi-caption"><%= !resumen ? 'Temporalmente no disponible' : resumen[campo] == null ? 'Sin permiso de consulta' : ayuda %></dd></div>
-        <% }); %>
-      </dl>
-    </section>
-    <div class="command-secondary"><section class="operations-directory" aria-label="Operaciones disponibles"><div class="directory-heading"><h2>Entra en operación</h2><p>Herramientas habilitadas para tu cuenta.</p></div><div class="module-grid">
-    <% if (usuario.permisos.includes('VENTAS_REGISTRAR')) { %>
-      <a class="module-card module-sales" href="/facturacion"><span class="module-icon"><%- include('partials/icon',{nombre:'receipt'}) %></span><span class="eyebrow">Ventas y caja</span><h2>Facturación</h2><p>Prepara la venta. Verifica las existencias. Procesa la operación.</p><span class="module-action">Registrar venta <span aria-hidden="true">&rarr;</span></span></a>
-    <% } %>
-    <% if (usuario.permisos.includes('AUDITORIA_CONSULTAR')) { %>
-      <a class="module-card module-audit" href="/auditoria"><span class="module-icon"><%- include('partials/icon',{nombre:'shield'}) %></span><span class="eyebrow">Control y trazabilidad</span><h2>Auditoría</h2><p>Accesos, cambios y eventos.<br>La trazabilidad de cada operación.</p><span class="module-action">Consultar auditoría <span aria-hidden="true">&rarr;</span></span></a>
-    <% } %>
-    </div></section>
-    <section class="access-profile" aria-labelledby="permisos-title">
-      <div class="profile-body">
-        <h2 class="h5 mb-3" id="permisos-title">Perfil de acceso</h2>
-        <p class="text-secondary small">Alcance de acceso asignado a tu cuenta.</p>
-        <% if (usuario.permisos.length) { %>
-          <ul class="permission-list">
-            <% usuario.permisos.forEach((permiso) => { %>
-              <li class="permission-badge"><%= permiso %></li>
-            <% }); %>
-          </ul>
-        <% } else { %>
-          <p class="text-secondary mb-0">No tienes permisos activos asignados.</p>
-        <% } %>
-      </div>
-    </section></div>
-  </main>
-</body>
-</html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Centro de operaciones | SecureFinance ERP</title><link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css"><link rel="stylesheet" href="/css/styles.css"><link rel="stylesheet" href="/css/operations-center.css"><script src="/js/visual.js" defer></script></head>
+<body class="app-shell dashboard-workspace"><a class="skip-link" href="#workspace">Ir al contenido</a>
+<%- include('partials/navigation',{actual:'dashboard',rolesCuenta:resumen?.RolesActuales||''}) %>
+<% const can=p=>usuario.permisos.includes(p); const group=v=>String(v).replace(/\B(?=(\d{3})+(?!\d))/g,','); const money=v=>{const [a,b]=v.split('.');return 'Q '+group(a)+'.'+b;}; const amount=(key,currency=false)=>resumen?.[key]==null?'No disponible':currency?money(resumen[key]):group(resumen[key]); %>
+<main id="workspace" tabindex="-1" class="container page-content operations-center">
+<header class="oc-heading"><div><p class="eyebrow">SecureFinance / Gestión financiera</p><h1>Centro de operaciones</h1><p>Ventas, abastecimiento y control de la jornada.</p></div><div class="oc-period"><span>Jornada de Guatemala</span><strong><%= resumen?.FechaOperacion||'Fecha no disponible' %></strong><small>00:00–23:59 · UTC−6</small></div></header>
+<% if(advertencia){ %><p class="oc-warning" role="status"><%= advertencia %></p><% } %>
+<section class="oc-day" aria-labelledby="day-title"><div class="oc-section-heading"><h2 id="day-title">Actividad financiera de hoy</h2><span>Quetzales · GTQ (Q)</span></div>
+<div class="oc-sales <%= resumen?.VentasDia==='0.00'?'is-zero':'' %>"><span>Ventas del día</span><strong><%= amount('VentasDia',true) %></strong><p><%= !resumen?'Resumen temporalmente no disponible':resumen.VentasDia==null?'Sin acceso al resumen de ventas':resumen.FacturasDia==='0'?'Sin facturas registradas en esta jornada.':'Total de facturas registradas durante la jornada local.' %></p></div>
+<div class="oc-day-bottom"><div><span>Facturas emitidas</span><strong><%= amount('FacturasDia') %></strong></div><% if(can('AUDITORIA_CONSULTAR')){ %><div><span>Eventos de auditoría</span><strong><%= amount('EventosDMLDia') %></strong><a href="/auditoria?vista=dml">Consultar cambios <span aria-hidden="true">→</span></a></div><% } %></div>
+<% if(can('VENTAS_REGISTRAR')){ %><a class="oc-primary" href="/facturacion"><%- include('partials/icon',{nombre:'receipt'}) %> Nueva factura <span aria-hidden="true">→</span></a><% } %>
+</section>
+<div class="oc-grid">
+<section class="oc-supply" aria-labelledby="supply-title"><div class="oc-section-heading"><div><p class="eyebrow">Abastecimiento y existencias</p><h2 id="supply-title">Atención de inventario</h2></div><% if(operacion){ %><span class="oc-inventory-state <%= operacion.habilitado?'':'is-disabled' %>"><%= operacion.habilitado?'Kardex habilitado':'Kardex deshabilitado' %></span><% } %></div>
+<% if(avisoInventario){ %><p class="oc-warning" role="status"><%= avisoInventario %></p><% }else if(operacion){ %>
+<div class="oc-stock-summary <%= operacion.total===0?'is-clear':'' %>"><p><strong><%= group(operacion.total) %></strong> productos que requieren reposición</p><p><span><%= group(operacion.criticos) %> con existencias críticas</span> · Activos con existencia igual o inferior a su mínimo.</p></div>
+<% if(!operacion.habilitado){ %><p class="oc-warning" role="status">El Kardex está deshabilitado. Consulta Inventario para revisar su estado antes de registrar movimientos.</p><% } %>
+<% if(operacion.criticos>0){ %><p class="oc-attention" role="status"><strong>Revisar abastecimiento</strong>Hay productos activos en su existencia mínima o por debajo. Consulta su Kardex antes de registrar un ingreso.</p><% } %>
+<% if(operacion.productos.length){ %><div class="oc-table-scroll"><table class="oc-stock-table"><caption>Prioridad de reposición · hasta cinco productos</caption><thead><tr><th scope="col">Producto</th><th scope="col">Existencia</th><th scope="col">Reorden</th><th scope="col">Situación</th><th scope="col">Acción</th></tr></thead><tbody><% operacion.productos.forEach(p=>{ %><tr><th scope="row"><%= p.Descripcion %><small><%= p.Codigo %></small></th><td><strong><%= p.Stock %></strong></td><td><%= p.PuntoReorden %></td><td class="<%= p.Stock<=p.StockMinimo?'oc-critical':'' %>"><%= p.Stock===0?'Sin existencias':p.Stock<=p.StockMinimo?'Existencia crítica':'Reponer' %></td><td><a href="/inventario?id=<%= p.ProductoId %>">Ver Kardex <span aria-hidden="true">→</span></a></td></tr><% }); %></tbody></table></div><% }else{ %><p class="oc-empty">Ningún producto activo ha alcanzado su punto de reorden.</p><% } %>
+<a class="oc-text-link" href="/inventario">Consultar todas las existencias <span aria-hidden="true">→</span></a>
+<% }else{ %><p class="oc-empty"><%= can('INVENTARIO_CONSULTAR')?'La consulta de inventario no está disponible en este momento.':'La consulta de existencias requiere permiso de Inventario.' %></p><% } %>
+</section>
+<section class="operations-console" aria-labelledby="console-title"><div class="oc-section-heading"><h2 id="console-title">Mesa de trabajo</h2><span>Operaciones autorizadas</span></div>
+<% const operations=[['VENTAS_REGISTRAR','/facturacion','receipt','Facturación','Preparar y registrar una venta'],['INVENTARIO_CONSULTAR','/inventario','box','Inventario','Existencias, ingresos y Kardex'],['PRODUCTOS_CONSULTAR','/productos','box','Productos','Catálogo, precios y fotografías'],['PROVEEDORES_CONSULTAR','/proveedores','users','Proveedores','Directorio y abastecimiento'],['CLIENTES_CONSULTAR','/clientes','user','Clientes','Contacto e identidad fiscal'],['AUDITORIA_CONSULTAR','/auditoria','shield','Auditoría','Accesos y trazabilidad'],['USUARIOS_ADMINISTRAR','/usuarios','key','Usuarios y roles','Administración de accesos']].filter(([permission])=>can(permission)); %>
+<div class="oc-operation-list"><% operations.forEach(([permission,url,icon,title,description])=>{ %><a href="<%= url %>"><span class="oc-operation-icon"><%- include('partials/icon',{nombre:icon}) %></span><span><strong><%= title %></strong><small><%= description %></small></span><span class="oc-arrow" aria-hidden="true">↗</span></a><% }); %></div>
+<% if(!operations.length){ %><p class="oc-empty">No tienes operaciones habilitadas. Consulta al administrador para revisar tu acceso.</p><% } %></section>
+</div>
+<section class="oc-account" aria-labelledby="permissions-heading"><details id="mis-permisos"><summary id="permissions-heading">Mi cuenta / Permisos <span><%= usuario.permisos.length %> asignados</span></summary><p>Alcance de acceso de <strong><%= usuario.nombreUsuario %></strong>.</p><% if(usuario.permisos.length){ %><ul class="oc-permissions"><% usuario.permisos.forEach(p=>{ %><li><%= p %></li><% }); %></ul><% }else{ %><p>No tienes permisos activos asignados.</p><% } %></details></section>
+</main></body></html>

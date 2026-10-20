@@ -21,6 +21,12 @@ const { createUsuarioService } = require('./src/services/usuarioService');
 const { createUsuarioRoutes } = require('./src/routes/usuarioRoutes');
 const { createPasswordService } = require('./src/services/passwordService');
 const { createPasswordRoutes } = require('./src/routes/passwordRoutes');
+const { createProductoService } = require('./src/services/productoService');
+const { createProveedorService } = require('./src/services/proveedorService');
+const { createClienteService } = require('./src/services/clienteService');
+const { createInventarioService } = require('./src/services/inventarioService');
+const { createFotografiaService } = require('./src/services/fotografiaService');
+const { createKennethRoutes } = require('./src/routes/kennethRoutes');
 
 function createApp({
   secret = process.env.SESSION_SECRET,
@@ -30,6 +36,7 @@ function createApp({
   auditoriaService = createAuditoriaService(),
   usuarioService = createUsuarioService(),
   passwordService = createPasswordService(),
+  kennethServices = { productos:createProductoService(), proveedores:createProveedorService(), clientes:createClienteService(), inventario:createInventarioService(), photos:createFotografiaService() },
   production = process.env.NODE_ENV === 'production',
 } = {}) {
   if (!secret || secret.trim().length < 32) {
@@ -78,6 +85,7 @@ function createApp({
   app.use(createAuditoriaRoutes(auditoriaService));
 
   app.use(createUsuarioRoutes(usuarioService));
+  app.use(createKennethRoutes(kennethServices));
 
   app.get('/health', (req, res) =>
     res.json({ status: 'ok', phase: 3 })

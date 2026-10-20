@@ -7,13 +7,15 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "check": "node --check server.js && node --check src/config/database.js && node --check src/services/authService.js && node --check src/controllers/authController.js && node --check src/routes/authRoutes.js && node --check src/middleware/authMiddleware.js && node --check src/services/ventaService.js && node --check src/controllers/ventaController.js && node --check src/routes/ventaRoutes.js && node --check src/public/js/facturacion.js && node --check src/services/auditoriaService.js && node --check src/controllers/auditoriaController.js && node --check src/routes/auditoriaRoutes.js && node --check tests/auth.test.js && node --check tests/venta.test.js && node --check tests/facturacion.test.js && node --check tests/audit.test.js && node --check database/tests/TransactionIntegrationTests.js && node --check src/services/usuarioService.js && node --check src/controllers/usuarioController.js && node --check src/routes/usuarioRoutes.js && node --check src/public/js/usuarios.js && node --check tests/usuarios.test.js && node --check database/tests/UserAdministrationIntegrationTests.js && node --check src/services/passwordService.js && node --check src/controllers/passwordController.js && node --check src/routes/passwordRoutes.js && node --check tests/password.test.js && node --check tests/browser/operationsDesk.browser.js && node --check src/services/dashboardService.js && node --check src/controllers/dashboardController.js && node --check src/routes/dashboardRoutes.js && node --check src/public/js/messages.js && node --check tests/dashboard.test.js",
+    "check": "node --check server.js && node --check src/config/database.js && node --check src/services/authService.js && node --check src/controllers/authController.js && node --check src/routes/authRoutes.js && node --check src/middleware/authMiddleware.js && node --check src/services/ventaService.js && node --check src/controllers/ventaController.js && node --check src/routes/ventaRoutes.js && node --check src/public/js/facturacion.js && node --check src/services/auditoriaService.js && node --check src/controllers/auditoriaController.js && node --check src/routes/auditoriaRoutes.js && node --check tests/auth.test.js && node --check tests/venta.test.js && node --check tests/facturacion.test.js && node --check tests/audit.test.js && node --check database/tests/TransactionIntegrationTests.js && node --check src/services/usuarioService.js && node --check src/controllers/usuarioController.js && node --check src/routes/usuarioRoutes.js && node --check src/public/js/usuarios.js && node --check tests/usuarios.test.js && node --check database/tests/UserAdministrationIntegrationTests.js && node --check src/services/passwordService.js && node --check src/controllers/passwordController.js && node --check src/routes/passwordRoutes.js && node --check tests/password.test.js && node --check tests/browser/operationsDesk.browser.js && node --check src/services/dashboardService.js && node --check src/controllers/dashboardController.js && node --check src/routes/dashboardRoutes.js && node --check src/public/js/messages.js && node --check tests/dashboard.test.js && node --check src/controllers/kennethController.js && node --check src/controllers/kennethValidation.js && node --check src/routes/kennethRoutes.js && node --check src/services/kennethSql.js && node --check src/services/productoService.js && node --check src/services/proveedorService.js && node --check src/services/clienteService.js && node --check src/services/inventarioService.js && node --check src/services/fotografiaService.js && node --check src/public/js/kenneth.js && node --check tests/kenneth.test.js && node --check tests/browser/kenneth.browser.js && node --check database/tests/RunKennethWebTests.js && node --check database/tests/RunKennethRefinement.js && node --check tests/browser/kennethCapture.js && node --check tests/browser/kennethReadOnlyPreview.js && node --check tests/browser/kennethRefinement.browser.js && node --check tests/browser/kennethSelection.browser.js && node --check tests/browser/operationsCenter.browser.js",
     "test": "node --test tests/*.test.js",
     "test:sql": "node database/tests/TransactionIntegrationTests.js",
     "check:db": "node -e \"require('dotenv').config({quiet:true}); const db=require('./src/config/database'); Promise.resolve().then(()=>db.getPool()).then(()=>console.log('Conexion SQL Server correcta')).catch(e=>{console.error(e.code || e.message); process.exitCode=1;}).finally(()=>db.closePool());\"",
     "test:sql:usuarios": "node database/tests/UserAdministrationIntegrationTests.js",
     "test:sql:password": "node database/tests/UserAdministrationIntegrationTests.js",
-    "test:ui": "node tests/browser/operationsDesk.browser.js"
+    "test:ui": "node tests/browser/operationsDesk.browser.js",
+    "test:sql:kenneth:web": "node database/tests/RunKennethWebTests.js --run --browser",
+    "test:sql:kenneth:refinement": "node database/tests/RunKennethRefinement.js --run --browser"
   },
   "engines": {
     "node": ">=24"
@@ -36,6 +38,7 @@
     "ejs": "^6.0.1",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
-    "mssql": "^12.7.2"
+    "mssql": "^12.7.2",
+    "sharp": "^0.35.5"
   }
 }

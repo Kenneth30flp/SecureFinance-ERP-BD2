@@ -1,6 +1,13 @@
 'use strict';
 // Presentation only: observe existing DOM updates, never sales/access state.
 (() => {
+  const revealPermissions=()=>{
+    if(location.hash!=='#mis-permisos')return;
+    const panel=document.getElementById('mis-permisos');
+    if(panel){panel.open=true;panel.querySelector('summary')?.focus();}
+  };
+  window.addEventListener('hashchange',revealPermissions);
+  revealPermissions();
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const timers = new WeakMap();
   const flash = target => {

@@ -379,3 +379,7 @@ fieldset,.panel-body,.sale-detail,.audit-records { min-width:0; }
   .receipt-table tr { break-inside:avoid; } .receipt-table thead { display:table-header-group; }
   .receipt-totals,.receipt-information { break-inside:avoid; } .sale-totals .money-total { font-size:18pt; }
 }
+
+/* Navigation density for authorized Parte II modules. */
+.sidebar:has(.partii-link) { overflow-y:auto; padding-block:14px; }.sidebar:has(.partii-link) .rail-brand { margin-bottom:4px; padding-bottom:14px; }.sidebar:has(.partii-link) .desk-nav { gap:2px; }.sidebar:has(.partii-link) .desk-nav a { min-height:49px; padding:7px 2px; gap:5px; font-size:.62rem; }.sidebar:has(.partii-link) .desk-nav .ui-icon { width:20px; height:20px; }.sidebar:has(.partii-link) .rail-account { padding-top:12px; }
+@media(max-width:767px){.sidebar:has(.partii-link){padding:8px 12px;align-items:start;overflow:visible}.sidebar:has(.partii-link) .desk-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}.sidebar:has(.partii-link) .desk-nav a{min-height:48px}.sidebar:has(.partii-link) .rail-brand{padding:10px 0}}

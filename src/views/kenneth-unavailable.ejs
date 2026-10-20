@@ -1,0 +1,2 @@
+<%- include('partials/kenneth-head',{actual,title:({inventario:'Inventario',productos:'Productos',proveedores:'Proveedores',clientes:'Clientes'})[actual],eyebrow:'Espacio operativo',intro:'Consulta no disponible'}) %>
+<section class="master-empty" role="alert"><h2>No fue posible cargar la información</h2><p><%= error %></p><a class="btn btn-outline-secondary" href="/<%= actual %>">Volver a consultar</a><a class="btn btn-link" href="/dashboard">Ir al inicio</a></section></main></body></html>

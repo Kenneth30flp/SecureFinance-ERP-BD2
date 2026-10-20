@@ -63,7 +63,7 @@ test('Desarrollo: enlace académico relativo, sin confiar en Host', async t => {
   const f=await fixture(t);
   const page=await f.request('/recuperar-password'); const csrf=f.csrf(await page.text());
   const response=await f.post('/recuperar-password',f.cookie(page),{_csrf:csrf,UsuarioOCorreo:'demo'});
-  const html=await response.text(); assert.match(html,/DEMOSTRACIÓN ACADÉMICA/);
+  const html=await response.text(); assert.match(html,/SOLO DESARROLLO/);
   assert.ok(html.includes('/restablecer-password?token='+f.token));
   assert.doesNotMatch(html,/https?:\/\//);
 });
@@ -161,7 +161,7 @@ test('Cambio voluntario disponible para usuarios autenticados sin obligación', 
   const f=await fixture(t); const login=await f.login('normal');
   assert.equal(login.headers.get('location'),'/dashboard');
   const response=await f.request('/cambiar-password',{headers:{cookie:f.cookie(login)}});
-  assert.equal(response.status,200); assert.match(await response.text(),/Volver al dashboard/);
+  assert.equal(response.status,200); assert.match(await response.text(),/Volver al inicio/);
 });
 
 test('PasswordService: randomBytes, solo SHA-512 del token a SQL y fórmula de password delegada', async () => {

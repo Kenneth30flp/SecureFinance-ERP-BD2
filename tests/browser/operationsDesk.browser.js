@@ -148,9 +148,9 @@ async function main() {
     await evaluate("fetch('/login',{method:'POST',body:new URLSearchParams({NombreUsuario:'admin',Password:'test'})}).then(r=>r.status)");
     for (const [width, height] of [[1366, 768], [1920, 1080]]) {
       await cdp('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
-      await navigate('/dashboard', '.dashboard-kpis');
+      await navigate('/dashboard', '.operations-console');
       await contrast('dashboard');
-      assert.equal(await evaluate("document.querySelectorAll('.kpi-card').length"), 4);
+      assert.equal(await evaluate("document.querySelectorAll('.kpi-card').length"), 0);
       assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true);
       await screenshot('dashboard-' + width);
       await navigate('/usuarios', '[data-user-id]');
@@ -196,7 +196,7 @@ async function main() {
     }
     for (const width of [1024, 768, 390, 320]) {
       await cdp('Emulation.setDeviceMetricsOverride', { width, height: 844, deviceScaleFactor: 1, mobile: false });
-      for (const [route, selector, name] of [['/dashboard', '.dashboard-kpis', 'dashboard'], ['/facturacion', '#agregar', 'facturacion'], ['/auditoria?vista=dml', '#vista-dml', 'auditoria-dml'], ['/usuarios', '[data-user-id]', 'usuarios'], ['/cambiar-password', 'form', 'password']]) {
+      for (const [route, selector, name] of [['/dashboard', '.operations-console', 'dashboard'], ['/facturacion', '#agregar', 'facturacion'], ['/auditoria?vista=dml', '#vista-dml', 'auditoria-dml'], ['/usuarios', '[data-user-id]', 'usuarios'], ['/cambiar-password', 'form', 'password']]) {
         await navigate(route, selector);
         if (name === 'facturacion') await evaluate("document.getElementById('cliente').value='1';document.getElementById('cliente').dispatchEvent(new Event('change'));document.getElementById('producto').value='1';document.getElementById('agregar').click()");
         await noOverflow(name + ' overflow ' + width); await screenshot(name + '-' + width);

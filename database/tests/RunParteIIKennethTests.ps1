@@ -38,6 +38,7 @@ $full = [IO.File]::ReadAllText((Join-Path $databaseRoot 'SecureFinanceERP_Full.s
 # La creacion ya fue exclusiva. Se elimina en memoria el preambulo master del Full.
 $firstApplicationUse = $full.IndexOf('USE [SecureFinanceERP];')
 if ($firstApplicationUse -lt 0) { throw 'Instalador base sin contexto esperado.' }
+Add-IsolatedScript "EXEC sys.sp_set_session_context @key=N'SecureFinance.AllowAcademicSeed',@value=1;"
 Add-IsolatedScript ($full.Substring($firstApplicationUse).Replace('SecureFinanceERP', $Database))
 Add-IsolatedScript "IF DATABASE_PRINCIPAL_ID(N'securefinance_app') IS NULL CREATE USER securefinance_app WITHOUT LOGIN;"
 Add-IsolatedScript @'

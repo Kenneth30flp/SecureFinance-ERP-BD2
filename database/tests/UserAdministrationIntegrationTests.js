@@ -24,7 +24,7 @@ async function main() {
   try {
     await run('CREATE DATABASE [' + database + '];'); created = true;
     const full = await readFile(path.join(__dirname, '../SecureFinanceERP_Full.sql'), 'utf8');
-    await run(full.replaceAll('[SecureFinanceERP]', '[' + database + ']'));
+    await run("EXEC sys.sp_set_session_context @key=N'SecureFinance.AllowAcademicSeed',@value=1;\nGO\n"+full.replaceAll('[SecureFinanceERP]', '[' + database + ']'));
     // Los cuatro paquetes anteriores tambien se ejecutan sobre el instalador completo.
     for (const name of ['SecurityTests.sql','AuthenticationTests.sql','TransactionTests.sql','AuditTests.sql','PasswordRecoveryTests.sql','UserAdministrationTests.sql','DashboardSummaryTests.sql']) {
       const source = await readFile(path.join(__dirname, name), 'utf8');

@@ -1,5 +1,5 @@
 -- Instalación NUEVA de SecureFinance ERP.
--- Incluye seguridad, RBAC, negocio, ventas, auditoría y semillas DEMO.
+-- Incluye seguridad, RBAC, negocio, ventas y auditoría. Semillas académicas desactivadas por defecto.
 -- No es una migración. No ejecutar sobre una instalación existente con las tablas ya creadas.
 -- No crea passwords ni logins de servidor. El login securefinance_app se configura externamente.
 -- Las fechas se almacenan en UTC donde aplica.
@@ -313,6 +313,9 @@ BEGIN TRY
     WHERE NOT EXISTS (SELECT 1 FROM dbo.Rol_Permiso WITH (UPDLOCK, HOLDLOCK)
                       WHERE RolId = r.RolId AND PermisoId = p.PermisoId);
 
+    -- Academic identities are opt-in; core roles and permissions above are not demo data.
+    IF TRY_CONVERT(BIT, SESSION_CONTEXT(N'SecureFinance.AllowAcademicSeed')) = 1
+    BEGIN
     DECLARE @UsuarioId INT, @Codigo INT;
     SELECT @UsuarioId = UsuarioId FROM dbo.Usuario WITH (UPDLOCK, HOLDLOCK)
     WHERE NombreUsuario = N'admin';
@@ -334,8 +337,9 @@ BEGIN TRY
     WHERE r.Nombre = N'Administrador'
       AND NOT EXISTS (SELECT 1 FROM dbo.Usuario_Rol WITH (UPDLOCK, HOLDLOCK)
                       WHERE UsuarioId = @UsuarioId AND RolId = r.RolId);
+    END;
     COMMIT TRANSACTION;
-    PRINT N'OK: semillas DEMO disponibles; datos existentes conservados.';
+    PRINT N'OK: seguridad base configurada; identidades existentes conservadas.';
 END TRY
 BEGIN CATCH
     IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
@@ -442,6 +446,17 @@ USE [SecureFinanceERP];
 GO
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
+-- No sample business records unless explicitly enabled in this SQL session.
+IF COALESCE(TRY_CONVERT(BIT, SESSION_CONTEXT(N'SecureFinance.AllowAcademicSeed')),0) <> 1
+BEGIN
+    PRINT N'SKIP: academic business seed not enabled.';
+    RETURN;
+END;
+-- Never seed a database with issued invoices, even with an opt-in flag.
+IF EXISTS (SELECT 1 FROM dbo.Factura)
+    THROW 54950, 'Academic seed is blocked on databases with invoices.', 1;
+IF OBJECT_ID(N'dbo.Kardex_Inventario',N'U') IS NOT NULL
+    EXEC sys.sp_executesql N'IF EXISTS(SELECT 1 FROM dbo.Kardex_Inventario) THROW 54950, ''Academic seed is blocked on databases with Kardex.'', 1;';
 -- Ficticios. Reejecutar no repone stock ni cambia precios/estados existentes.
 BEGIN TRY
     BEGIN TRANSACTION;
