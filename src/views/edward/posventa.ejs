@@ -1,45 +1,120 @@
-<% const title=module==='garantias'?'Garantías':module==='notas-credito'?'Notas de crédito':'Devoluciones'; const can=p=>usuario.permisos.includes(p); %>
-<%- include('../partials/kenneth-head',{actual:module,title,eyebrow:'Posventa / '+title,intro:'Atención al cliente con documentos y seguimiento verificables.'}) %>
+<%
+const warranty=module==='garantias', credit=module==='notas-credito';
+const title=warranty?'Garantías':credit?'Notas de crédito':'Devoluciones';
+const intro=warranty?'Registro, diagnóstico y seguimiento de solicitudes de garantía.':credit?'Consulta de documentos y ajustes vinculados a devoluciones autorizadas.':'Gestiona devoluciones vinculadas a la factura original.';
+const can=p=>usuario.permisos.includes(p);
+const labels={RECIBIDO:'Recibido',EN_REVISION:'En revisión',APROBADO:'Aprobado',RECHAZADO:'Rechazado',ENTREGADO:'Entregado',EMITIDA:'Emitida',PENDIENTE:'Pendiente',APLICADO:'Aplicado',VIGENTE:'Vigente',VENCIDA:'Vencida',SIN_COBERTURA:'Sin cobertura',NO_VERIFICADA:'No verificada'};
+const label=s=>labels[s]||s||'No registrado';
+const utc=v=>v&&Number.isFinite(new Date(v).getTime())?new Date(v).toISOString().replace('T',' ').replace('.000Z',' UTC').replace('Z',' UTC'):'No registrada';
+const filtered=Boolean(f.buscar||f.estado||query.desde||query.hasta||f.offset);
+%>
+<%- include('../partials/kenneth-head',{actual:module,title,eyebrow:'Operaciones / Posventa / '+title,intro}) %>
 <link rel="stylesheet" href="/css/edward.css"><script src="/js/edward.js" defer></script>
-<nav class="posventa-tabs" aria-label="Posventa">
-<% if(can('DEVOLUCIONES_CONSULTAR')){ %><a href="/devoluciones">Devoluciones</a><a href="/notas-credito">Notas de crédito</a><% } %>
-<% if(can('GARANTIAS_CONSULTAR')){ %><a href="/garantias">Garantías</a><% } %></nav>
-<div id="posventa-message" role="status" aria-live="polite" tabindex="-1"><%= error||'' %></div>
-<% if(module!=='notas-credito'){ %>
-<section class="posventa-panel"><h2>Buscar factura para <%= module==='garantias'?'abrir un ticket':'registrar una devolución' %></h2>
-<form method="get" class="posventa-form"><label>Número de factura<input class="form-control" name="factura" type="number" min="1" required value="<%= query.factura||'' %>"></label><button class="btn btn-primary">Buscar factura</button></form>
-<% if(invoice){ %><h3>Factura #<%= invoice.FacturaId %> · <%= invoice.Cliente %></h3><p>NIT de emisión: <%= invoice.NIT||'No registrado históricamente' %> · Total Q <%= invoice.Total %></p>
-<form method="post" action="/<%= module %>" data-posventa-form data-kind="<%= module %>">
-<input type="hidden" name="FacturaId" value="<%= invoice.FacturaId %>"><input type="hidden" name="OperacionId" value="<%= operation %>">
-<div class="master-table-scroll"><table class="table master-table"><caption>Productos de la factura original</caption><thead><tr><th>Producto</th><th>Vendidos</th><th>Devueltos</th><th>Disponibles</th><th>Precio histórico</th><th><%= module==='garantias'?'Seleccionar':'Devolver' %></th><% if(module==='devoluciones'){ %><th>Condición</th><% } %></tr></thead><tbody>
-<% lines.forEach(l=>{ %><tr data-line="<%= l.DetalleFacturaId %>"><td><%= l.Descripcion %></td><td><%= l.Cantidad %></td><td><%= l.Devuelto %></td><td><%= l.Disponible %></td><td>Q <%= l.PrecioUnitario %></td>
-<% if(module==='garantias'){ %><td><input type="radio" name="DetalleFacturaId" value="<%= l.DetalleFacturaId %>" aria-label="Seleccionar <%= l.Descripcion %>" required></td>
-<% }else{ %><td><input class="form-control" data-quantity type="number" min="0" max="<%= l.Disponible %>" value="0" aria-label="Cantidad a devolver de <%= l.Descripcion %>" <%= l.Disponible===0?'disabled':'' %>></td><td><select class="form-select" data-condition aria-label="Condición de <%= l.Descripcion %>"><option value="false">Defectuoso · sin reingreso</option><% if(can('INVENTARIO_REGISTRAR')){ %><option value="true">Apto para venta · reingresar</option><% } %></select></td><% } %></tr><% }); %></tbody></table></div>
-<label class="posventa-wide">Motivo<textarea class="form-control" name="Motivo" maxlength="250" required></textarea></label>
-<% if(module==='garantias'){ %><p>La recepción no confirma cobertura. Se verificará la vigencia y la documentación durante la revisión.</p><% }else{ %><p>Se emitirá una nota de crédito pendiente. Los productos defectuosos no ingresan al inventario disponible.</p><% } %>
-<% if(module==='garantias'?can('GARANTIAS_GESTIONAR'):can('DEVOLUCIONES_REGISTRAR')&&can('DEVOLUCIONES_AUTORIZAR')){ %><button class="btn btn-primary" type="submit"><%= module==='garantias'?'Crear ticket':'Revisar y confirmar devolución' %></button><% }else{ %><p>Tu cuenta tiene acceso de consulta.</p><% } %>
-</form><% } %></section><% } %>
-<section class="posventa-panel"><h2><%= f.id?'Ficha del registro':'Registros' %></h2>
-<form method="get" class="posventa-form">
-<% if(module==='garantias'){ %><label>Ticket, cliente, factura o producto<input class="form-control" name="buscar" maxlength="150" value="<%= f.buscar %>"></label><label>Estado<select class="form-select" name="estado"><option value="">Todos</option><% states.forEach(s=>{ %><option value="<%= s %>" <%= f.estado===s?'selected':'' %>><%= s.replaceAll('_',' ') %></option><% }); %></select></label><% } %>
-<label>Desde (UTC)<input class="form-control" type="date" name="desde" value="<%= query.desde||'' %>"></label><label>Hasta (UTC, incluido)<input class="form-control" type="date" name="hasta" value="<%= query.hasta||'' %>"></label>
-<button class="btn btn-outline-secondary">Filtrar</button><a href="/<%= module %>">Limpiar filtros</a></form>
-<% if(!rows.length){ %><p>No hay registros para esta consulta.</p><% }else{ %>
-<div class="master-table-scroll"><table class="table master-table"><caption><%= title %> · fechas UTC</caption><thead><tr><th>Documento</th><th>Factura</th><th>Cliente</th><th>Fecha UTC</th><th>Estado</th><th><%= module==='garantias'?'Responsable':'Total' %></th></tr></thead><tbody>
-<% rows.forEach(r=>{ %><tr><td><a href="/<%= module %>?id=<%= module==='garantias'?r.TicketId:r.DevolucionId %>"><%= module==='garantias'?'TK-'+r.TicketId:'DEV-'+r.DevolucionId+' / NC-'+r.NotaCreditoId %></a></td><td><%= r.FacturaId %></td><td><%= r.Cliente %></td><td><%= new Date(r.FechaApertura||r.FechaHora).toISOString().replace('T',' ').replace('Z',' UTC') %></td><td><%= r.Estado %></td><td><%= module==='garantias'?r.Responsable:'Q '+r.Total %></td></tr><% }); %></tbody></table></div><% } %>
-<% if(f.offset>0){ %><a class="btn btn-outline-secondary" href="?<%= new URLSearchParams({...query,offset:String(Math.max(0,f.offset-50))}) %>">Anterior</a><% } %>
-<% if(next){ %><a class="btn btn-outline-secondary" href="?<%= new URLSearchParams({...query,offset:String(f.offset+50)}) %>">Siguiente</a><% } %>
-</section>
-<% if(f.id&&rows[0]){const r=rows[0]; %><section class="posventa-panel" id="comprobante">
-<% if(module==='garantias'){ %>
-<h2>Ticket TK-<%= r.TicketId %> · <%= r.Descripcion %></h2><p><%= r.Motivo %></p><p>Cobertura: <strong><%= r.Cobertura %></strong> · Responsable: <%= r.Responsable %></p><p>Evidencia: <%= r.Evidencia||'Sin referencia documental' %></p><p>Resolución: <%= r.FechaResolucion?new Date(r.FechaResolucion).toISOString():'Pendiente' %></p>
-<h3>Historial cronológico</h3><ol class="posventa-history"><% details.forEach(h=>{ %><li><strong><%= h.EstadoAnterior||'Apertura' %> → <%= h.EstadoNuevo %></strong><p><%= h.Diagnostico %></p><small><%= new Date(h.FechaHora).toISOString() %> · <%= h.Responsable %></small></li><% }); %></ol>
-<% if(can('GARANTIAS_GESTIONAR')&&r.Estado!=='ENTREGADO'){const allowed={RECIBIDO:['RECIBIDO','EN_REVISION'],EN_REVISION:['EN_REVISION','APROBADO','RECHAZADO'],APROBADO:['APROBADO','ENTREGADO'],RECHAZADO:['RECHAZADO','ENTREGADO']}[r.Estado]||[]; %>
-<form data-posventa-form method="post" action="/garantias/<%= r.TicketId %>/estado"><input type="hidden" name="Version" value="<%= r.Version %>"><label>Nuevo estado<select class="form-select" name="Estado"><% allowed.forEach(s=>{ %><option value="<%= s %>"><%= s.replaceAll('_',' ') %></option><% }); %></select></label><label class="posventa-wide">Diagnóstico u observaciones<textarea class="form-control" name="Diagnostico" maxlength="2000" required></textarea></label><label class="posventa-wide">Referencia documental de cobertura verificada<input class="form-control" name="Evidencia" maxlength="250" value="<%= r.Evidencia||'' %>"></label><button class="btn btn-primary">Guardar seguimiento</button></form><% } %>
-<% }else{ %>
-<h2>Nota de crédito NC-<%= r.NotaCreditoId %></h2><p>Devolución DEV-<%= r.DevolucionId %> · Factura #<%= r.FacturaId %> · <%= r.Cliente %></p><p><%= r.Motivo %></p><p>Responsable: <%= r.Responsable %> · Referencia: <%= r.OperacionId %></p>
-<div class="master-table-scroll"><table class="table master-table"><thead><tr><th>Producto</th><th>Cantidad</th><th>Precio histórico</th><th>Descuento</th><th>IVA</th><th>Total</th><th>Inventario</th></tr></thead><tbody><% details.forEach(d=>{ %><tr><td><%= d.Descripcion %></td><td><%= d.Cantidad %></td><td>Q <%= d.PrecioUnitario %></td><td>Q <%= d.Descuento %></td><td>Q <%= d.IVA %></td><td>Q <%= d.Total %></td><td><%= d.Reingresar?'Reingreso Kardex #'+d.KardexId:'Defectuoso · sin reingreso' %></td></tr><% }); %></tbody></table></div>
-<p>Subtotal Q <%= r.Subtotal %> − descuento Q <%= r.Descuento %> + IVA Q <%= r.IVA %> = <strong>Q <%= r.Total %></strong></p><p>Nota <%= r.Estado %> · crédito <%= r.EstadoCredito %>. No se ha registrado un reembolso.</p><button class="btn btn-outline-secondary" type="button" data-print>Imprimir comprobante</button>
-<% } %></section><% } %>
-<dialog id="posventa-confirm"><h2>Confirmar devolución</h2><p id="posventa-summary"></p><p>Se emitirá una nota de crédito y se registrarán los reingresos seleccionados.</p><button type="button" class="btn btn-primary" id="posventa-accept">Confirmar devolución</button><button type="button" class="btn btn-outline-secondary" id="posventa-cancel">Volver al formulario</button></dialog>
+<div class="posventa-workspace">
+  <nav class="posventa-tabs" aria-label="Módulos de posventa">
+    <% if(can('DEVOLUCIONES_CONSULTAR')){ %>
+      <a href="/devoluciones" <%- module==='devoluciones'?'aria-current="page"':'' %>><%- include('../partials/icon',{nombre:'receipt'}) %>Devoluciones</a>
+      <a href="/notas-credito" <%- credit?'aria-current="page"':'' %>><%- include('../partials/icon',{nombre:'receipt'}) %>Notas de crédito</a>
+    <% } if(can('GARANTIAS_CONSULTAR')){ %>
+      <a href="/garantias" <%- warranty?'aria-current="page"':'' %>><%- include('../partials/icon',{nombre:'shield'}) %>Garantías</a>
+    <% } %>
+  </nav>
+  <div id="posventa-message" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"><%= error||'' %></div>
+
+  <% if(!credit&&!f.id){ %>
+  <section class="posventa-panel posventa-operation" id="posventa-operacion" aria-labelledby="operation-title">
+    <div class="posventa-operation-top">
+      <div class="posventa-section-heading"><span class="posventa-section-icon"><%- include('../partials/icon',{nombre:warranty?'shield':'receipt'}) %></span><div><h2 id="operation-title"><%= warranty?'Abrir solicitud de garantía':'Registrar devolución' %></h2><p><%= warranty?'Busca la factura original y selecciona el producto para abrir su ticket.':'Localiza la factura original para consultar los productos disponibles para devolución.' %></p></div></div>
+      <span class="posventa-context">Factura original</span>
+    </div>
+    <div class="posventa-search-layout">
+      <form method="get" class="posventa-form posventa-invoice-search">
+        <label for="invoice-number">Número de factura<input id="invoice-number" class="form-control" name="factura" type="number" min="1" required placeholder="Ej. 1024" value="<%= query.factura||'' %>" aria-describedby="invoice-help"></label>
+        <button class="btn btn-primary" type="submit"><%- include('../partials/icon',{nombre:'search'}) %>Buscar factura</button>
+      </form>
+      <ol class="posventa-steps" aria-label="Guía de la operación">
+        <li><span>1</span>Buscar factura</li><li><span>2</span><%= warranty?'Seleccionar producto':'Seleccionar productos y cantidades' %></li><li><span>3</span><%= warranty?'Registrar solicitud':'Revisar devolución y confirmar' %></li>
+      </ol>
+    </div>
+    <p class="posventa-help" id="invoice-help"><%= warranty?'La apertura registra la solicitud; la cobertura se determina con la información disponible.':'La devolución conserva los precios y descuentos históricos de la venta.' %></p>
+    <% if(error){ %><div class="posventa-notice posventa-warning"><strong>Revisa el número de factura.</strong> No se encontraron productos para esa referencia. Puedes corregirla y buscar nuevamente.</div><% } %>
+    <% if(invoice){ %>
+    <div class="posventa-invoice-context">
+      <div><span>Documento de origen</span><strong>Factura #<%= invoice.FacturaId %></strong></div><div><span>Cliente</span><strong><%= invoice.Cliente %></strong></div>
+      <div><span>NIT de emisión</span><strong><%= invoice.NIT||'No registrado históricamente' %></strong></div><div class="posventa-money"><span>Importe histórico</span><strong>Q <%= invoice.Total %></strong></div>
+    </div>
+    <form method="post" action="/<%= module %>" data-posventa-form data-kind="<%= module %>" class="posventa-entry">
+      <input type="hidden" name="FacturaId" value="<%= invoice.FacturaId %>"><input type="hidden" name="OperacionId" value="<%= operation %>">
+      <div class="master-table-scroll posventa-table-scroll" role="region" aria-label="Productos de la factura" tabindex="0"><table class="table master-table posventa-table">
+        <caption>Productos facturados · precios de la venta original</caption>
+        <thead><tr><th scope="col">Producto</th><th scope="col" class="posventa-number">Vendidos</th><th scope="col" class="posventa-number">Devueltos</th><th scope="col" class="posventa-number">Disponibles</th><th scope="col" class="posventa-money">Precio histórico</th><th scope="col"><%= warranty?'Seleccionar':'Devolver' %></th><% if(!warranty){ %><th scope="col">Condición del producto</th><% } %></tr></thead>
+        <tbody><% lines.forEach(l=>{ %><tr data-line="<%= l.DetalleFacturaId %>">
+          <th scope="row"><%= l.Descripcion %></th><td class="posventa-number"><%= l.Cantidad %></td><td class="posventa-number"><%= l.Devuelto %></td><td class="posventa-number"><strong class="<%= l.Disponible>0?'posventa-available':'' %>"><%= l.Disponible %></strong></td><td class="posventa-money">Q <%= l.PrecioUnitario %></td>
+          <% if(warranty){ %><td><input class="posventa-radio" type="radio" name="DetalleFacturaId" value="<%= l.DetalleFacturaId %>" aria-label="Seleccionar <%= l.Descripcion %>" required></td>
+          <% }else{ %><td><input class="form-control" data-quantity type="number" min="0" max="<%= l.Disponible %>" value="0" aria-label="Cantidad a devolver de <%= l.Descripcion %>" <%= l.Disponible===0?'disabled':'' %>></td><td><select class="form-select" data-condition aria-label="Condición de <%= l.Descripcion %>"><option value="false">Defectuoso · sin reingreso</option><% if(can('INVENTARIO_REGISTRAR')){ %><option value="true">Apto para venta · reingresar</option><% } %></select></td><% } %>
+        </tr><% }); %></tbody>
+      </table></div>
+      <% if(!warranty){ %><div class="posventa-condition-key"><span><i class="posventa-dot posventa-dot-teal"></i>Apto para venta: reingresa al inventario.</span><span><i class="posventa-dot posventa-dot-amber"></i>Defectuoso: sin reingreso.</span></div><% } %>
+      <div class="posventa-entry-footer">
+        <label for="operation-reason"><%= warranty?'Motivo de la solicitud':'Motivo de devolución' %><textarea id="operation-reason" class="form-control" name="Motivo" maxlength="250" required placeholder="Describe el motivo de la solicitud." aria-describedby="operation-note"></textarea></label>
+        <div class="posventa-action-summary"><p id="operation-note"><%= warranty?'La recepción no confirma cobertura. Se verificará la vigencia y la documentación durante la revisión.':'Se emitirá una nota de crédito pendiente. Los productos defectuosos no ingresan al inventario disponible.' %></p>
+          <% if(warranty?can('GARANTIAS_GESTIONAR'):can('DEVOLUCIONES_REGISTRAR')&&can('DEVOLUCIONES_AUTORIZAR')){ %><button class="btn btn-primary" type="submit"><%= warranty?'Crear ticket':'Revisar devolución' %><%- include('../partials/icon',{nombre:'arrow'}) %></button><% }else{ %><p class="posventa-notice">Tu cuenta tiene acceso de consulta.</p><% } %>
+        </div>
+      </div>
+    </form><% } %>
+  </section><% } %>
+
+  <% if(f.id&&rows[0]){const r=rows[0]; %>
+  <section class="posventa-panel posventa-document" id="comprobante" aria-labelledby="document-title">
+    <% if(warranty){ %>
+    <header class="posventa-document-heading"><div><p class="eyebrow">Seguimiento de solicitud</p><h2 id="document-title">Ticket TK-<%= r.TicketId %></h2><p><%= r.Descripcion %></p></div><div class="posventa-document-actions"><span class="posventa-badge" data-state="<%= r.Estado %>"><%= label(r.Estado) %></span><a class="btn btn-outline-secondary" href="/garantias#invoice-number">Consultar otra factura</a></div></header>
+    <dl class="posventa-facts"><div><dt>Cliente</dt><dd><%= r.Cliente %></dd></div><div><dt>Factura original</dt><dd>#<%= r.FacturaId %></dd></div><div><dt>Cobertura</dt><dd><%= label(r.Cobertura) %></dd></div><div><dt>Responsable</dt><dd><%= r.Responsable %></dd></div><div><dt>Apertura · UTC</dt><dd><%= utc(r.FechaApertura) %></dd></div><div><dt>Resolución · UTC</dt><dd><%= r.FechaResolucion?utc(r.FechaResolucion):'Pendiente' %></dd></div></dl>
+    <div class="posventa-ticket-layout">
+      <div class="posventa-ticket-record"><div class="posventa-note"><h3>Motivo de la solicitud</h3><p><%= r.Motivo %></p><h3>Evidencia documental</h3><p><%= r.Evidencia||'Sin referencia documental registrada.' %></p></div>
+        <h3 class="posventa-subheading">Historial cronológico</h3>
+        <ol class="posventa-history"><% details.forEach(h=>{ %><li><div class="posventa-history-heading"><strong><%= h.EstadoAnterior?label(h.EstadoAnterior):'Apertura' %> → <%= label(h.EstadoNuevo) %></strong><time><%= utc(h.FechaHora) %></time></div><p><%= h.Diagnostico %></p><span><%= h.Responsable %></span></li><% }); %></ol>
+        <% if(!details.length){ %><p class="posventa-help">No se recibieron eventos de historial para este ticket.</p><% } %>
+      </div>
+      <% if(can('GARANTIAS_GESTIONAR')&&r.Estado!=='ENTREGADO'){const allowed={RECIBIDO:['RECIBIDO','EN_REVISION'],EN_REVISION:['EN_REVISION','APROBADO','RECHAZADO'],APROBADO:['APROBADO','ENTREGADO'],RECHAZADO:['RECHAZADO','ENTREGADO']}[r.Estado]||[]; %>
+      <form data-posventa-form method="post" action="/garantias/<%= r.TicketId %>/estado" class="posventa-ticket-editor">
+        <h3>Actualizar seguimiento</h3><p class="posventa-help">Registra el diagnóstico y el siguiente estado autorizado.</p><input type="hidden" name="Version" value="<%= r.Version %>">
+        <label for="ticket-state">Nuevo estado<select id="ticket-state" class="form-select" name="Estado"><% allowed.forEach(s=>{ %><option value="<%= s %>"><%= label(s) %></option><% }); %></select></label>
+        <label for="ticket-diagnosis">Diagnóstico u observaciones<textarea id="ticket-diagnosis" class="form-control" name="Diagnostico" maxlength="2000" required></textarea></label>
+        <label for="ticket-evidence">Referencia documental de cobertura verificada<input id="ticket-evidence" class="form-control" name="Evidencia" maxlength="250" value="<%= r.Evidencia||'' %>"></label>
+        <button class="btn btn-primary" type="submit">Guardar seguimiento</button>
+      </form><% }else{ %><div class="posventa-note"><h3><%= r.Estado==='ENTREGADO'?'Seguimiento completado':'Acceso de consulta' %></h3><p><%= r.Estado==='ENTREGADO'?'El ticket se encuentra entregado. Su historial permanece disponible.':'Tu cuenta puede consultar el historial de esta solicitud.' %></p></div><% } %>
+    </div>
+    <% }else{ %>
+    <header class="posventa-document-heading"><div><p class="eyebrow">SecureFinance · Documento de ajuste</p><h2 id="document-title">Nota de crédito NC-<%= r.NotaCreditoId %></h2><p>Devolución DEV-<%= r.DevolucionId %> · Factura #<%= r.FacturaId %></p></div><div class="posventa-document-actions"><span class="posventa-badge" data-state="<%= r.Estado %>"><%= label(r.Estado) %></span><button class="btn btn-outline-secondary" type="button" data-print>Imprimir comprobante</button></div></header>
+    <dl class="posventa-facts"><div><dt>Cliente</dt><dd><%= r.Cliente %></dd></div><% if(r.NIT){ %><div><dt>NIT de emisión</dt><dd><%= r.NIT %></dd></div><% } %><div><dt>Fecha · UTC</dt><dd><%= utc(r.FechaHora) %></dd></div><div><dt>Responsable</dt><dd><%= r.Responsable %></dd></div><div><dt>Estado del crédito</dt><dd><span class="posventa-badge" data-state="<%= r.EstadoCredito %>"><%= label(r.EstadoCredito) %></span></dd></div></dl>
+    <div class="posventa-document-reason"><strong>Motivo de la devolución</strong><p><%= r.Motivo %></p></div>
+    <div class="master-table-scroll posventa-table-scroll" role="region" aria-label="Detalle de la nota de crédito" tabindex="0"><table class="table master-table posventa-table"><caption>Detalle de productos · importes históricos</caption><thead><tr><th scope="col">Producto</th><th scope="col" class="posventa-number">Cantidad</th><th scope="col" class="posventa-money">Precio histórico</th><th scope="col" class="posventa-money">Descuento</th><th scope="col" class="posventa-money">IVA</th><th scope="col" class="posventa-money">Total</th><th scope="col">Inventario</th></tr></thead><tbody><% details.forEach(d=>{ %><tr><th scope="row"><%= d.Descripcion %></th><td class="posventa-number"><%= d.Cantidad %></td><td class="posventa-money">Q <%= d.PrecioUnitario %></td><td class="posventa-money">Q <%= d.Descuento %></td><td class="posventa-money">Q <%= d.IVA %></td><td class="posventa-money">Q <%= d.Total %></td><td><span class="posventa-disposition <%= d.Reingresar?'is-restocked':'is-defective' %>"><%= d.Reingresar?'Reingreso Kardex #'+d.KardexId:'Defectuoso · sin reingreso' %></span></td></tr><% }); %></tbody></table></div>
+    <div class="posventa-document-bottom"><div><p class="posventa-help">Referencia de operación</p><p class="posventa-reference"><%= r.OperacionId %></p><p class="posventa-help">No se ha registrado un reembolso.</p></div><dl class="posventa-totals"><div><dt>Subtotal</dt><dd>Q <%= r.Subtotal %></dd></div><div><dt>Descuento</dt><dd>− Q <%= r.Descuento %></dd></div><div><dt>IVA</dt><dd>Q <%= r.IVA %></dd></div><div class="posventa-grand-total"><dt>Total de la nota</dt><dd>Q <%= r.Total %></dd></div></dl></div>
+    <% } %>
+  </section><% } %>
+
+  <section class="posventa-panel posventa-register" aria-labelledby="register-title">
+    <header class="posventa-register-heading"><div><h2 id="register-title"><%= warranty?'Seguimiento de tickets':credit?'Consulta de notas de crédito':'Historial de devoluciones' %></h2><p><%= warranty?'Consulta solicitudes por referencia, cliente o estado.':credit?'Las notas de crédito se generan a partir de devoluciones confirmadas.':'Consulta las devoluciones y sus documentos relacionados.' %></p></div><span class="posventa-context">Fechas en UTC</span></header>
+    <% if(warranty){ %><div class="posventa-state-guide" aria-label="Estados del seguimiento"><% states.forEach(s=>{ %><span class="posventa-badge" data-state="<%= s %>"><%= label(s) %></span><% }); %></div><% } %>
+    <form method="get" class="posventa-form posventa-filters">
+      <% if(warranty){ %><label for="record-search" class="posventa-search-field">Ticket, cliente, factura o producto<input id="record-search" class="form-control" name="buscar" maxlength="150" placeholder="Buscar una solicitud" value="<%= f.buscar %>"></label><label for="record-state">Estado<select id="record-state" class="form-select" name="estado"><option value="">Todos los estados</option><% states.forEach(s=>{ %><option value="<%= s %>" <%= f.estado===s?'selected':'' %>><%= label(s) %></option><% }); %></select></label><% } %>
+      <label for="date-from">Fecha inicial · UTC<input id="date-from" class="form-control" type="date" name="desde" value="<%= query.desde||'' %>"></label>
+      <label for="date-to">Fecha final · UTC<input id="date-to" class="form-control" type="date" name="hasta" value="<%= query.hasta||'' %>" aria-describedby="date-range-help"></label>
+      <div class="posventa-filter-actions"><button class="btn btn-outline-secondary" type="submit"><%- include('../partials/icon',{nombre:'filter'}) %>Filtrar</button><a href="/<%= module %>" class="posventa-clear">Limpiar filtros</a></div>
+    </form><p class="posventa-help" id="date-range-help">La fecha final incluye el día completo en UTC.</p>
+    <% if(!rows.length){ %>
+    <div class="posventa-empty"><span class="posventa-empty-icon"><%- include('../partials/icon',{nombre:filtered||f.id?'search':warranty?'shield':'receipt'}) %></span><div>
+      <h3><%= f.id?'Registro no encontrado':filtered?'Sin coincidencias para estos filtros':warranty?'Sin solicitudes de garantía':credit?'No hay notas de crédito registradas':'Sin devoluciones registradas' %></h3>
+      <p><%= f.id?'La referencia solicitada no está disponible en esta consulta.':filtered?'Prueba con otro período o elimina los filtros para ampliar la consulta.':warranty?'Busca la factura original para registrar una solicitud y comenzar su seguimiento.':credit?'Los documentos aparecerán aquí cuando existan devoluciones confirmadas.':'Busca una factura para consultar sus productos y registrar una devolución autorizada.' %></p>
+      <% if(filtered||f.id){ %><a href="/<%= module %>">Ver todos los registros <span aria-hidden="true">→</span></a><% }else if(!credit){ %><a href="#invoice-number">Buscar factura <span aria-hidden="true">→</span></a><% }else if(can('DEVOLUCIONES_CONSULTAR')){ %><a href="/devoluciones">Consultar devoluciones <span aria-hidden="true">→</span></a><% } %>
+    </div></div>
+    <% }else{ %>
+    <div class="master-table-scroll posventa-table-scroll" role="region" aria-label="Resultados de la consulta" tabindex="0"><table class="table master-table posventa-table"><caption><%= title %> · documentos y fechas de registro</caption>
+      <thead><tr><th scope="col"><%= warranty?'Ticket':credit?'Nota de crédito':'Devolución' %></th><% if(!warranty){ %><th scope="col"><%= credit?'Devolución':'Nota de crédito' %></th><% } %><th scope="col">Factura original</th><th scope="col">Cliente</th><th scope="col">Fecha · UTC</th><th scope="col">Estado</th><% if(!warranty){ %><th scope="col">Estado del crédito</th><% } %><th scope="col" class="<%= warranty?'':'posventa-money' %>"><%= warranty?'Responsable':'Importe' %></th></tr></thead>
+      <tbody><% rows.forEach(r=>{ %><tr><th scope="row"><a href="/<%= module %>?id=<%= warranty?r.TicketId:r.DevolucionId %>#comprobante"><%= warranty?'TK-'+r.TicketId:credit?'NC-'+r.NotaCreditoId:'DEV-'+r.DevolucionId %></a></th><% if(!warranty){ %><td><a href="/<%= credit?'devoluciones':'notas-credito' %>?id=<%= r.DevolucionId %>#comprobante"><%= credit?'DEV-'+r.DevolucionId:'NC-'+r.NotaCreditoId %></a></td><% } %><td>#<%= r.FacturaId %></td><td><%= r.Cliente %></td><td class="posventa-date"><%= utc(r.FechaApertura||r.FechaHora) %></td><td><span class="posventa-badge" data-state="<%= r.Estado %>"><%= label(r.Estado) %></span></td><% if(!warranty){ %><td><span class="posventa-badge" data-state="<%= r.EstadoCredito %>"><%= label(r.EstadoCredito) %></span></td><% } %><td class="<%= warranty?'':'posventa-money' %>"><%= warranty?r.Responsable:'Q '+r.Total %></td></tr><% }); %></tbody>
+    </table></div><% } %>
+    <% if(f.offset>0||next){ %><nav class="posventa-pagination" aria-label="Paginación de registros"><% if(f.offset>0){ %><a class="btn btn-outline-secondary" href="?<%= new URLSearchParams({...query,offset:String(Math.max(0,f.offset-50))}) %>">Anterior</a><% } %><% if(next){ %><a class="btn btn-outline-secondary" href="?<%= new URLSearchParams({...query,offset:String(f.offset+50)}) %>">Siguiente</a><% } %></nav><% } %>
+  </section>
+</div>
+<dialog id="posventa-confirm" aria-labelledby="posventa-confirm-title" aria-describedby="posventa-summary posventa-confirm-note"><p class="eyebrow">Revisión de la operación</p><h2 id="posventa-confirm-title">Confirmar devolución</h2><p id="posventa-summary"></p><p id="posventa-confirm-note">Se emitirá una nota de crédito y se registrarán los reingresos seleccionados.</p><div class="posventa-dialog-actions"><button type="button" class="btn btn-outline-secondary" id="posventa-cancel" autofocus>Volver al formulario</button><button type="button" class="btn btn-primary" id="posventa-accept">Confirmar devolución</button></div></dialog>
 </main></body></html>
