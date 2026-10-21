@@ -27,6 +27,8 @@ const { createClienteService } = require('./src/services/clienteService');
 const { createInventarioService } = require('./src/services/inventarioService');
 const { createFotografiaService } = require('./src/services/fotografiaService');
 const { createKennethRoutes } = require('./src/routes/kennethRoutes');
+const { createEdwardService } = require('./src/modules/edward/services');
+const { createEdwardRoutes } = require('./src/modules/edward/routes');
 
 function createApp({
   secret = process.env.SESSION_SECRET,
@@ -36,6 +38,7 @@ function createApp({
   auditoriaService = createAuditoriaService(),
   usuarioService = createUsuarioService(),
   passwordService = createPasswordService(),
+  edwardService = createEdwardService(),
   kennethServices = { productos:createProductoService(), proveedores:createProveedorService(), clientes:createClienteService(), inventario:createInventarioService(), photos:createFotografiaService() },
   production = process.env.NODE_ENV === 'production',
 } = {}) {
@@ -80,6 +83,7 @@ function createApp({
 
   // Facturación de Edward
   app.use(createVentaRoutes(ventaService));
+  app.use(createEdwardRoutes(edwardService));
 
   // Auditoría de José
   app.use(createAuditoriaRoutes(auditoriaService));
