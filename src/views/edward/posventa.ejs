@@ -1,0 +1,45 @@
+<% const title=module==='garantias'?'Garantías':module==='notas-credito'?'Notas de crédito':'Devoluciones'; const can=p=>usuario.permisos.includes(p); %>
+<%- include('../partials/kenneth-head',{actual:module,title,eyebrow:'Posventa / '+title,intro:'Atención al cliente con documentos y seguimiento verificables.'}) %>
+<link rel="stylesheet" href="/css/edward.css"><script src="/js/edward.js" defer></script>
+<nav class="posventa-tabs" aria-label="Posventa">
+<% if(can('DEVOLUCIONES_CONSULTAR')){ %><a href="/devoluciones">Devoluciones</a><a href="/notas-credito">Notas de crédito</a><% } %>
+<% if(can('GARANTIAS_CONSULTAR')){ %><a href="/garantias">Garantías</a><% } %></nav>
+<div id="posventa-message" role="status" aria-live="polite" tabindex="-1"><%= error||'' %></div>
+<% if(module!=='notas-credito'){ %>
+<section class="posventa-panel"><h2>Buscar factura para <%= module==='garantias'?'abrir un ticket':'registrar una devolución' %></h2>
+<form method="get" class="posventa-form"><label>Número de factura<input class="form-control" name="factura" type="number" min="1" required value="<%= query.factura||'' %>"></label><button class="btn btn-primary">Buscar factura</button></form>
+<% if(invoice){ %><h3>Factura #<%= invoice.FacturaId %> · <%= invoice.Cliente %></h3><p>NIT de emisión: <%= invoice.NIT||'No registrado históricamente' %> · Total Q <%= invoice.Total %></p>
+<form method="post" action="/<%= module %>" data-posventa-form data-kind="<%= module %>">
+<input type="hidden" name="FacturaId" value="<%= invoice.FacturaId %>"><input type="hidden" name="OperacionId" value="<%= operation %>">
+<div class="master-table-scroll"><table class="table master-table"><caption>Productos de la factura original</caption><thead><tr><th>Producto</th><th>Vendidos</th><th>Devueltos</th><th>Disponibles</th><th>Precio histórico</th><th><%= module==='garantias'?'Seleccionar':'Devolver' %></th><% if(module==='devoluciones'){ %><th>Condición</th><% } %></tr></thead><tbody>
+<% lines.forEach(l=>{ %><tr data-line="<%= l.DetalleFacturaId %>"><td><%= l.Descripcion %></td><td><%= l.Cantidad %></td><td><%= l.Devuelto %></td><td><%= l.Disponible %></td><td>Q <%= l.PrecioUnitario %></td>
+<% if(module==='garantias'){ %><td><input type="radio" name="DetalleFacturaId" value="<%= l.DetalleFacturaId %>" aria-label="Seleccionar <%= l.Descripcion %>" required></td>
+<% }else{ %><td><input class="form-control" data-quantity type="number" min="0" max="<%= l.Disponible %>" value="0" aria-label="Cantidad a devolver de <%= l.Descripcion %>" <%= l.Disponible===0?'disabled':'' %>></td><td><select class="form-select" data-condition aria-label="Condición de <%= l.Descripcion %>"><option value="false">Defectuoso · sin reingreso</option><% if(can('INVENTARIO_REGISTRAR')){ %><option value="true">Apto para venta · reingresar</option><% } %></select></td><% } %></tr><% }); %></tbody></table></div>
+<label class="posventa-wide">Motivo<textarea class="form-control" name="Motivo" maxlength="250" required></textarea></label>
+<% if(module==='garantias'){ %><p>La recepción no confirma cobertura. Se verificará la vigencia y la documentación durante la revisión.</p><% }else{ %><p>Se emitirá una nota de crédito pendiente. Los productos defectuosos no ingresan al inventario disponible.</p><% } %>
+<% if(module==='garantias'?can('GARANTIAS_GESTIONAR'):can('DEVOLUCIONES_REGISTRAR')&&can('DEVOLUCIONES_AUTORIZAR')){ %><button class="btn btn-primary" type="submit"><%= module==='garantias'?'Crear ticket':'Revisar y confirmar devolución' %></button><% }else{ %><p>Tu cuenta tiene acceso de consulta.</p><% } %>
+</form><% } %></section><% } %>
+<section class="posventa-panel"><h2><%= f.id?'Ficha del registro':'Registros' %></h2>
+<form method="get" class="posventa-form">
+<% if(module==='garantias'){ %><label>Ticket, cliente, factura o producto<input class="form-control" name="buscar" maxlength="150" value="<%= f.buscar %>"></label><label>Estado<select class="form-select" name="estado"><option value="">Todos</option><% states.forEach(s=>{ %><option value="<%= s %>" <%= f.estado===s?'selected':'' %>><%= s.replaceAll('_',' ') %></option><% }); %></select></label><% } %>
+<label>Desde (UTC)<input class="form-control" type="date" name="desde" value="<%= query.desde||'' %>"></label><label>Hasta (UTC, incluido)<input class="form-control" type="date" name="hasta" value="<%= query.hasta||'' %>"></label>
+<button class="btn btn-outline-secondary">Filtrar</button><a href="/<%= module %>">Limpiar filtros</a></form>
+<% if(!rows.length){ %><p>No hay registros para esta consulta.</p><% }else{ %>
+<div class="master-table-scroll"><table class="table master-table"><caption><%= title %> · fechas UTC</caption><thead><tr><th>Documento</th><th>Factura</th><th>Cliente</th><th>Fecha UTC</th><th>Estado</th><th><%= module==='garantias'?'Responsable':'Total' %></th></tr></thead><tbody>
+<% rows.forEach(r=>{ %><tr><td><a href="/<%= module %>?id=<%= module==='garantias'?r.TicketId:r.DevolucionId %>"><%= module==='garantias'?'TK-'+r.TicketId:'DEV-'+r.DevolucionId+' / NC-'+r.NotaCreditoId %></a></td><td><%= r.FacturaId %></td><td><%= r.Cliente %></td><td><%= new Date(r.FechaApertura||r.FechaHora).toISOString().replace('T',' ').replace('Z',' UTC') %></td><td><%= r.Estado %></td><td><%= module==='garantias'?r.Responsable:'Q '+r.Total %></td></tr><% }); %></tbody></table></div><% } %>
+<% if(f.offset>0){ %><a class="btn btn-outline-secondary" href="?<%= new URLSearchParams({...query,offset:String(Math.max(0,f.offset-50))}) %>">Anterior</a><% } %>
+<% if(next){ %><a class="btn btn-outline-secondary" href="?<%= new URLSearchParams({...query,offset:String(f.offset+50)}) %>">Siguiente</a><% } %>
+</section>
+<% if(f.id&&rows[0]){const r=rows[0]; %><section class="posventa-panel" id="comprobante">
+<% if(module==='garantias'){ %>
+<h2>Ticket TK-<%= r.TicketId %> · <%= r.Descripcion %></h2><p><%= r.Motivo %></p><p>Cobertura: <strong><%= r.Cobertura %></strong> · Responsable: <%= r.Responsable %></p><p>Evidencia: <%= r.Evidencia||'Sin referencia documental' %></p><p>Resolución: <%= r.FechaResolucion?new Date(r.FechaResolucion).toISOString():'Pendiente' %></p>
+<h3>Historial cronológico</h3><ol class="posventa-history"><% details.forEach(h=>{ %><li><strong><%= h.EstadoAnterior||'Apertura' %> → <%= h.EstadoNuevo %></strong><p><%= h.Diagnostico %></p><small><%= new Date(h.FechaHora).toISOString() %> · <%= h.Responsable %></small></li><% }); %></ol>
+<% if(can('GARANTIAS_GESTIONAR')&&r.Estado!=='ENTREGADO'){const allowed={RECIBIDO:['RECIBIDO','EN_REVISION'],EN_REVISION:['EN_REVISION','APROBADO','RECHAZADO'],APROBADO:['APROBADO','ENTREGADO'],RECHAZADO:['RECHAZADO','ENTREGADO']}[r.Estado]||[]; %>
+<form data-posventa-form method="post" action="/garantias/<%= r.TicketId %>/estado"><input type="hidden" name="Version" value="<%= r.Version %>"><label>Nuevo estado<select class="form-select" name="Estado"><% allowed.forEach(s=>{ %><option value="<%= s %>"><%= s.replaceAll('_',' ') %></option><% }); %></select></label><label class="posventa-wide">Diagnóstico u observaciones<textarea class="form-control" name="Diagnostico" maxlength="2000" required></textarea></label><label class="posventa-wide">Referencia documental de cobertura verificada<input class="form-control" name="Evidencia" maxlength="250" value="<%= r.Evidencia||'' %>"></label><button class="btn btn-primary">Guardar seguimiento</button></form><% } %>
+<% }else{ %>
+<h2>Nota de crédito NC-<%= r.NotaCreditoId %></h2><p>Devolución DEV-<%= r.DevolucionId %> · Factura #<%= r.FacturaId %> · <%= r.Cliente %></p><p><%= r.Motivo %></p><p>Responsable: <%= r.Responsable %> · Referencia: <%= r.OperacionId %></p>
+<div class="master-table-scroll"><table class="table master-table"><thead><tr><th>Producto</th><th>Cantidad</th><th>Precio histórico</th><th>Descuento</th><th>IVA</th><th>Total</th><th>Inventario</th></tr></thead><tbody><% details.forEach(d=>{ %><tr><td><%= d.Descripcion %></td><td><%= d.Cantidad %></td><td>Q <%= d.PrecioUnitario %></td><td>Q <%= d.Descuento %></td><td>Q <%= d.IVA %></td><td>Q <%= d.Total %></td><td><%= d.Reingresar?'Reingreso Kardex #'+d.KardexId:'Defectuoso · sin reingreso' %></td></tr><% }); %></tbody></table></div>
+<p>Subtotal Q <%= r.Subtotal %> − descuento Q <%= r.Descuento %> + IVA Q <%= r.IVA %> = <strong>Q <%= r.Total %></strong></p><p>Nota <%= r.Estado %> · crédito <%= r.EstadoCredito %>. No se ha registrado un reembolso.</p><button class="btn btn-outline-secondary" type="button" data-print>Imprimir comprobante</button>
+<% } %></section><% } %>
+<dialog id="posventa-confirm"><h2>Confirmar devolución</h2><p id="posventa-summary"></p><p>Se emitirá una nota de crédito y se registrarán los reingresos seleccionados.</p><button type="button" class="btn btn-primary" id="posventa-accept">Confirmar devolución</button><button type="button" class="btn btn-outline-secondary" id="posventa-cancel">Volver al formulario</button></dialog>
+</main></body></html>
