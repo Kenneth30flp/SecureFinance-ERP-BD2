@@ -1,6 +1,7 @@
 'use strict';
 // SQLCMD Windows authentication; only creates fresh, marked laboratory databases.
-// No application .env credentials and no DROP/RESTORE operations.
+// Installation uses Windows authentication; integrated HTTP checks use the dedicated app login.
+// No DROP/RESTORE operations.
 const fs=require('node:fs');
 const path=require('node:path');
 const os=require('node:os');
@@ -8,6 +9,7 @@ const {spawn}=require('node:child_process');
 const {randomUUID}=require('node:crypto');
 const assert=require('node:assert/strict');
 const server=process.env.EDWARD_TEST_SERVER||'.\\SQLEXPRESS';
+const integrated=process.argv.includes('--integrated');
 const database='SecureFinanceERP_Edward_Test_'+randomUUID().replaceAll('-','');
 const marker=randomUUID();
 const root=path.resolve(__dirname,'..');
@@ -15,7 +17,7 @@ const temp=fs.mkdtempSync(path.join(os.tmpdir(),'edward-sql-'));
 let serial=0;
 function run(text,db=database){
  const file=path.join(temp,String(++serial)+'.sql');
- fs.writeFileSync(file,text);
+ fs.writeFileSync(file,'SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON; SET ANSI_PADDING ON; SET ANSI_WARNINGS ON; SET ARITHABORT ON; SET CONCAT_NULL_YIELDS_NULL ON; SET NUMERIC_ROUNDABORT OFF;\n'+text);
  return new Promise((resolve,reject)=>{
  const p=spawn('sqlcmd',['-S',server,'-E','-C','-b','-r','0','-f','65001','-d',db,'-i',file],{windowsHide:true});
  let out='';p.stdout.on('data',d=>out+=d);p.stderr.on('data',d=>out+=d);
@@ -42,6 +44,12 @@ async function setup(){
  }
  // Reapply only new migrations to prove repeatability.
  for(let n=24;n<=26;n++)await run(safe(fs.readFileSync(path.join(root,fs.readdirSync(root).find(f=>f.startsWith(n+'_'))),'utf8')));
+ if(integrated){
+  for(let repeat=0;repeat<2;repeat++)for(const n of [30,31,32]){
+   const file=fs.readdirSync(root).find(f=>f.startsWith(n+'_'));assert.ok(file);
+   await run(safe(fs.readFileSync(path.join(root,file),'utf8')));
+  }
+ }
  console.log('PASS isolated installation and repeatability');
 }
 async function main(){
@@ -50,8 +58,10 @@ async function main(){
  await setup();
  await run(fs.readFileSync(path.join(__dirname,'EdwardTests.sql'),'utf8'));
  console.log('PASS SQL business, security, rollback and historical amounts');
+ if(integrated){await run(fs.readFileSync(path.join(__dirname,'JoseAnaliticaTests.sql'),'utf8'));console.log('PASS Jose SQL historical sales, discounts, customers and replenishment');}
  await concurrency();
  console.log('PASS SQL concurrency A/B/C');
+ if(integrated)await require('./VerifyParteIIIntegration').verify({database,run});
  console.log('Database retained for inspection: '+database);
 }
 async function concurrency(){
