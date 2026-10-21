@@ -4,6 +4,7 @@ const v = require('./kennethValidation');
 const can = (req, permission) => req.session.usuario.permisos?.includes(permission);
 const messages = new Map([[54114, 'El NIT ya esta registrado.'], [54101, 'Tu usuario no tiene autorización vigente.'], [54102, 'Revisa los datos ingresados.'], [54103, 'El registro cambió. Actualiza la página antes de guardar.'], [54104, 'La referencia no existe o está inactiva.'], [54110, 'Kardex está deshabilitado; solicita la activación al responsable.'], [54112, 'La referencia del movimiento ya se utilizó con otros datos.'], [54113, 'Stock insuficiente o cantidad fuera de rango.'], [54407, 'El inventario necesita conciliación. Comunícate con el responsable.'], [2601, 'El SKU o NIT ya está registrado.'], [2627, 'El SKU o NIT ya está registrado.'], [547, 'Los datos incumplen una restricción o relación vigente.']]);
 function failure(res, error) {
+  if ([54802,54803,54804,54805].includes(error.number)) return res.status(error.number===54803?409:400).json({error:error.number===54804?'El monto supera el saldo disponible. Actualiza la nota antes de continuar.':error.number===54803?'La referencia ya se utilizó con otros datos o la operación está ocupada. Reintenta con la misma referencia.':'Revisa los datos y el documento de respaldo.'});
   const status = error.status || (error.number === 54101 ? 403 : [54103,54112,54113,54407].includes(error.number) ? 409 : messages.has(error.number) ? 400 : 503);
   return res.status(status).json({ error: error.status ? error.message : messages.get(error.number) || 'No fue posible confirmar el resultado. Consulta el registro antes de volver a enviarlo.' });
 }
@@ -30,8 +31,9 @@ function createKennethController(services) {
         if (f.id && !selected) return res.status(404).type('text').send('El registro no está disponible.');
         if (!selected && !f.nuevo && module !== 'productos') { selected = list[0] || null; f.id = selected?.[module === 'clientes' ? 'ClienteId' : module === 'proveedores' ? 'ProveedorId' : 'ProductoId'] || null; }
         let suppliers = [];
+        const relations = selected && ['productos','proveedores'].includes(module) ? await services.productos.relations(actor,module==='productos'?{productoId:selected.ProductoId}:{proveedorId:selected.ProveedorId}) : [];
         // El selector busca proveedores por nombre; no depende de cargar todos los registros.
-        if (module === 'productos' && can(req, 'PROVEEDORES_CONSULTAR')) suppliers = await services.proveedores.list(actor, { buscar: '', offset: 0 });
+        if ((module === 'productos' || inventory) && can(req, 'PROVEEDORES_CONSULTAR')) suppliers = await services.proveedores.list(actor, { buscar: '', offset: 0 });
         const state = inventory ? (await services.inventario.state(actor))[0] : null;
         if (inventory && !state) throw new Error('Estado de inventario ausente');
         const history = inventory && selected ? await services.inventario.history(actor, f) : [];
@@ -43,12 +45,15 @@ function createKennethController(services) {
           if (keys.length >= 30) delete req.session.inventoryOps[keys[0]];
           req.session.inventoryOps[operation] = null;
         }
-        return res.render(module, { usuario: req.session.usuario, csrf: req.session.kennethCsrf, f, rows: list.slice(0,50), next: list.length > 50, selected, suppliers, state, history: history.slice(0,50), historyNext: history.length > 50, operation });
+        return res.render(module, { usuario: req.session.usuario, csrf: req.session.kennethCsrf, f, rows: list.slice(0,50), next: list.length > 50, selected, suppliers, relations, state, history: history.slice(0,50), historyNext: history.length > 50, operation });
       } catch (error) {
         if (error.status) return res.status(error.status).type('text').send(error.message);
         req.session.kennethCsrf ||= randomBytes(32).toString('hex');
         return res.status(error.number === 54101 ? 403 : 503).render('kenneth-unavailable',{usuario:req.session.usuario,csrf:req.session.kennethCsrf,actual:module,error:error.number===54101?messages.get(54101):'El módulo no está disponible. Contacta al responsable e inténtalo nuevamente.'});
       }
+    },
+    async associate(req,res) {
+      try {const d={id:v.integer(req.params.id),ProveedorId:v.integer(req.body?.ProveedorId),Activo:v.active(req.body?.Activo)};await services.productos.associate(req.session.usuario.usuarioId,d);return res.json({id:d.id});}catch(e){return failure(res,e);}
     },
     async suppliers(req, res) {
       try { return res.json({ rows: await services.proveedores.list(req.session.usuario.usuarioId, { buscar: v.text(req.query.buscar ?? '',150,false) || '' }) }); } catch (e) { return failure(res,e); }
@@ -103,11 +108,15 @@ function createKennethController(services) {
         if (!can(req,type === 'COMPRA' ? 'INVENTARIO_REGISTRAR' : 'INVENTARIO_AJUSTAR')) return res.status(403).json({error:'No tienes permiso para este movimiento.'});
         const d = { id:v.integer(b.ProductoId),Version:v.version(b.Version),TipoMovimiento:type,Cantidad:v.integer(b.Cantidad),DocumentoRespaldo:v.text(b.DocumentoRespaldo,100),Motivo:v.text(b.Motivo,250),OperacionId:b.OperacionId };
         if (typeof d.OperacionId !== 'string' || !Object.hasOwn(req.session.inventoryOps || {},d.OperacionId)) throw new v.ValidationError('Actualiza la página para obtener una referencia de operación.');
+        if (type === 'COMPRA') {
+          d.ProveedorId = v.integer(b.ProveedorId);
+          d.CostoUnitario = b.CostoUnitario ? v.money(b.CostoUnitario) : null;
+        }
         const fingerprint = createHash('sha256').update(JSON.stringify(d)).digest('hex');
         if (req.session.inventoryOps[d.OperacionId] && req.session.inventoryOps[d.OperacionId] !== fingerprint) return res.status(409).json({error:'Esta referencia ya se utilizó con otros datos. Consulta el historial.'});
         req.session.inventoryOps[d.OperacionId] = fingerprint;
         await new Promise((resolve,reject)=>req.session.save(e=>e?reject(e):resolve()));
-        const result = await services.inventario.move(req.session.usuario.usuarioId,d);
+        const result = type === 'COMPRA' ? await services.inventario.receive(req.session.usuario.usuarioId,d) : await services.inventario.move(req.session.usuario.usuarioId,d);
         return res.status(201).json({ id:d.id,movimiento:result[0]?.KardexId });
       } catch(e) { return failure(res,e); }
     },

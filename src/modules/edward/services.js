@@ -9,6 +9,8 @@ function createEdwardService(provider=getPool){
   return (result.recordsets||[result.recordset||[]]).map(rows=>rows.map(row=>({...row,...(Buffer.isBuffer(row.Version)?{Version:row.Version.toString('hex')}:{})})));
  }
  return {
+ aplicaciones:(actor,id)=>execute('dbo.sp_ConsultarAplicacionesNotaCredito',actor,[['NotaCreditoId',sql.Int,id]]),
+ aplicar:async(actor,b)=>(await execute('dbo.sp_RegistrarAplicacionNotaCredito',actor,[['NotaCreditoId',sql.Int,b.NotaCreditoId],['Monto',sql.Decimal(19,2),b.Monto],['ReferenciaDocumental',sql.NVarChar(100),b.ReferenciaDocumental],['OperacionId',sql.UniqueIdentifier,b.OperacionId]]))[0][0],
  factura:(actor,id,garantia=false)=>execute(p.factura,actor,[['FacturaId',sql.Int,id],['Garantia',sql.Bit,garantia]]),
  devoluciones:(actor,f)=>execute(p.devoluciones,actor,queryParams(f)),
  garantias:(actor,f)=>execute(p.garantias,actor,[...queryParams(f),['Buscar',sql.NVarChar(150),f.buscar||''],['Estado',sql.VarChar(15),f.estado]]),

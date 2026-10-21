@@ -17,13 +17,17 @@ function createKennethRoutes(services) {
       router.post('/',permit(write),csrf,controller.save);
       router.post('/:id',permit(write),csrf,(req,res,next)=>req.params.id==='fotografias'?next('route'):controller.save(req,res));
     }
-    if (module === 'inventario') router.post('/movimientos',csrf,controller.move);
+    if (module === 'inventario') {
+      router.get('/proveedores',permit('PROVEEDORES_CONSULTAR'),controller.suppliers);
+      router.post('/movimientos',csrf,controller.move);
+    }
     if (module === 'clientes') {
       router.post('/',permit('CLIENTES_REGISTRAR'),csrf,controller.save);
       router.post('/:id/datos',permit('CLIENTES_EDITAR'),csrf,controller.save);
       for (const [action,p] of [['nit','CLIENTES_ACTUALIZAR_NIT'],['inactivar','CLIENTES_INACTIVAR']]) router.post(`/:id/${action}`,permit(p),csrf,(req,res)=>{req.params.action=action;return controller.client(req,res);});
     }
     if (module === 'productos') {
+      router.post('/:id/proveedores',permit(write),permit('PROVEEDORES_CONSULTAR'),csrf,controller.associate);
       router.get('/proveedores',permit('PROVEEDORES_CONSULTAR'),controller.suppliers);
       router.post('/fotografias',permit(write),csrf,express.raw({type:['image/png','image/jpeg'],limit:'3mb'}),async(req,res)=>{
         try {
