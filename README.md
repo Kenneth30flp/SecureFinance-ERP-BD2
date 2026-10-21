@@ -2,7 +2,7 @@
 
 Proyecto académico con Node.js, Express, EJS, Bootstrap y SQL Server. Incluye autenticación segura mediante SHA2_512 + Salt, RBAC, bitácora de accesos, clientes, productos, facturación multiproducto, transacciones ACID, control de stock, movimiento de caja, auditoría DML mediante triggers, histórico de ventas, interfaz web corporativa y permisos mínimos SQL.
 
-La recuperación y el cambio de contraseña completos **no están implementados**. Existen el esquema `Token_Recuperacion` y el indicador `DebeCambiarPassword`, pero este indicador no obliga a cambiar la contraseña mediante una interfaz.
+La recuperación, el cambio de contraseña y la exigencia de cambio inicial están implementados; consulta [PasswordRecovery](docs/PasswordRecovery.md). La entrega de correo requiere configuración operativa externa. La estabilización funcional y sus límites de validación se documentan en [Estabilización ERP](docs/estabilizacion/Cambios.md).
 
 ## Equipo
 

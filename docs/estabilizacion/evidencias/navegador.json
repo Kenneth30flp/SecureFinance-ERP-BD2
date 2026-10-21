@@ -1,0 +1,19 @@
+{
+  "database": "SecureFinanceERP_Estabilizacion_20261021",
+  "authentication": "SESSION_FIXTURE_NOT_REAL_LOGIN",
+  "checks": [
+    "Express session established (SESSION_FIXTURE_NOT_REAL_LOGIN)",
+    "Product -> purchase confirmation -> persisted stock +10, one Kardex, supplier and operation",
+    "Real browser sale, receipt and central Kardex",
+    "Browser return persists credit and authorized restock",
+    "Browser partial and final documented external reimbursements, ledger and zero balance",
+    "Browser warranty opening and persisted diagnostic history",
+    "SQL-backed page /dashboard",
+    "SQL-backed page /analitica?modo=RANGO&fechaDesde=2026-01-01&fechaHasta=2026-12-31",
+    "SQL-backed page /usuarios",
+    "SQL-backed page /clientes",
+    "SQL-backed page /proveedores",
+    "SQL-backed page /auditoria",
+    "No JavaScript exceptions; mobile credit document fits viewport"
+  ]
+}
