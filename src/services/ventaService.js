@@ -1,6 +1,7 @@
 'use strict';
 
 const { sql, getPool } = require('../config/database');
+const { randomUUID } = require('node:crypto');
 
 function createVentaService(poolProvider = getPool) {
   return {
@@ -17,7 +18,7 @@ function createVentaService(poolProvider = getPool) {
       const pool = await poolProvider();
       return (await pool.request().execute('dbo.sp_ListarProductosDisponibles')).recordset;
     },
-    async procesarVenta(clienteId, usuarioId, lineas, motivoDescuento = null) {
+    async procesarVenta(clienteId, usuarioId, lineas, motivoDescuento = null, operacionId = randomUUID()) {
       const detalle = new sql.Table('dbo.TipoDetalleVentaDescuento');
       detalle.columns.add('ProductoId', sql.Int, { nullable: false });
       detalle.columns.add('Cantidad', sql.Int, { nullable: false });
@@ -29,7 +30,8 @@ function createVentaService(poolProvider = getPool) {
         .input('UsuarioId', sql.Int, usuarioId)
         .input('Detalle', detalle)
         .input('MotivoDescuento', sql.NVarChar(80), motivoDescuento)
-        .execute('dbo.sp_ProcesarVentaTransaccional');
+        .input('OperacionId', sql.UniqueIdentifier, operacionId)
+        .execute('dbo.sp_ERP_ProcesarVenta');
       return { ...result.recordset[0], Detalle: result.recordsets?.[1] ?? [] };
     },
   };

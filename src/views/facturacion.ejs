@@ -20,7 +20,7 @@
     </div>
     <noscript><p class="alert alert-warning">Activa JavaScript para preparar y procesar la venta.</p></noscript>
     <div id="mensaje" class="alert d-none" role="status" aria-live="polite" tabindex="-1"></div>
-    <form id="venta-form" data-max-descuento="<%= politica.MaxDescuento %>">
+    <form id="venta-form" data-operacion-id="<%= operacionId %>" data-max-descuento="<%= politica.MaxDescuento %>">
       <fieldset id="venta-campos">
         <legend class="visually-hidden">Datos de la venta</legend>
         <div class="sale-layout">

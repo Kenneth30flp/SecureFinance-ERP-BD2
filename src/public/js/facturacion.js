@@ -201,7 +201,7 @@
       const response = await fetch('/facturacion/procesar', {
         method: 'POST', redirect: 'error',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content },
-        body: JSON.stringify({ ClienteId: Number($('cliente').value),
+        body: JSON.stringify({ OperacionId: $('venta-form').dataset.operacionId, ClienteId: Number($('cliente').value),
           MotivoDescuento: $('motivo-descuento').value || null,
           Detalle: [...lineas.values()].map(({ ProductoId, Cantidad, DescuentoPorcentaje }) => ({ ProductoId, Cantidad, DescuentoPorcentaje })) }),
       });
