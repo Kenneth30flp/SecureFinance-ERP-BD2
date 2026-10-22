@@ -67,6 +67,6 @@ Se verificó un respaldo existente con RESTORE VERIFYONLY, se restauró en `Secu
 
 El navegador adicional usa SQL real y cookies de sesión reales. La ejecución identificada `SESSION_FIXTURE_NOT_REAL_LOGIN` sustituye exclusivamente la autenticación; **no demuestra login SQL con contraseña real**. El modo predeterminado exige credenciales existentes en `.data/qa-login.local.json` (ignorado por Git), sin cambiarlas ni incluirlas en evidencias.
 
-La [comprobación posterior acotada del login](LoginReal.md) confirmó el destino aislado y la protección anónima de los cinco módulos solicitados. El acceso autenticado sigue pendiente por ausencia de una credencial web local disponible; el PR permanece en borrador.
+La [comprobación posterior acotada del login](LoginReal.md) confirmó el destino aislado y la protección anónima de los cinco módulos solicitados. Se preparó y ejecutó un acceso manual seguro en navegador, sin exigir archivos al operador. El plazo de quince minutos terminó sin confirmar una sesión autenticada y el perfil temporal fue eliminado. El acceso autenticado sigue pendiente; el PR permanece en borrador.
 
 Los fixtures HTTP de las pruebas existentes se ampliaron para el nuevo proveedor requerido y los nuevos contratos de procedimientos/UUID. No se eliminaron aserciones de negocio ni se marcaron pruebas como omitidas.

@@ -26,7 +26,8 @@ function credentials(){
  return null;
 }
 async function main(){
- let server,browser,socket;
+ let server,browser,socket,profile,cdp;
+ fs.mkdirSync('.data',{recursive:true});
  try{
   const pool=await getPool();
   if((await pool.request().query('SELECT DB_NAME() AS BaseActual')).recordset[0].BaseActual!==database)throw Error('WRONG_DATABASE');
@@ -40,25 +41,41 @@ async function main(){
    result.checks.push({route,check:'Unauthenticated access denied',status:'PASS'});
   }
   const c=credentials();
-  if(!c){result.status='BLOCKED';result.blocker='NO_EXISTING_LOCAL_WEB_CREDENTIALS';process.exitCode=2;return;}
+  const manual=process.argv.includes('--manual')||!c;
+  result.credentialSource=manual?'MANUAL_BROWSER_MEMORY_ONLY':'EXISTING_LOCAL_SOURCE';
+  result.existingLocalCredentialsAvailable=Boolean(c);
   const executable=['C:/Program Files/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(p=>fs.existsSync(p));
   if(!executable)throw Error('CHROMIUM_UNAVAILABLE');
   const reservation=net.createServer().listen(0,'127.0.0.1');await once(reservation,'listening');
   const port=reservation.address().port;await new Promise(r=>reservation.close(r));
-  const profile=fs.mkdtempSync(path.join(os.tmpdir(),'sf-real-login-'));
-  browser=spawn(executable,['--headless=new','--disable-gpu','--no-first-run','--remote-debugging-port='+port,'--user-data-dir='+profile,'about:blank'],{windowsHide:true,stdio:'ignore'});
+  profile=fs.mkdtempSync(path.join(os.tmpdir(),'sf-real-login-'));
+  browser=spawn(executable,[...(manual?['--new-window','--incognito']:['--headless=new']),'--disable-gpu','--no-first-run','--no-default-browser-check','--disable-sync','--disable-extensions','--disable-features=PasswordManagerOnboarding,PasswordLeakDetection','--remote-debugging-address=127.0.0.1','--remote-debugging-port='+port,'--user-data-dir='+profile,'about:blank'],{windowsHide:!manual,stdio:'ignore'});
   let pages;for(let i=0;i<100;i++){try{pages=await(await fetch('http://127.0.0.1:'+port+'/json/list')).json();if(pages.some(p=>p.type==='page'))break;}catch{}await delay(100);}
   socket=new WebSocket(pages.find(p=>p.type==='page').webSocketDebuggerUrl);await once(socket,'open');
   let seq=0;const pending=new Map(),responses=new Map();
   socket.addEventListener('message',e=>{const m=JSON.parse(e.data);if(m.method==='Network.responseReceived'&&m.params.type==='Document'){const r=m.params.response;responses.set(r.url,r.status);}const task=pending.get(m.id);if(task){pending.delete(m.id);clearTimeout(task.timer);m.error?task.reject(Error('CDP_COMMAND_FAILED')):task.resolve(m.result);}});
-  const cdp=(method,params={})=>new Promise((resolve,reject)=>{const id=++seq;const timer=setTimeout(()=>reject(Error('CDP_TIMEOUT')),15000);pending.set(id,{resolve,reject,timer});socket.send(JSON.stringify({id,method,params}));});
+  cdp=(method,params={})=>new Promise((resolve,reject)=>{const id=++seq;const timer=setTimeout(()=>{pending.delete(id);reject(Error('CDP_TIMEOUT'));},15000);pending.set(id,{resolve,reject,timer});socket.send(JSON.stringify({id,method,params}));});
   const evaluate=async expression=>{const r=await cdp('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error('BROWSER_EVALUATION_FAILED');return r.result.value;};
   const wait=async expression=>{for(let i=0;i<120;i++){if(await evaluate(expression))return;await delay(100);}throw Error('LOGIN_OR_PAGE_NOT_CONFIRMED');};
   const navigate=async route=>{await cdp('Page.navigate',{url:base+route});await wait('location.href==='+JSON.stringify(base+route)+'&&document.readyState==="complete"');};
-  await cdp('Page.enable');await cdp('Runtime.enable');await cdp('Network.enable');
+  await cdp('Page.enable');await cdp('Runtime.enable');
   await navigate('/login');
-  await evaluate(`document.querySelector('[name=NombreUsuario]').value=${JSON.stringify(c.usuario)};document.querySelector('[name=Password]').value=${JSON.stringify(c.password)};document.querySelector('form').requestSubmit()`);
-  await wait('location.pathname==="/dashboard"&&document.readyState==="complete"');
+  if(manual){
+   console.log('MANUAL_LOGIN_READY: ventana privada de SecureFinance ERP abierta sobre la base aislada. Ingresa tu usuario y contrasena directamente en el navegador. No se capturan formularios ni trafico de login.');
+   const deadline=Date.now()+15*60*1000;
+   let authenticated=false;
+   while(Date.now()<deadline){
+    if(await evaluate('location.pathname==="/dashboard"&&document.readyState==="complete"')){authenticated=true;break;}
+    if(await evaluate('location.pathname==="/cambiar-password"'))throw Error('EXISTING_ACCOUNT_REQUIRES_PASSWORD_CHANGE');
+    await delay(1000);
+   }
+   if(!authenticated)throw Error('MANUAL_LOGIN_TIMEOUT');
+  }else{
+   await evaluate(`document.querySelector('[name=NombreUsuario]').value=${JSON.stringify(c.usuario)};document.querySelector('[name=Password]').value=${JSON.stringify(c.password)};document.querySelector('form').requestSubmit()`);
+   await wait('location.pathname==="/dashboard"&&document.readyState==="complete"');
+  }
+  // Enable response tracking only after login; never collect credential POST traffic.
+  await cdp('Network.enable');
   const cookies=await cdp('Network.getCookies',{urls:[base]});
   if(!cookies.cookies.some(c=>c.name==='securefinance.sid'&&c.httpOnly))throw Error('AUTHENTICATED_COOKIE_NOT_CONFIRMED');
   result.authentication='REAL_SQL_LOGIN_PASS';
@@ -72,7 +89,23 @@ async function main(){
   result.status='PASS';
  }catch(e){result.status='FAIL';result.errorCode=/^[A-Z_]+$/.test(e.message)?e.message:'INTEGRATION_CHECK_FAILED';process.exitCode=1;}
  finally{
-  socket?.close();browser?.kill();if(server)await new Promise(r=>{server.close(r);server.closeAllConnections();});await closePool().catch(()=>{});
+  if(socket?.readyState===WebSocket.OPEN&&cdp)await cdp('Browser.close').catch(()=>{});
+  socket?.close();
+  if(browser&&browser.exitCode===null){
+   await Promise.race([once(browser,'exit'),delay(5000)]);
+   if(browser.exitCode===null){
+    const killer=spawn('taskkill',['/PID',String(browser.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'});
+    await once(killer,'exit');
+   }
+  }
+  if(server)await new Promise(r=>{server.close(r);server.closeAllConnections();});await closePool().catch(()=>{});
+  if(profile){
+   const resolved=path.resolve(profile),root=path.resolve(os.tmpdir()),relative=path.relative(root,resolved);
+   if(!relative.startsWith('..')&&!path.isAbsolute(relative)&&/^sf-real-login-/.test(path.basename(resolved))){
+    try{await fs.promises.rm(resolved,{recursive:true,force:true,maxRetries:12,retryDelay:300});result.temporaryProfileRemoved=!fs.existsSync(resolved);}catch{result.temporaryProfileRemoved=false;}
+   }else result.temporaryProfileRemoved=false;
+   if(!result.temporaryProfileRemoved){result.status='FAIL';result.errorCode='TEMPORARY_PROFILE_CLEANUP_FAILED';process.exitCode=1;}
+  }
   fs.mkdirSync('.data',{recursive:true});fs.writeFileSync(artifact,JSON.stringify(result,null,2)+'\n');
   console.log(JSON.stringify(result));
  }
