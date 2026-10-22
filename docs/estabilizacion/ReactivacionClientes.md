@@ -34,7 +34,15 @@ Todas las escrituras QA se limitaron a clientes de prueba de la copia y excluyer
 
 Se creó backup completo actual COPY_ONLY/CHECKSUM de SecureFinanceERP, se ejecutó VERIFYONLY y se restauró en `SecureFinanceERP_Clientes_20261022001219`. Pasaron CHECKDB, restricciones y conciliación de las **30 tablas anteriores**, incluyendo todos los clientes, documentos, relaciones y bitácora. Los hashes excluyen únicamente las filas nuevas esperadas de CLIENTES_REACTIVAR en Permiso/Rol_Permiso; se verifica por separado su asignación exclusiva al Administrador. El libro nuevo debe estar vacío al instalar.
 
-`DeployClientReactivation40.ps1` permite Inspect, Prepare, Laboratory, Deploy y Verify. Comprueba la definición exacta de objetos, SHA-256 de la migración validada, permisos y preservación de filas. La ventana coordinada requiere backend detenido, ausencia de sesiones de escritura y RESTRICTED_USER durante actualización y conciliación. El arranque del backend exige los dos procedimientos nuevos. El despliegue final se registra tras completar esa ventana.
+`DeployClientReactivation40.ps1` permite Inspect, Prepare, Laboratory, Deploy y Verify. Comprueba la definición exacta de objetos, SHA-256 de la migración validada, permisos y preservación de filas. La ventana coordinada requiere backend detenido, ausencia de sesiones de escritura y RESTRICTED_USER durante actualización y conciliación. El arranque del backend exige los dos procedimientos nuevos.
+
+### Despliegue local completado
+
+Se aplicó exclusivamente la migración incremental 40 en `SecureFinanceERP`, después de validar la copia restaurada y detener el backend. Pasaron CHECKDB, restricciones y conciliación de las 30 tablas anteriores; la base volvió a ONLINE/MULTI_USER. Las etapas Verify e Inspect posteriores confirmaron preservación de documentos, instalación exacta y permisos efectivos de `securefinance_app`, sin UPDATE directo sobre Cliente.
+
+El backend se inició desde esta rama con el código `e940257`, Node v24.14.0 y PID 28464, conservando la configuración existente. La sesión SQL confirmó `SecureFinanceERP` y `securefinance_app`; `/health` responde correctamente. La comprobación de solo lectura de las doce rutas pasó. Chromium sobre la principal confirmó motivo, opción Reactivar e historial visibles, sin enviar ningún POST. Estas sesiones QA no acreditan el inicio de sesión manual.
+
+Consumidor final DEMO (ClienteId 3) permanece **Inactivo**, con sus seis facturas. El libro ReactivacionCliente permanece vacío en la principal: no se reactivó ningún cliente durante instalación o verificaciones. El respaldo recuperable utilizado fue `SecureFinanceERP_Clientes40_Current_20261022001219.bak`.
 
 **Cliente principal reservado para operación manual:** Consumidor final DEMO, ClienteId 3, se encontró **Inactivo**, con seis facturas asociadas. No se reactiva automáticamente ni como parte de las pruebas. Su reactivación se hará mediante la interfaz después del despliegue.
 
