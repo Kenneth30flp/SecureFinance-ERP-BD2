@@ -13,6 +13,7 @@ const { createDashboardService } = require('./src/services/dashboardService');
 const { createDashboardRoutes } = require('./src/routes/dashboardRoutes');
 
 const { createVentaService } = require('./src/services/ventaService');
+const { createFacturaService } = require('./src/services/facturaService');
 const { createVentaRoutes } = require('./src/routes/ventaRoutes');
 
 const { createAuditoriaService } = require('./src/services/auditoriaService');
@@ -38,6 +39,7 @@ function createApp({
   authService = createAuthService(),
   dashboardService = createDashboardService(),
   ventaService = createVentaService(),
+  facturaService = createFacturaService(),
   auditoriaService = createAuditoriaService(),
   usuarioService = createUsuarioService(),
   passwordService = createPasswordService(),
@@ -87,7 +89,7 @@ function createApp({
   app.use(createPasswordRoutes(passwordService, { production }));
 
   // Facturación de Edward
-  app.use(createVentaRoutes(ventaService));
+  app.use(createVentaRoutes(ventaService,facturaService));
   app.use(createEdwardRoutes(edwardService));
 
   // Auditoría de José

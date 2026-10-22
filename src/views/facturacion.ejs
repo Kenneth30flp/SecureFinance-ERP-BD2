@@ -7,6 +7,7 @@
   <title>Facturación | SecureFinance ERP</title>
   <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/facturas.css">
   <script src="/js/messages.js" defer></script>
   <script src="/js/operationalDates.js" defer></script>
   <script src="/js/facturacion.js" defer></script>
@@ -18,6 +19,7 @@
   <main tabindex="-1" id="workspace" class="container page-content">
     <div class="page-header"><p class="eyebrow mb-2">Transaction desk / Operación financiera</p>
     <h1 class="h2 fw-bold">Facturación</h1>
+    <%- include('partials/facturacion-tabs',{active:'venta'}) %>
     </div>
     <noscript><p class="alert alert-warning">Activa JavaScript para preparar y procesar la venta.</p></noscript>
     <div id="mensaje" class="alert d-none" role="status" aria-live="polite" tabindex="-1"></div>
