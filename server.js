@@ -5,6 +5,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('node:path');
 const { getPool, closePool } = require('./src/config/database');
+const { verifyIntegration } = require('./src/config/integration');
 
 const { createAuthService } = require('./src/services/authService');
 const { createAuthRoutes } = require('./src/routes/authRoutes');
@@ -12,6 +13,7 @@ const { createDashboardService } = require('./src/services/dashboardService');
 const { createDashboardRoutes } = require('./src/routes/dashboardRoutes');
 
 const { createVentaService } = require('./src/services/ventaService');
+const { createFacturaService } = require('./src/services/facturaService');
 const { createVentaRoutes } = require('./src/routes/ventaRoutes');
 
 const { createAuditoriaService } = require('./src/services/auditoriaService');
@@ -37,6 +39,7 @@ function createApp({
   authService = createAuthService(),
   dashboardService = createDashboardService(),
   ventaService = createVentaService(),
+  facturaService = createFacturaService(),
   auditoriaService = createAuditoriaService(),
   usuarioService = createUsuarioService(),
   passwordService = createPasswordService(),
@@ -86,7 +89,7 @@ function createApp({
   app.use(createPasswordRoutes(passwordService, { production }));
 
   // Facturación de Edward
-  app.use(createVentaRoutes(ventaService));
+  app.use(createVentaRoutes(ventaService,facturaService));
   app.use(createEdwardRoutes(edwardService));
 
   // Auditoría de José
@@ -130,11 +133,13 @@ async function start() {
     throw new Error('PORT debe ser un puerto válido.');
   }
 
-  await getPool();
+  const identity = await verifyIntegration(await getPool());
 
   const server = app.listen(port, '127.0.0.1', () => {
     console.log(`SecureFinance ERP: http://localhost:${port}`);
     console.log('Conexión inicial a SQL Server establecida.');
+    console.log('ERP_RUNTIME', JSON.stringify({ pid: process.pid, directory: __dirname,
+      database: identity.databaseName, login: identity.loginName }));
   });
 
   server.on('error', async (error) => {

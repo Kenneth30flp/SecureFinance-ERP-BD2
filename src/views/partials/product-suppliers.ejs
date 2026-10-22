@@ -1,0 +1,8 @@
+<section aria-label="Proveedores del producto"><h3>Proveedores de este SKU</h3>
+<p>El stock pertenece al producto. Cada recepción conserva su propio proveedor.</p>
+<ul><% relations.forEach(r=>{ %><li><%= r.Proveedor %> · <%= r.Principal?'Principal':'Alternativo' %> · <%= r.Activo&&r.ProveedorActivo?'Activo':'Inactivo' %>
+<% if(!r.Principal&&usuario.permisos.includes('PRODUCTOS_ADMINISTRAR')&&usuario.permisos.includes('PROVEEDORES_CONSULTAR')){ %>
+<form method="post" data-master-form action="/productos/<%= p.ProductoId %>/proveedores"><input type="hidden" name="ProveedorId" value="<%= r.ProveedorId %>"><input type="hidden" name="Activo" value="<%= r.Activo?'0':'1' %>"><button class="btn btn-outline-secondary" type="submit"><%= r.Activo?'Inactivar relación':'Activar relación' %></button></form><% } %></li><% }); %></ul>
+<% if(usuario.permisos.includes('PRODUCTOS_ADMINISTRAR')&&usuario.permisos.includes('PROVEEDORES_CONSULTAR')){ %>
+<form method="post" data-master-form action="/productos/<%= p.ProductoId %>/proveedores"><input type="hidden" name="Activo" value="1"><label for="alternative-supplier">Agregar proveedor alternativo</label><select class="form-select" id="alternative-supplier" name="ProveedorId" required><option value="">Selecciona proveedor activo</option><% suppliers.filter(s=>s.Activo).forEach(s=>{ %><option value="<%= s.ProveedorId %>"><%= s.Nombre %></option><% }); %></select><button class="btn btn-outline-secondary" type="submit">Asociar proveedor</button></form><% } %>
+</section>

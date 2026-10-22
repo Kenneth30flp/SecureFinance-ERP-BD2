@@ -1,0 +1,4 @@
+<nav class="billing-tabs" aria-label="Apartados de Facturación">
+<% if(usuario.permisos.includes('VENTAS_REGISTRAR')){ %><a href="/facturacion" <%- active==='venta'?'aria-current="page"':'' %>>Nueva venta</a><% } %>
+<% if(usuario.permisos.includes('FACTURAS_CONSULTAR')){ %><a href="/facturacion/historial" <%- active==='historial'?'aria-current="page"':'' %>>Historial de facturas</a><% } %>
+</nav>

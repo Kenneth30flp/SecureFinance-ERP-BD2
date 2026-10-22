@@ -70,7 +70,7 @@ async function runKennethBrowser({base,username,password,product,supplier,custom
   await viewport(1366);
   await navigate('/productos?nuevo=1','[data-master-form]');
   const sku='BROWSER-'+Date.now();
-  await evaluate(`(()=>{const v={Codigo:${JSON.stringify(sku)},Descripcion:'Producto creado desde navegador de pruebas',Precio:'12.50',PrecioCosto:'7.00',ProveedorId:${JSON.stringify(String(supplier))},StockMinimo:'1',PuntoReorden:'2',GarantiaMeses:'6'};for(const[name,value]of Object.entries(v))document.querySelector('[name="'+name+'"]').value=value;})()`);
+  await evaluate(`(()=>{document.querySelector('#ModoCodigo').value='MANUAL';document.querySelector('#ModoCodigo').dispatchEvent(new Event('change'));const v={Codigo:${JSON.stringify(sku)},Descripcion:'Producto creado desde navegador de pruebas',Precio:'12.50',PrecioCosto:'7.00',ProveedorId:${JSON.stringify(String(supplier))},StockMinimo:'1',PuntoReorden:'2',GarantiaMeses:'6'};for(const[name,value]of Object.entries(v))document.querySelector('[name="'+name+'"]').value=value;})()`);
   const png=path.join(directory,'browser-upload.png');await sharp({create:{width:100,height:70,channels:3,background:'#37485c'}}).png().toFile(png);
   const doc=await cdp('DOM.getDocument');const input=await cdp('DOM.querySelector',{nodeId:doc.root.nodeId,selector:'#product-photo'});await cdp('DOM.setFileInputFiles',{nodeId:input.nodeId,files:[png]});
   await wait('!!document.querySelector("[name=UploadToken]").value');

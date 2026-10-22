@@ -37,6 +37,7 @@ async function main(){
  const app=createApp({secret:'edward-browser-test-session-secret-1234',production:false,
  authService:{login:async name=>({codigo:0,usuario:{usuarioId:1,nombreUsuario:name,permisos:name==='lector'?['DEVOLUCIONES_CONSULTAR']:p}})},
  edwardService:{
+ aplicaciones:async()=>[[{SaldoDisponible:"10.08",EstadoCredito:"PENDIENTE"}],[]],
  factura:async(a,id)=>id===999?[[],[]]:[[{FacturaId:1,Cliente:'Cliente de prueba',NIT:'CF',Total:'20.16'}],[{DetalleFacturaId:1,Descripcion:'Producto de prueba',Cantidad:2,Devuelto:returns,Disponible:2-returns,PrecioUnitario:'10.00'}]],
  devoluciones:async()=>returns?[[returned],[{Descripcion:'Producto de prueba',Cantidad:1,PrecioUnitario:'10.00',Descuento:'1.00',IVA:'1.08',Total:'10.08',Reingresar:false}]]:[[],[]],
  garantias:async(a,f)=>{if(f.buscar==='fallo-servicio')throw Error('Fixture unavailable');if(f.buscar==='sin-coincidencias'||f.id===999)return[[],[]];return tickets?[[ticket],[{EstadoAnterior:null,EstadoNuevo:'RECIBIDO',Diagnostico:'Falla',FechaHora:ticket.FechaApertura,Responsable:'operador'}]]:[[],[]];},

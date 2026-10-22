@@ -1,0 +1,6 @@
+PASS concurrent same purchase: one receipt and one Kardex
+PASS concurrent distinct purchases: no lost movement
+PASS concurrent credit applications: one succeeds, excess rejected, no negative balance
+PASS concurrent identical final application: one ledger entry
+PASS warranty stale version rejected
+PASS concurrent identical sale: one invoice, one cash movement, one Kardex

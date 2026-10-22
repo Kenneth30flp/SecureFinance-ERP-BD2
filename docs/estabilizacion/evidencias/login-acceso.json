@@ -1,0 +1,44 @@
+{
+  "checkedAt": "2026-10-22T00:11:13.016Z",
+  "database": "SecureFinanceERP_Estabilizacion_20261021",
+  "authentication": "PENDING",
+  "credentialValuesDisclosed": false,
+  "credentialsModified": false,
+  "businessOperationsExecuted": false,
+  "checks": [
+    {
+      "check": "Actual SQL connection targets isolated database",
+      "status": "PASS"
+    },
+    {
+      "route": "/inventario",
+      "check": "Unauthenticated access denied",
+      "status": "PASS"
+    },
+    {
+      "route": "/productos",
+      "check": "Unauthenticated access denied",
+      "status": "PASS"
+    },
+    {
+      "route": "/facturacion",
+      "check": "Unauthenticated access denied",
+      "status": "PASS"
+    },
+    {
+      "route": "/notas-credito",
+      "check": "Unauthenticated access denied",
+      "status": "PASS"
+    },
+    {
+      "route": "/garantias",
+      "check": "Unauthenticated access denied",
+      "status": "PASS"
+    }
+  ],
+  "credentialSource": "MANUAL_BROWSER_MEMORY_ONLY",
+  "existingLocalCredentialsAvailable": false,
+  "status": "FAIL",
+  "errorCode": "MANUAL_LOGIN_TIMEOUT",
+  "temporaryProfileRemoved": true
+}

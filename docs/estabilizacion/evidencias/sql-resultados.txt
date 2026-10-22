@@ -1,0 +1,33 @@
+Base aislada: SecureFinanceERP_Estabilizacion_20261021
+Backup existente: RESTORE VERIFYONLY PASS; restauracion separada PASS
+No se ejecuto Full ni se aplicaron migraciones a SecureFinanceERP.
+
+stabilization-sql.txt
+PASS A/B HDMI 90 + 10 = 100; reintento un solo Kardex
+PASS C dos proveedores mismo ProductoId; stock 115
+PASS D rollback cabecera detalle Kardex stock
+PASS E actor sin permiso rechazado
+PASS M venta real dos unidades un egreso Kardex
+PASS F/G devolucion parcial; credito y reingreso unicos
+PASS H aplicacion parcial idempotente
+PASS J saldo excedido rechazado
+PASS I credito liquidado saldo cero
+PASS K garantia con historial, sin ingreso de stock
+PASS L transicion invalida rechazada
+PASS N cliente inactivo factura intacta
+
+stabilization-regression.txt
+PASS venta idempotente: una factura, caja y egreso
+PASS venta: clave reutilizada con otros datos rechazada
+PASS ajuste por wrapper; acceso central directo denegado
+PASS mantenimiento y consulta de relacion comercial
+PASS O TVF productos clientes abastecimiento; dashboards con permisos
+
+stabilization-edge-cases.txt
+PASS nota de importe cero emitida y liquidada sin inventar aplicaciones
+PASS aplicacion sin DML directo de stock
+
+stabilization-final-sql.txt
+PASS proveedor historico capturado y recepcion inmutable
+PASS migraciones 33-37 repetibles: productos notas Kardex y aplicaciones preservados
+PASS integridad final DBCC

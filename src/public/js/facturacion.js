@@ -11,7 +11,7 @@
   const centavos = (precio) => BigInt(precio.replace('.', ''));
   const dineroSQL = (valor) => valor == null ? '-' : 'Q ' + valor;
   const ahorro = (linea) => (linea.precio * BigInt(linea.Cantidad) * linea.descuento + 5000n) / 10000n;
-  $('fecha').textContent = new Date().toLocaleDateString('es-GT');
+  $('fecha').textContent = globalThis.SecureFinanceDates.formatDate(new Date());
   function mensaje(texto, tipo = 'danger') {
     window.SecureFinanceMessages.show($('mensaje'), texto, tipo);
     $('mensaje').focus();
@@ -174,7 +174,7 @@
   });
   function comprobante(venta) {
     for (const [campo, valor] of [['factura', '#' + venta.FacturaId], ['cliente', venta.Cliente], ['nit', venta.NIT], ['cajero', venta.Cajero],
-      ['fecha', new Date(venta.FechaHora).toLocaleString('es-GT', { timeZone: 'America/Guatemala' })], ['motivo', venta.MotivoDescuento || 'Sin motivo']]) {
+      ['fecha', globalThis.SecureFinanceDates.formatDateTime(venta.FechaHora)], ['motivo', venta.MotivoDescuento || 'Sin motivo']]) {
       $('recibo-' + campo).textContent = valor ?? '-';
     }
     for (const [campo, valor] of [['subtotal', venta.Subtotal], ['neto', venta.SubtotalNeto], ['iva', venta.IVA], ['total', venta.Total]]) {
@@ -201,7 +201,7 @@
       const response = await fetch('/facturacion/procesar', {
         method: 'POST', redirect: 'error',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content },
-        body: JSON.stringify({ ClienteId: Number($('cliente').value),
+        body: JSON.stringify({ OperacionId: $('venta-form').dataset.operacionId, ClienteId: Number($('cliente').value),
           MotivoDescuento: $('motivo-descuento').value || null,
           Detalle: [...lineas.values()].map(({ ProductoId, Cantidad, DescuentoPorcentaje }) => ({ ProductoId, Cantidad, DescuentoPorcentaje })) }),
       });
