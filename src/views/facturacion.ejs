@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/css/styles.css">
   <script src="/js/messages.js" defer></script>
+  <script src="/js/operationalDates.js" defer></script>
   <script src="/js/facturacion.js" defer></script>
   <script src="/js/visual.js" defer></script>
 </head>
@@ -38,7 +39,7 @@
             </select>
             </div>
             <div id="cliente-actual" class="selected-client" hidden><span class="receipt-label">Cliente actual</span><strong id="cliente-actual-nombre"></strong><small id="cliente-actual-nit"></small></div>
-            <p class="transaction-context">Operador: <strong><%= usuario.nombreUsuario %></strong> · <time id="fecha"></time> · Importes preliminares</p>
+            <p class="transaction-context">Operador: <strong><%= usuario.nombreUsuario %></strong> · <time id="fecha"></time> · Guatemala (UTC−6) · Importes preliminares</p>
             <% if (!clientes.length) { %><p class="text-secondary mt-2">No hay clientes activos disponibles.</p><% } %>
           </div>
         </section><div class="sale-detail"><div class="transaction-body"><section class="work-panel product-dock" aria-labelledby="productos-title">
@@ -107,7 +108,7 @@
     <section id="comprobante" class="work-panel sale-receipt" aria-labelledby="comprobante-titulo" tabindex="-1" hidden>
       <div class="panel-body">
         <div class="receipt-heading"><div><p class="eyebrow">SECUREFINANCE ERP / COMPROBANTE INTERNO</p><h2 id="comprobante-titulo">Operación completada</h2></div><span class="status-badge status-success">REGISTRADA</span></div>
-        <dl class="receipt-information"><dt>Factura</dt><dd id="recibo-factura"></dd><dt>Cliente</dt><dd id="recibo-cliente"></dd><dt>NIT</dt><dd id="recibo-nit"></dd><dt>Cajero</dt><dd id="recibo-cajero"></dd><dt>Fecha</dt><dd id="recibo-fecha"></dd><dt>Motivo de descuentos</dt><dd id="recibo-motivo"></dd></dl>
+        <dl class="receipt-information"><dt>Factura</dt><dd id="recibo-factura"></dd><dt>Cliente</dt><dd id="recibo-cliente"></dd><dt>NIT</dt><dd id="recibo-nit"></dd><dt>Cajero</dt><dd id="recibo-cajero"></dd><dt>Fecha · Guatemala (UTC−6)</dt><dd id="recibo-fecha"></dd><dt>Motivo de descuentos</dt><dd id="recibo-motivo"></dd></dl>
         <div class="table-responsive"><table class="table table-modern receipt-table"><caption>Detalle de la operación</caption><thead><tr><th scope="col">Producto</th><th scope="col">Cant.</th><th scope="col">Precio</th><th scope="col">Descuento</th><th scope="col">Ahorro</th><th scope="col">Neto</th></tr></thead><tbody id="recibo-detalle"></tbody></table></div>
         <dl class="sale-totals receipt-totals"><dt>Subtotal bruto</dt><dd id="recibo-subtotal"></dd><dt>Descuento</dt><dd id="recibo-descuento" class="discount-reduction"></dd><dt>Subtotal neto</dt><dd id="recibo-neto"></dd><dt>IVA (12%)</dt><dd id="recibo-iva"></dd><dt class="total-label">Total</dt><dd id="recibo-total" class="money-total"></dd></dl>
         <p class="summary-note">Comprobante interno / académico. No constituye factura electrónica SAT.</p>

@@ -1,0 +1,6 @@
+<% let raw = value;
+if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(raw) && !/(?:Z|[+-]\d{2}:\d{2})$/i.test(raw)) raw += 'Z';
+const instant = raw === null || raw === undefined || raw === '' ? null : new Date(raw);
+const options = { timeZone: 'America/Guatemala', day: '2-digit', month: '2-digit', year: 'numeric',
+ ...(typeof dateOnly !== 'undefined' && dateOnly ? {} : { hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }) };
+%><%= instant && Number.isFinite(instant.getTime()) ? new Intl.DateTimeFormat('es-GT', options).format(instant) : 'No registrada' %>

@@ -141,8 +141,8 @@ test('Kenneth: proveedor vacio, drawer y producto sin proveedores activos',async
 test('Kenneth: tabla de productos oculta costo sin permiso y Kardex muestra ocho columnas',async t=>{
  const f=await fixture(t,['PRODUCTOS_CONSULTAR','INVENTARIO_CONSULTAR']);
  const html=await(await f.request('/productos?vista=tabla')).text();assert.match(html,/Catálogo empresarial/);assert.doesNotMatch(html,/Costo Q/);assert.match(html,/Venta Q/);
- const inv=await(await f.request('/inventario')).text();for(const title of ['Fecha UTC','Movimiento','Documento','Actor','Ingreso','Egreso','Anterior','Resultante'])assert(inv.includes('>'+title+'</th>'));
- assert.match(inv,/UTC\+00:00/);
+ const inv=await(await f.request('/inventario')).text();for(const title of ['Fecha Guatemala','Movimiento','Documento','Actor','Ingreso','Egreso','Anterior','Resultante'])assert(inv.includes('>'+title+'</th>'));
+ assert.match(inv,/America\/Guatemala, UTC−6/);
 });
 test('Kenneth: servicio de clientes parametriza alta y edicion sin enviar NIT en edicion',async()=>{
  const calls=[],provider=async()=>({request(){const values=[];return{input(...v){values.push(v);return this;},async execute(procedure){calls.push({procedure,values});return{recordset:[]};}};}});
