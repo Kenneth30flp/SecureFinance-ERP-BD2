@@ -24,7 +24,7 @@ function createKennethRoutes(services) {
     if (module === 'clientes') {
       router.post('/',permit('CLIENTES_REGISTRAR'),csrf,controller.save);
       router.post('/:id/datos',permit('CLIENTES_EDITAR'),csrf,controller.save);
-      for (const [action,p] of [['nit','CLIENTES_ACTUALIZAR_NIT'],['inactivar','CLIENTES_INACTIVAR']]) router.post(`/:id/${action}`,permit(p),csrf,(req,res)=>{req.params.action=action;return controller.client(req,res);});
+      for (const [action,p] of [['nit','CLIENTES_ACTUALIZAR_NIT'],['inactivar','CLIENTES_INACTIVAR'],['reactivar','CLIENTES_REACTIVAR']]) router.post(`/:id/${action}`,permit(p),csrf,(req,res)=>{req.params.action=action;return controller.client(req,res);});
     }
     if (module === 'productos') {
       router.post('/:id/proveedores',permit(write),permit('PROVEEDORES_CONSULTAR'),csrf,controller.associate);

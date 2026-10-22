@@ -39,13 +39,14 @@ function createKennethController(services) {
         const history = inventory && selected ? await services.inventario.history(actor, f) : [];
         req.session.kennethCsrf ||= randomBytes(32).toString('hex');
         const operation = randomUUID();
+        const clientHistory = module==='clientes'&&selected&&services.clientes.stateHistory ? await services.clientes.stateHistory(actor,selected.ClienteId) : [];
         if (inventory && selected) {
           req.session.inventoryOps ||= {};
           const keys = Object.keys(req.session.inventoryOps);
           if (keys.length >= 30) delete req.session.inventoryOps[keys[0]];
           req.session.inventoryOps[operation] = null;
         }
-        return res.render(module, { usuario: req.session.usuario, csrf: req.session.kennethCsrf, f, rows: list.slice(0,50), next: list.length > 50, selected, suppliers, relations, state, history: history.slice(0,50), historyNext: history.length > 50, operation });
+        return res.render(module, { usuario: req.session.usuario, csrf: req.session.kennethCsrf, f, rows: list.slice(0,50), next: list.length > 50, selected, suppliers, relations, state, history: history.slice(0,50), historyNext: history.length > 50, operation, clientHistory });
       } catch (error) {
         if (error.status) return res.status(error.status).type('text').send(error.message);
         req.session.kennethCsrf ||= randomBytes(32).toString('hex');
@@ -98,6 +99,13 @@ function createKennethController(services) {
     async client(req,res) {
       try {
         const d = { id:v.integer(req.params.id),Version:v.version(req.body?.Version),Motivo:v.text(req.body?.Motivo,250) };
+        if(req.params.action==='reactivar') {
+          d.OperacionId=req.body?.OperacionId;
+          if(typeof d.OperacionId!=='string'||!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(d.OperacionId))throw new v.ValidationError('Actualiza la ficha para obtener una referencia de reactivación.');
+          const rows=await services.clientes.reactivate(req.session.usuario.usuarioId,d);
+          if(!rows[0]?.Activo)throw new Error('Respuesta de reactivacion ausente');
+          return res.json({id:d.id,activo:true,mensaje:'Cliente reactivado correctamente.'});
+        }
         if (req.params.action === 'nit') d.NIT = v.nit(req.body?.NIT);
         await services.clientes.update(req.session.usuario.usuarioId,d,req.params.action === 'inactivar');
         return res.json({ id:d.id });

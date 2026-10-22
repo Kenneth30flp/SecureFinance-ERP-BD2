@@ -92,7 +92,8 @@
           form.setAttribute('aria-busy','true');if(event.submitter){event.submitter.disabled=true;event.submitter.dataset.label=event.submitter.textContent;event.submitter.textContent='Guardando...';}
           const result=await request(form.getAttribute('action'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
           const url=new URL(location.href);url.searchParams.delete('nuevo');url.searchParams.delete('editar');url.searchParams.set('id',String(result.id));
-          await navigate(url,{replace:true,feedback:result.codigo?'Producto guardado correctamente. SKU: '+result.codigo:'Operación confirmada correctamente.'});
+          if(result.activo===true)url.searchParams.delete('estado');
+          await navigate(url,{replace:true,feedback:result.codigo?'Producto guardado correctamente. SKU: '+result.codigo:result.mensaje||'Operación confirmada correctamente.'});
         }catch(e){announce(e.message,false,errorTarget);if(e.status===409){const hint=document.createElement('p');hint.textContent='Tus campos se conservan. Copia los cambios pendientes y consulta la versión vigente antes de volver a guardar.';const link=document.createElement('a');link.href=location.href;link.textContent=' Consultar versión vigente';hint.append(link);errorTarget.append(hint);}else if(!e.status||e.status===503){form.dataset.uncertain='1';announce('No fue posible confirmar el resultado. Consulta el registro antes de volver a enviarlo.',false,errorTarget);}}
         finally{busy=false;saving=false;form.removeAttribute('aria-busy');if(event.submitter?.dataset.label){event.submitter.disabled=form.dataset.uncertain==='1';event.submitter.textContent=event.submitter.dataset.label;}}
       });

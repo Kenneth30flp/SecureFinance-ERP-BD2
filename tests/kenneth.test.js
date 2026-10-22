@@ -46,6 +46,44 @@ test('Kenneth: CSRF aislado y rechazo antes del servicio',async t=>{
 });
 const validProduct={ModoCodigo:'MANUAL',Codigo:'PR1',Descripcion:'Producto',Precio:'12.30',PrecioCosto:'5.10',ProveedorId:'1',StockMinimo:'2',PuntoReorden:'3',GarantiaMeses:'12'};
 
+test('Clientes: reactivacion solo en inactivos, motivo, confirmacion y ficha actualizada',async t=>{
+ const f=await fixture(t,[...permissions,'CLIENTES_REACTIVAR']);let current={...customer,Activo:false,FechaInactivacion:new Date('2026-10-22T06:00:00Z'),MotivoInactivacion:'Anterior'};
+ f.services.clientes.list=async()=>[current];
+ f.services.clientes.stateHistory=async()=>[{FechaHora:new Date('2026-10-22T06:00:00Z'),EstadoAnterior:'Activo',EstadoNuevo:'Inactivo',Motivo:'Anterior',Responsable:'admin'}];
+ f.services.clientes.reactivate=async(actor,d)=>{f.calls.push(['reactivate',actor,d]);current={...current,Activo:true};return[current];};
+ const html=await(await f.request('/clientes?id=1&estado=inactivo')).text();
+ assert.match(html,/action="\/clientes\/1\/reactivar"/);assert.match(html,/Motivo de reactivación/);assert.match(html,/data-confirm="¿Reactivar/);
+ assert.doesNotMatch(html,/action="\/clientes\/1\/inactivar"/);assert.match(html,/Historial de cambios de estado/);
+ const operation=html.match(/name="OperacionId" value="([a-f0-9-]+)"/)[1];
+ const r=await f.post('/clientes/1/reactivar',{Version:customer.Version,Motivo:'Aprobación administrativa',OperacionId:operation,ActorUsuarioId:999,NIT:'NO-CAMBIAR'});
+ assert.equal(r.status,200);assert.deepEqual(await r.json(),{id:1,activo:true,mensaje:'Cliente reactivado correctamente.'});
+ const call=f.calls.find(c=>c[0]==='reactivate');assert.equal(call[1],42);assert.equal(call[2].id,1);assert.equal(call[2].NIT,undefined);assert.equal(call[2].OperacionId,operation);
+ const active=await(await f.request('/clientes?id=1')).text();assert.match(active,/action="\/clientes\/1\/inactivar"/);assert.doesNotMatch(active,/action="\/clientes\/1\/reactivar"/);assert.match(active,/Última inactivación/);
+});
+
+test('Clientes: reactivacion exige permiso propio, CSRF, version, motivo y UUID',async t=>{
+ const denied=await fixture(t,['CLIENTES_CONSULTAR','CLIENTES_INACTIVAR']);assert.equal((await denied.post('/clientes/1/reactivar',{})).status,403);
+ const f=await fixture(t,['CLIENTES_CONSULTAR','CLIENTES_REACTIVAR']);let calls=0;
+ const clientPage=await(await f.request('/clientes?id=1')).text();const token=clientPage.match(/name="csrf-token" content="([a-f0-9]+)"/)[1];
+ f.services.clientes.reactivate=async()=>{calls++;return[{Activo:true}];};
+ const valid={Version:customer.Version,Motivo:'Motivo requerido',OperacionId:require('node:crypto').randomUUID()};
+ assert.equal((await f.post('/clientes/1/reactivar',valid,'bad')).status,403);
+ for(const patch of [{Motivo:''},{Motivo:'x'.repeat(251)},{Version:'bad'},{OperacionId:'bad'},{OperacionId:null}])assert.equal((await f.post('/clientes/1/reactivar',{...valid,...patch},token)).status,400);
+ assert.equal(calls,0);
+ f.services.clientes.reactivate=async()=>{throw Object.assign(Error('SQL privado'),{number:54103});};
+ const conflict=await f.post('/clientes/1/reactivar',valid,token);assert.equal(conflict.status,409);assert.doesNotMatch(await conflict.text(),/SQL privado/);
+});
+
+test('Clientes: servicio de reactivacion parametrizado y sin NIT ni UPDATE directo',async()=>{
+ const calls=[];let proc;
+ const service=createClienteService(async()=>({request(){return{input(...args){calls.push(args);return this;},async execute(p){proc=p;return{recordset:[]};}};}}));
+ const data={id:3,Version:customer.Version,Motivo:'Motivo',OperacionId:require('node:crypto').randomUUID()};
+ await service.reactivate(42,data);assert.equal(proc,'dbo.sp_ReactivarCliente');
+ assert.deepEqual(calls.map(c=>c[0]),['ActorUsuarioId','ClienteId','VersionEsperada','Motivo','OperacionId']);
+ assert.ok(Buffer.isBuffer(calls[2][2]));assert.equal(calls[2][2].length,8);assert.equal(calls[4][2],data.OperacionId);
+ calls.length=0;await service.stateHistory(42,3);assert.equal(proc,'dbo.sp_ConsultarHistorialEstadoCliente');
+});
+
 test('Productos: SKU automatico predeterminado, opcion manual y codigo definitivo del servidor',async t=>{
  const f=await fixture(t);
  const html=await(await f.request('/productos?nuevo=1')).text();

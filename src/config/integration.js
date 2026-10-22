@@ -7,6 +7,7 @@ const procedures = [
   'sp_ConsultarAplicacionesNotaCredito', 'sp_AsociarProductoProveedor',
   'sp_ERP_RegistrarProducto',
   'sp_ERP_ConsultarFacturas', 'sp_ERP_ConsultarComprobante',
+  'sp_ReactivarCliente', 'sp_ConsultarHistorialEstadoCliente',
 ];
 
 async function verifyIntegration(pool) {
@@ -16,7 +17,7 @@ async function verifyIntegration(pool) {
     FROM (VALUES ${procedures.map(name => `('${name}')`).join(',')}) p(name);`);
   const missing = result.recordsets[1].filter(row => row.allowed !== 1).map(row => row.name);
   if (missing.length) {
-    const error = new Error(`Integracion SQL incompleta en ${result.recordsets[0][0].databaseName}: verificar migraciones 33-39 y EXECUTE (${missing.join(', ')}).`);
+    const error = new Error(`Integracion SQL incompleta en ${result.recordsets[0][0].databaseName}: verificar migraciones 33-40 y EXECUTE (${missing.join(', ')}).`);
     error.integration = true;
     throw error;
   }

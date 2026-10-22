@@ -1,0 +1,11 @@
+<% if(!c.Activo&&usuario.permisos.includes('CLIENTES_REACTIVAR')){ %>
+<details class="context-action"><summary>Reactivar cliente</summary><p>Habilita nuevas ventas. Conserva su identidad, facturas y documentos anteriores.</p>
+<form method="post" data-master-form data-confirm="¿Reactivar a <%= c.Nombre %>? Volverá a estar disponible para nuevas ventas. Su NIT y documentos se conservarán." data-success="/clientes?id=" action="/clientes/<%= c.ClienteId %>/reactivar">
+<input type="hidden" name="Version" value="<%= c.Version %>"><input type="hidden" name="OperacionId" value="<%= operation %>">
+<%- include('kenneth-field',{name:'Motivo',label:'Motivo de reactivación',value:'',max:250,controlId:'MotivoReactivar'}) %>
+<div class="form-feedback" role="status" aria-live="polite" tabindex="-1" hidden></div><button type="submit" class="btn btn-primary">Reactivar cliente</button></form></details>
+<% } %>
+<% if(typeof clientHistory!=='undefined'){ %><details class="context-action"><summary>Historial de cambios de estado</summary><p>Últimos 20 cambios · Guatemala (UTC−6). El historial completo se conserva en la bitácora.</p>
+<% if(clientHistory.length){ %><div class="master-table-scroll"><table class="table master-table"><caption>Inactivaciones y reactivaciones del cliente</caption><thead><tr><th>Fecha · Guatemala</th><th>Estado</th><th>Motivo y responsable</th></tr></thead><tbody>
+<% clientHistory.forEach(h=>{ %><tr><td><%- include('operational-date',{value:h.FechaHora}) %></td><td><%= h.EstadoAnterior %> → <%= h.EstadoNuevo %></td><td><%= h.Motivo %><br><small><%= h.Responsable %></small></td></tr><% }); %>
+</tbody></table></div><% }else{ %><p>Sin cambios de estado registrados.</p><% } %></details><% } %>
