@@ -23,7 +23,7 @@ El formato usa un mínimo de seis dígitos. Después de `PRD-999999` sigue `PRD-
 
 ## Migración y despliegue
 
-**La migración 38 se instaló y probó únicamente en laboratorio. No está desplegada en `SecureFinanceERP` y no se reinició el backend principal.** El código de esta entrega requiere instalar 38 antes de arrancarlo; la comprobación de integración exige EXECUTE sobre `sp_ERP_RegistrarProducto` para impedir otro arranque con SQL incompatible.
+**Actualización de despliegue local:** la migración 38 ya está instalada en `SecureFinanceERP` y el backend compatible fue reiniciado tras validar un respaldo actual restaurado. Véase [Despliegue de SKU 38](DespliegueSKU38.md). La entrega inicial de esta mejora solo estaba validada en laboratorio. La comprobación de integración exige EXECUTE sobre `sp_ERP_RegistrarProducto` para impedir un arranque con SQL incompatible.
 
 Se creó la copia dedicada `SecureFinanceERP_SKU_20261021224833` a partir del laboratorio de integración existente, mediante backup COPY_ONLY con CHECKSUM, VERIFYONLY y restauración con archivos separados. Se aplicó solo 38 y se verificaron conservación de productos, facturas y Kardex e integridad CHECKDB. No se ejecutaron instaladores Full ni semillas.
 
