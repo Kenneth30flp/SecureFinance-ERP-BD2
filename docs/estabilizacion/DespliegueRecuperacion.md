@@ -1,5 +1,7 @@
 # Despliegue y recuperación
 
+> Actualización del 21/10/2026: el despliegue local 33–37 ya se completó en la principal con respaldo actual restaurado y conciliado. Véase [Reparación e integración](ReparacionIntegracion.md). Las afirmaciones siguientes de que aún no se aplicó describen la entrega anterior.
+
 ## Antes de producción
 
 1. Revisar el PR; no fusionar automáticamente. Confirmar que la base seleccionada es la correcta y que contiene las migraciones 01–32 aplicables. Comparar objetos con el respaldo; no ejecutar Full ni semillas.

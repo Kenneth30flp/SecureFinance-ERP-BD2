@@ -5,6 +5,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('node:path');
 const { getPool, closePool } = require('./src/config/database');
+const { verifyIntegration } = require('./src/config/integration');
 
 const { createAuthService } = require('./src/services/authService');
 const { createAuthRoutes } = require('./src/routes/authRoutes');
@@ -130,11 +131,13 @@ async function start() {
     throw new Error('PORT debe ser un puerto válido.');
   }
 
-  await getPool();
+  const identity = await verifyIntegration(await getPool());
 
   const server = app.listen(port, '127.0.0.1', () => {
     console.log(`SecureFinance ERP: http://localhost:${port}`);
     console.log('Conexión inicial a SQL Server establecida.');
+    console.log('ERP_RUNTIME', JSON.stringify({ pid: process.pid, directory: __dirname,
+      database: identity.databaseName, login: identity.loginName }));
   });
 
   server.on('error', async (error) => {

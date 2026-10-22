@@ -3,7 +3,9 @@
 // Default: existing credentials from ignored .data/qa-login.local.json.
 // --session-fixture: explicitly substitutes authentication ONLY; results label this limitation.
 require('dotenv').config({quiet:true});
-process.env.DB_NAME='SecureFinanceERP_Estabilizacion_20261021';
+const databaseArg=process.argv.find(a=>a.startsWith('--database='));
+process.env.DB_NAME=databaseArg?databaseArg.slice('--database='.length):'SecureFinanceERP_Estabilizacion_20261021';
+if(!/^SecureFinanceERP_Estabilizacion_\d+$/.test(process.env.DB_NAME))throw Error('Solo laboratorio aislado');
 const fs=require('node:fs');
 const path=require('node:path');
 const {spawn}=require('node:child_process');
@@ -52,7 +54,8 @@ async function main(){
  await evaluate(`document.querySelector('[name=NombreUsuario]').value=${JSON.stringify(credentials.usuario)};document.querySelector('[name=Password]').value=${JSON.stringify(credentials.password)};document.querySelector('form').requestSubmit()`);
  await wait('location.pathname==="/dashboard"&&document.readyState==="complete"');pass('Express session established ('+results.authentication+')');
  const products=createProductoService(),inventory=createInventarioService(),sales=createVentaService(),edward=createEdwardService();
- const p=(await products.list(actor,{id:4,inventario:true}))[0];assert.equal(p.Codigo,'DEMO-CABLE');
+ const productCodeArg=process.argv.find(a=>a.startsWith('--product-code='));
+ const p=(await products.list(actor,{id:4,inventario:true}))[0];assert.equal(p.Codigo,productCodeArg?productCodeArg.slice('--product-code='.length):'DEMO-CABLE');
  await navigate('/productos?id=4');await capture('01-producto-ingresar');
  assert.ok(await evaluate("[...document.querySelectorAll('a')].some(a=>a.textContent==='Ingresar existencias')"));
  await evaluate("[...document.querySelectorAll('a')].find(a=>a.textContent==='Ingresar existencias').click()");
