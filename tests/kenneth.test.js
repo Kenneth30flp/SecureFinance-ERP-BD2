@@ -44,7 +44,43 @@ test('Kenneth: todas las rutas requieren sesión y permisos, sin escrituras',asy
 test('Kenneth: CSRF aislado y rechazo antes del servicio',async t=>{
  const f=await fixture(t);assert.equal((await f.post('/productos',{},'bad')).status,403);assert.equal((await f.post('/clientes/1/nit',{},'a'.repeat(64))).status,403);assert(!f.calls.some(c=>c[0].endsWith('save')||c[0]==='client'));
 });
-const validProduct={Codigo:'PR1',Descripcion:'Producto',Precio:'12.30',PrecioCosto:'5.10',ProveedorId:'1',StockMinimo:'2',PuntoReorden:'3',GarantiaMeses:'12'};
+const validProduct={ModoCodigo:'MANUAL',Codigo:'PR1',Descripcion:'Producto',Precio:'12.30',PrecioCosto:'5.10',ProveedorId:'1',StockMinimo:'2',PuntoReorden:'3',GarantiaMeses:'12'};
+
+test('Productos: SKU automatico predeterminado, opcion manual y codigo definitivo del servidor',async t=>{
+ const f=await fixture(t);
+ const html=await(await f.request('/productos?nuevo=1')).text();
+ assert.match(html, /value="AUTOMATICO" selected/);
+ assert.match(html, /Usar un SKU propio \(manual\)/);
+ assert.match(html, /id="Codigo"[^>]*disabled/);
+ const {ModoCodigo,...automatic}=validProduct;
+ f.services.productos.save=async(actor,d)=>{f.calls.push(['product-save',actor,d]);return [{ProductoId:5,Codigo:'PRD-000005'}];};
+ const response=await f.post('/productos',{...automatic,Codigo:'IGNORADO-EN-AUTOMATICO'});
+ assert.equal(response.status,201);
+ assert.deepEqual(await response.json(),{id:5,codigo:'PRD-000005'});
+ const data=f.calls.find(c=>c[0]==='product-save')[2];
+ assert.equal(data.Codigo,null);assert.equal(data.CodigoAutomatico,true);
+ assert.equal((await f.post('/productos',{...validProduct,ModoCodigo:'otro'})).status,400);
+});
+
+test('Productos: SKU manual validado, duplicado seguro y edicion sin regenerar codigo',async t=>{
+ const f=await fixture(t);
+ await f.post('/productos',validProduct);
+ const data=f.calls.find(c=>c[0]==='product-save')[2];assert.equal(data.Codigo,'PR1');assert.equal(data.CodigoAutomatico,false);
+ f.services.productos.save=async()=>{throw Object.assign(new Error('Detalle SQL privado'),{number:2627});};
+ const duplicate=await f.post('/productos',validProduct);assert.equal(duplicate.status,400);
+ assert.match((await duplicate.json()).error,/ya está registrado/);
+ f.services.productos.save=async(actor,d)=>{assert.equal(d.CodigoAutomatico,false);assert.equal(d.Codigo,product.Codigo);return [product];};
+ const response=await f.post('/productos/1',{...validProduct,Codigo:product.Codigo,Version:product.Version,Activo:'1'});
+ assert.equal(response.status,200);assert.equal((await response.json()).codigo,product.Codigo);
+});
+
+test('Productos: servicio usa wrapper SQL y parametro automatico solo en altas',async()=>{
+ const calls=[];const service=createProductoService(async()=>({request(){return {input(...p){calls.push(p);return this;},async execute(proc){calls.push(proc);return {recordset:[]};}};}}));
+ await service.save(42,{...validProduct});assert.equal(calls.at(-1),'dbo.sp_ERP_RegistrarProducto');
+ assert.equal(calls.find(p=>p[0]==='CodigoAutomatico')[2],true);
+ calls.length=0;await service.save(42,{...validProduct,CodigoAutomatico:false});assert.equal(calls.find(p=>p[0]==='CodigoAutomatico')[2],false);
+ calls.length=0;await service.save(42,{...validProduct,id:1,Version:product.Version});assert.equal(calls.at(-1),'dbo.sp_ActualizarProducto');assert(!calls.some(p=>p[0]==='CodigoAutomatico'));
+});
 test('Clientes: cada seleccion y drawer conserva su identidad y destino de edicion',async t=>{
  const f=await fixture(t);
  const clients=[1,2,3].map(id=>({...customer,ClienteId:id,Nombre:'Cliente '+id,NIT:'NIT'+id,Correo:'c'+id+'@example.invalid',Telefono:'5555-000'+id}));

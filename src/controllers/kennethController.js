@@ -65,7 +65,9 @@ function createKennethController(services) {
         let d = { id };
         if (id) d.Version = v.version(b.Version);
         if (module === 'productos') {
-          d = { ...d, Codigo: v.text(b.Codigo,40), Descripcion: v.text(b.Descripcion,200), Precio: v.money(b.Precio), PrecioCosto: v.money(b.PrecioCosto), ProveedorId: v.integer(b.ProveedorId), StockMinimo: v.integer(b.StockMinimo,0), PuntoReorden: v.integer(b.PuntoReorden,0), GarantiaMeses: v.integer(b.GarantiaMeses,0,32767), Activo: id ? v.active(b.Activo) : true };
+          if (!id && b.ModoCodigo !== undefined && !['AUTOMATICO','MANUAL'].includes(b.ModoCodigo)) throw new v.ValidationError('Selecciona SKU automático o manual.');
+          const automatic = !id && b.ModoCodigo !== 'MANUAL';
+          d = { ...d, CodigoAutomatico: automatic, Codigo: automatic ? null : v.text(b.Codigo,40), Descripcion: v.text(b.Descripcion,200), Precio: v.money(b.Precio), PrecioCosto: v.money(b.PrecioCosto), ProveedorId: v.integer(b.ProveedorId), StockMinimo: v.integer(b.StockMinimo,0), PuntoReorden: v.integer(b.PuntoReorden,0), GarantiaMeses: v.integer(b.GarantiaMeses,0,32767), Activo: id ? v.active(b.Activo) : true };
           if (d.PuntoReorden < d.StockMinimo) throw new v.ValidationError('El punto de reorden debe ser igual o mayor al stock mínimo.');
           const current = id ? (await services.productos.list(actor, { id, costo:true }))[0] : null;
           if (id && !current) throw new v.ValidationError('Producto no disponible.');
@@ -90,7 +92,7 @@ function createKennethController(services) {
         const result = await services[module].save(actor,d);
         if (!result[0]) throw new Error('Respuesta ausente');
         if (module === 'productos' && b.UploadToken) delete req.session.pendingPhotos[b.UploadToken];
-        return res.status(id ? 200 : 201).json({ id: result[0][module === 'productos' ? 'ProductoId' : module === 'clientes' ? 'ClienteId' : 'ProveedorId'] });
+        return res.status(id ? 200 : 201).json({ id: result[0][module === 'productos' ? 'ProductoId' : module === 'clientes' ? 'ClienteId' : 'ProveedorId'], ...(module === 'productos' ? { codigo: result[0].Codigo } : {}) });
       } catch (e) { return failure(res,e); }
     },
     async client(req,res) {

@@ -9,7 +9,8 @@ function createProductoService(provider) {
     save(actor, d) {
       const p = [['Codigo', sql.NVarChar(40), d.Codigo], ['Descripcion', sql.NVarChar(200), d.Descripcion], ['Precio', sql.Decimal(12, 2), d.Precio], ['PrecioCosto', sql.Decimal(12, 2), d.PrecioCosto], ['ProveedorId', sql.Int, d.ProveedorId], ['StockMinimo', sql.Int, d.StockMinimo], ['PuntoReorden', sql.Int, d.PuntoReorden], ['GarantiaMeses', sql.SmallInt, d.GarantiaMeses], ['Fotografia', sql.VarChar(40), d.Fotografia]];
       if (d.id) p.push(['ProductoId', sql.Int, d.id], ['VersionEsperada', sql.Binary(8), Buffer.from(d.Version, 'hex')], ['Activo', sql.Bit, d.Activo]);
-      return execute(d.id ? 'dbo.sp_ActualizarProducto' : 'dbo.sp_RegistrarProducto', actor, p);
+      else p.push(['CodigoAutomatico', sql.Bit, d.CodigoAutomatico !== false]);
+      return execute(d.id ? 'dbo.sp_ActualizarProducto' : 'dbo.sp_ERP_RegistrarProducto', actor, p);
     },
   };
 }
