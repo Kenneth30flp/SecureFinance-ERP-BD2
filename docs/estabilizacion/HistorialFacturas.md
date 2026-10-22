@@ -45,7 +45,15 @@ El cotejo excluye únicamente las filas nuevas y esperadas de `FACTURAS_CONSULTA
 
 El ejecutor `DeployInvoiceHistory39.ps1` permite Inspect, Prepare, Laboratory, Deploy y Verify; solo instala 39 y verifica el hash del archivo, objetos, roles y permisos. El arranque del backend exige los dos procedimientos nuevos. Las evidencias privadas, backup y capturas quedan en `.data/`, excluido de Git.
 
-El despliegue coordinado y su verificación final se registran al completar la ventana sin escrituras. No se ejecuta Full, no se eliminan datos y no se fusiona `main`.
+**Despliegue local completado:** se detuvo el PID 15372 después de comprobar ausencia de solicitudes/transacciones de escritura. Se conservó una copia privada de recuperación del código 924fd2a sin activarla. La principal permaneció en RESTRICTED_USER durante la aplicación exclusiva de 39 y la conciliación; volvió a ONLINE / MULTI_USER tras CHECKDB, restricciones y permisos efectivos.
+
+El backend compatible del commit `54949be` se inició desde la misma carpeta y configuración: Node **v24.14.0**, PID **33552**, `127.0.0.1:3000`, base **SecureFinanceERP**, cuenta **securefinance_app**. La identidad se confirmó en el log de arranque y en `sys.dm_exec_sessions`. Los commits posteriores de esta entrega solo actualizan la evidencia.
+
+`InvoiceHistoryIntegration.js --main` pasó por la rama de solo lectura: #6010 exacta, otras facturas, filtros, permisos y coincidencia de las **15 facturas** con Auditoría. `invoiceHistory.browser.js --main` pasó consulta, reimpresión y PDF con cero POST de venta. `VerifyERPReadOnly.js --main` comprobó nuevamente las doce rutas, incluyendo Inventario, Productos, Proveedores y fotografías.
+
+Finalmente, `DeployInvoiceHistory39.ps1 -Stage Verify` comparó otra vez las filas anteriores con el backup: **todas permanecieron idénticas**, excluyendo exclusivamente las nuevas asignaciones de permiso verificadas. La tabla nueva de identidades seguía vacía, como corresponde a las facturas anteriores. Se conservan **15 facturas, 5 productos y 270 unidades**; esos productos y existencias ya estaban en el respaldo actual. No se confundieron con las métricas de entregas anteriores ni con las ventas QA de la copia.
+
+No se ejecutó Full, no se borraron datos, no se cambiaron contraseñas y no se fusiona `main`. Las pruebas de escritura se limitaron a la copia. La inspección final detecta 39 instalada y correcta, sin reaplicarla.
 
 ## Archivos principales
 
