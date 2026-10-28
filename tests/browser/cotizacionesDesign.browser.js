@@ -7,7 +7,7 @@ const state=JSON.parse(fs.readFileSync('.data/cotizaciones-visual.json','utf8').
 assert.match(state.lab,/^SecureFinanceERP_P3_COT_VISUAL_\d{14}_[a-f0-9]{8}$/);process.env.DB_NAME=state.lab;
 const {getPool,closePool,sql}=require('../../src/config/database');const {createApp}=require('../../server');
 const {createCotizacionService}=require('../../src/modules/cotizaciones/service');const {createProductoService}=require('../../src/services/productoService');const {createClienteService}=require('../../src/services/clienteService');const {createInventarioService}=require('../../src/services/inventarioService');
-const artifacts='docs/parte3/cotizaciones/redisenio/evidencias-comerciales';fs.mkdirSync(artifacts,{recursive:true});
+const artifacts=process.env.SF_UI_EVIDENCE_DIR||'docs/parte3/cotizaciones/redisenio/evidencias-comerciales';fs.mkdirSync(artifacts,{recursive:true});
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
 async function main(){
  let server,browser,socket;const results={authentication:'SESSION_FIXTURE_NOT_REAL_LOGIN',database:state.lab,demoWrites:'NONE; writes only in VISUAL clone',checks:[]};
@@ -36,6 +36,21 @@ async function main(){
   await cdp('Page.enable');await cdp('Runtime.enable');await width(1366);
   await navigate('/login');await evaluate("document.querySelector('[name=NombreUsuario]').value='FIXTURE_VISUAL';document.querySelector('[name=Password]').value='fixture';document.querySelector('form').requestSubmit()");await wait('location.pathname==="/dashboard"&&document.readyState==="complete"');
   await navigate('/cotizaciones');assert.ok(!await evaluate('document.body.innerText.includes("Cliente QA")||document.body.innerText.includes("QA UC09")'));await capture('01-historial-1366');pass('historial comercial real sin datos QA en copia derivada de demostracion');
+  await navigate('/modulos');assert.equal(await evaluate('document.querySelectorAll(".module-area").length'),6);await capture('00-centro-modulos');
+  for(const w of [1366,1024,768,390,320]){
+   await width(w);assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'),'Centro sin desborde '+w);
+   for(const area of ['ventas','inventario','compras','finanzas','administracion']){
+    await evaluate('document.querySelectorAll(".nav-area").forEach(e=>e.open=false);document.querySelector(\'.nav-area summary[aria-label="Área '+({ventas:'Ventas',inventario:'Inventario',compras:'Compras',finanzas:'Finanzas',administracion:'Administración'})[area]+'"]\').click()');
+    await delay(100);assert.equal(await evaluate('document.querySelectorAll(".nav-area[open]").length'),1);
+    assert.ok(await evaluate('(()=>{const r=document.querySelector(".nav-area[open] .nav-panel").getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1})()'),'Panel dentro de pantalla '+w);
+    if(w===1366||w===390)await capture('00-area-'+area+'-'+w);
+    await key('Escape');assert.equal(await evaluate('document.querySelectorAll(".nav-area[open]").length'),0);
+   }
+  }
+  await width(1366);
+  const routes=await evaluate('[...document.querySelectorAll(".module-entry")].map(a=>a.getAttribute("href"))');
+  for(const route of routes){const status=await evaluate('fetch('+JSON.stringify(route)+').then(r=>r.status)');assert.equal(status,200,'Ruta publicada '+route);}
+  pass('Centro de seis áreas, rutas autorizadas sin 404, paneles y Escape en cinco anchos');
   const service=createCotizacionService(),productService=createProductoService(),client=(await createClienteService().list(state.actor,{id:state.clients[0]}))[0];
   const first=(await productService.list(state.actor,{id:state.products[0],costo:true}))[0],second=(await productService.list(state.actor,{id:state.products[1],costo:true}))[0];assert.ok(first.Stock>=3&&second.Stock>=2);
   const before=[first.Stock,second.Stock];
@@ -62,6 +77,8 @@ async function main(){
   await width(1366);await navigate('/cotizaciones/'+id);await cdp('Emulation.setEmulatedMedia',{media:'print'});assert.equal(await evaluate('getComputedStyle(document.querySelector(".sidebar")).display'),'none');const pdf=await cdp('Page.printToPDF',{printBackground:false,preferCSSPageSize:true});fs.writeFileSync(path.join(artifacts,'07-cotizacion-imprimible.pdf'),Buffer.from(pdf.data,'base64'));await capture('07-comprobante-impresion');await cdp('Emulation.setEmulatedMedia',{media:''});pass('comprobante imprimible autentico, sin controles ni apariencia de factura tributaria');
   await evaluate('document.querySelector("#cot-convert").requestSubmit()');await wait('document.querySelector("#cot-confirm").open');await evaluate('document.querySelector(\'#cot-confirm [value="confirm"]\').click()');await wait('document.body.innerText.includes("PROCESADA")&&!document.querySelector("#cot-convert")');const converted=await service.detail(state.actor,id);assert.equal(converted.documento.Estado,'PROCESADA');await capture('08-procesada-1366');
   await navigate('/facturacion/facturas/'+converted.documento.FacturaId);assert.ok(await evaluate('document.body.innerText.includes('+JSON.stringify(totalString.replaceAll(',',''))+')||document.body.innerText.includes('+JSON.stringify(totalString)+')'));await capture('09-factura-1366');
+  for(const [paper,paperWidth,paperHeight] of [['a4',8.27,11.69],['carta',8.5,11]]){const pdf=await cdp('Page.printToPDF',{printBackground:false,paperWidth,paperHeight,displayHeaderFooter:false});assert.ok(pdf.data.length>1000);fs.writeFileSync(path.join(artifacts,'09-factura-'+paper+'.pdf'),Buffer.from(pdf.data,'base64'));}
+
   const afterFirst=(await productService.list(state.actor,{id:first.ProductoId,costo:true}))[0],afterSecond=(await productService.list(state.actor,{id:second.ProductoId,costo:true}))[0];assert.equal(afterFirst.Stock,before[0]-3);assert.equal(afterSecond.Stock,before[1]-2);const history=await createInventarioService().history(state.actor,{id:first.ProductoId});assert.ok(history.some(h=>h.TipoMovimiento==='VENTA'));await navigate('/inventario?id='+first.ProductoId);await capture('10-kardex-1366');pass('conversion a factura, comprobante, stock y Kardex reales sin duplicacion');
   await navigate('/cotizaciones/nueva');await evaluate('(()=>{const i=document.querySelector("#cot-search");i.focus();i.value="PRODUCTO_INEXISTENTE_DEMOSTRACION";i.dispatchEvent(new Event("input",{bubbles:true}));})()');await wait('document.querySelector(\'[data-picker="productos"] [role=status]\').textContent.includes("No encontramos")');await capture('11-sin-resultados');pass('estado vacio del buscador informa sin desplegar catalogo completo');
   assert.deepEqual(errors,[]);pass('sin excepciones JavaScript');results.quoteId=id;results.invoiceId=converted.documento.FacturaId;results.stockBefore=before;results.stockAfter=[afterFirst.Stock,afterSecond.Stock];results.total=totalString;results.result='PASS';

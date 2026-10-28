@@ -60,6 +60,8 @@ function createApp({
   app.disable('x-powered-by');
   app.set('view engine', 'ejs');
   app.set('views', path.join(__dirname, 'src/views'));
+  app.locals.moduleAreas = require('./src/config/moduleCatalog').visibleAreas;
+  app.locals.displayMoney = require('./src/modules/cotizaciones/format').money;
 
   app.use(express.urlencoded({ extended: false, limit: '10kb' }));
   app.use(express.json({ limit: '10kb' }));
@@ -86,6 +88,10 @@ function createApp({
   );
 
   // Autenticación de Kenneth
+  app.get('/modulos', require('./src/middleware/authMiddleware').requireAuth, (req,res)=>{
+    res.set('Cache-Control','no-store');
+    res.render('modulos',{usuario:req.session.usuario});
+  });
   app.use(createAuthRoutes(authService));
   app.use(createDashboardRoutes(dashboardService));
   app.use(createAnaliticaRoutes(analiticaService));

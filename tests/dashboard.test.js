@@ -77,7 +77,7 @@ test('Seeds: academicos requieren opt-in, bloquean historicos y Full conserva fu
 });
 
 test('Dashboard: ceros discretos y alertas solo con evidencia de existencias o estado',async()=>{
- const render=operacion=>require('ejs').renderFile('src/views/dashboard.ejs',{usuario:{nombreUsuario:'Operador',permisos:['INVENTARIO_CONSULTAR']},resumen:{...resumen,VentasDia:'0.00',FacturasDia:'0'},advertencia:null,avisoInventario:null,operacion});
+ const render=operacion=>require('ejs').renderFile('src/views/dashboard.ejs',{moduleAreas:require('../src/config/moduleCatalog').visibleAreas,usuario:{nombreUsuario:'Operador',permisos:['INVENTARIO_CONSULTAR']},resumen:{...resumen,VentasDia:'0.00',FacturasDia:'0'},advertencia:null,avisoInventario:null,operacion});
  const empty=await render({total:0,criticos:0,habilitado:true,productos:[]});
  assert.match(empty,/oc-sales is-zero/);assert.match(empty,/Q 0\.00/);assert.doesNotMatch(empty,/class="oc-attention"|role="status"|Financial Operations Center|Enterprise finance/);
  const critical=await render({total:1,criticos:1,habilitado:true,productos:[{ProductoId:81,Descripcion:'Equipo <script>',Codigo:'SKU81',Stock:0,StockMinimo:3,PuntoReorden:8}]});

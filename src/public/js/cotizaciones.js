@@ -1,4 +1,5 @@
 'use strict';
+const clientIdentity=value=>(document.body.dataset.demo==='true' && /^DEMOCOT\d+$/.test(value)?'Identificador de demostración: ':'NIT ')+value;
 (() => {
   const $=id=>document.getElementById(id),message=$('cot-message');
   const show=text=>{message.textContent=text;message.hidden=false;message.focus();};
@@ -63,7 +64,7 @@
         results=data.rows;page=data.pagina;next=data.next;input.removeAttribute('aria-activedescendant');
         for(let i=0;i<results.length;i++){
           const row=results[i],option=node('div','cot-option'),label=node('div');option.id=list.id+'-'+i;option.dataset.id=String(row.Id);option.setAttribute('role','option');option.setAttribute('aria-selected','false');
-          label.append(node('strong','',row.Nombre),node('small','',(kind==='clientes'?'NIT ':'SKU ')+row.Referencia));option.append(label);
+          label.append(node('strong','',row.Nombre),node('small','',(kind==='clientes'?clientIdentity(row.Referencia):'SKU '+row.Referencia)));option.append(label);
           if(kind==='productos'){
             const price=node('div','cot-option-price');price.append(node('strong','',money(decimal(row.Precio))),node('small',row.Stock===0?'cot-out-stock':'',row.Stock===0?'Sin existencias':row.Stock+' disponibles'));option.append(price);
           }
@@ -88,7 +89,7 @@
     return {clear(){value.value='';input.value='';onClear();input.focus();load();}};
   }
   const clientPicker=picker(document.querySelector('[data-picker="clientes"]'),row=>{
-    const selected=$('cot-client-selected'),label=node('div');label.append(node('strong','',row.Nombre),node('small','','NIT '+row.Referencia));
+    const selected=$('cot-client-selected'),label=node('div');label.append(node('strong','',row.Nombre),node('small','',clientIdentity(row.Referencia)));
     const change=node('button','','Cambiar');change.type='button';change.addEventListener('click',()=>clientPicker.clear());selected.replaceChildren(label,change);selected.hidden=false;
     $('cot-client-help').hidden=true;$('cot-summary-client').textContent=row.Nombre;
   },()=>{$('cot-client-selected').hidden=true;$('cot-client-help').hidden=false;$('cot-summary-client').textContent='Selecciona un cliente';});

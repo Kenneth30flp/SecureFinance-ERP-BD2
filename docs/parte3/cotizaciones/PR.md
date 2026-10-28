@@ -1,3 +1,15 @@
+## Cierre final: Cotizaciones y navegación modular
+
+- Pulido de importes, vigencias comerciales, identificadores de demostración e impresión.
+- Centro `/modulos` y seis áreas mediante catálogo central, permisos efectivos y paneles accesibles.
+- Se conservan rutas y contratos financieros. Sin nuevas migraciones ni cambios en Facturación/Kardex.
+- 115 pruebas Node; 48 grupos SQL reales; 16 + 12 grupos Chromium aprobados.
+- Demostración en localhost:3105, base DEMO verificada, COT-6/factura 7011 preservadas por hashes.
+- Evidencias y comandos: `docs/parte3/cierre-final/README.md`. Contrato para compañeros: `docs/parte3/NAVEGACION_MODULAR.md`.
+- Pruebas visuales con sesión fixture solo en copia VISUAL; demostración mantiene login normal. Sin merge automático.
+
+---
+
 Cotizaciones ahora presenta una experiencia comercial coherente con el tema oscuro de SecureFinance: historial compacto, formulario organizado en tres secciones, buscadores accesibles y paginados, edición de cantidades/descuentos, detalle empresarial, confirmación modal e impresión limpia. La demostración tiene una base exclusiva sin los registros generados por QA.
 
 ### Experiencia y consultas
