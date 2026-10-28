@@ -1,0 +1,34 @@
+{
+  "authentication": "SESSION_FIXTURE_NOT_REAL_LOGIN",
+  "database": "SecureFinanceERP_P3_COT_VISUAL_20261027233530_3fc452ba",
+  "demoWrites": "NONE; writes only in VISUAL clone",
+  "checks": [
+    "historial comercial real sin datos QA en copia derivada de demostracion",
+    "busqueda por NIT y seleccion por teclado con identificacion visible",
+    "contraste medido de texto y control de busqueda cumple 4.5:1 y 3:1",
+    "varios productos por mouse/teclado y edicion de cantidad/descuento con calculo exacto",
+    "formulario y lineas editables sin desborde en 1366/1024/768/390/320",
+    "guardado real SQL preserva lineas e importes editados",
+    "historial, detalle y dialogo responsive; Tab/Escape y foco restaurado en cinco anchos",
+    "comprobante imprimible autentico, sin controles ni apariencia de factura tributaria",
+    "conversion a factura, comprobante, stock y Kardex reales sin duplicacion",
+    "estado vacio del buscador informa sin desplegar catalogo completo",
+    "sin excepciones JavaScript"
+  ],
+  "contrast": {
+    "text": 16.580747131637246,
+    "border": 3.7959373383143324
+  },
+  "quoteId": 6,
+  "invoiceId": 7011,
+  "stockBefore": [
+    98,
+    25
+  ],
+  "stockAfter": [
+    95,
+    23
+  ],
+  "total": "3,362.59",
+  "result": "PASS"
+}

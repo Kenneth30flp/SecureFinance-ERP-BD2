@@ -1,13 +1,13 @@
 'use strict';
 
 const { sql, getPool } = require('../config/database');
+const { localDayBoundary } = require('../public/js/operationalDates');
 
 function normalizeDate(value, endOfDay = false) {
   if (value === undefined || value === null || value === '') return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return localDayBoundary(value, endOfDay, true);
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  // Los filtros HTML de fecha incluyen todo el ultimo dia, en UTC.
-  if (endOfDay && /^\d{4}-\d{2}-\d{2}$/.test(value)) date.setUTCHours(23, 59, 59, 999);
   return date;
 }
 

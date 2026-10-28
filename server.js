@@ -5,6 +5,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('node:path');
 const { getPool, closePool } = require('./src/config/database');
+const { verifyIntegration } = require('./src/config/integration');
 
 const { createAuthService } = require('./src/services/authService');
 const { createAuthRoutes } = require('./src/routes/authRoutes');
@@ -12,6 +13,7 @@ const { createDashboardService } = require('./src/services/dashboardService');
 const { createDashboardRoutes } = require('./src/routes/dashboardRoutes');
 
 const { createVentaService } = require('./src/services/ventaService');
+const { createFacturaService } = require('./src/services/facturaService');
 const { createVentaRoutes } = require('./src/routes/ventaRoutes');
 
 const { createAuditoriaService } = require('./src/services/auditoriaService');
@@ -31,18 +33,22 @@ const { createEdwardService } = require('./src/modules/edward/services');
 const { createEdwardRoutes } = require('./src/modules/edward/routes');
 const { createAnaliticaService } = require('./src/modules/jose/analiticaService');
 const { createAnaliticaRoutes } = require('./src/modules/jose/analiticaRoutes');
+const { createCotizacionService } = require('./src/modules/cotizaciones/service');
+const { createCotizacionRoutes } = require('./src/modules/cotizaciones/routes');
 
 function createApp({
   secret = process.env.SESSION_SECRET,
   authService = createAuthService(),
   dashboardService = createDashboardService(),
   ventaService = createVentaService(),
+  facturaService = createFacturaService(),
   auditoriaService = createAuditoriaService(),
   usuarioService = createUsuarioService(),
   passwordService = createPasswordService(),
   edwardService = createEdwardService(),
   kennethServices = { productos:createProductoService(), proveedores:createProveedorService(), clientes:createClienteService(), inventario:createInventarioService(), photos:createFotografiaService() },
   analiticaService = createAnaliticaService(),
+  cotizacionService = createCotizacionService(),
   production = process.env.NODE_ENV === 'production',
 } = {}) {
   if (!secret || secret.trim().length < 32) {
@@ -54,6 +60,8 @@ function createApp({
   app.disable('x-powered-by');
   app.set('view engine', 'ejs');
   app.set('views', path.join(__dirname, 'src/views'));
+  app.locals.moduleAreas = require('./src/config/moduleCatalog').visibleAreas;
+  app.locals.displayMoney = require('./src/modules/cotizaciones/format').money;
 
   app.use(express.urlencoded({ extended: false, limit: '10kb' }));
   app.use(express.json({ limit: '10kb' }));
@@ -80,13 +88,17 @@ function createApp({
   );
 
   // Autenticación de Kenneth
+  app.get('/modulos', require('./src/middleware/authMiddleware').requireAuth, (req,res)=>{
+    res.set('Cache-Control','no-store');
+    res.render('modulos',{usuario:req.session.usuario});
+  });
   app.use(createAuthRoutes(authService));
   app.use(createDashboardRoutes(dashboardService));
   app.use(createAnaliticaRoutes(analiticaService));
   app.use(createPasswordRoutes(passwordService, { production }));
 
   // Facturación de Edward
-  app.use(createVentaRoutes(ventaService));
+  app.use(createVentaRoutes(ventaService,facturaService));
   app.use(createEdwardRoutes(edwardService));
 
   // Auditoría de José
@@ -94,6 +106,7 @@ function createApp({
 
   app.use(createUsuarioRoutes(usuarioService));
   app.use(createKennethRoutes(kennethServices));
+  app.use(createCotizacionRoutes(cotizacionService));
 
   app.get('/health', (req, res) =>
     res.json({ status: 'ok', phase: 3 })
@@ -130,11 +143,13 @@ async function start() {
     throw new Error('PORT debe ser un puerto válido.');
   }
 
-  await getPool();
+  const identity = await verifyIntegration(await getPool());
 
   const server = app.listen(port, '127.0.0.1', () => {
     console.log(`SecureFinance ERP: http://localhost:${port}`);
     console.log('Conexión inicial a SQL Server establecida.');
+    console.log('ERP_RUNTIME', JSON.stringify({ pid: process.pid, directory: __dirname,
+      database: identity.databaseName, login: identity.loginName }));
   });
 
   server.on('error', async (error) => {

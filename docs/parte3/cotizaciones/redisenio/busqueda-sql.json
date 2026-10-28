@@ -1,0 +1,12 @@
+{
+  "lab": "SecureFinanceERP_P3_COT_20261027213647_67c25f5a",
+  "passed": [
+    "reaplicacion 44 no cambia motor UC09, caja, Kardex ni facturas",
+    "formulario recibe politica y reloj SQL sin cargar catalogos completos",
+    "clientes/productos paginados, estables, por nombre y NIT/SKU",
+    "texto parametrizado y estados vacios reales",
+    "permiso SQL vigente requerido para buscar",
+    "stock cero identificado sin ocultar registros por prefijo",
+    "consultas no generan efectos financieros o de inventario"
+  ]
+}

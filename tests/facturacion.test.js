@@ -34,7 +34,7 @@ function pantalla(fetchImpl, maxDescuento = 100) {
   get('producto').options = [{ value: '', dataset: {}, textContent: 'Selecciona' }, { value: '1', dataset: { search: 'HDMI Cable HDMI' }, textContent: 'Cable HDMI' }, { value: '2', dataset: { search: 'USB Cable USB' }, textContent: 'Cable USB' }];
   get('nueva-venta').className = 'd-none';
   let impresiones = 0;
-  runInNewContext(readFileSync(require.resolve('../src/public/js/messages.js'), 'utf8') + '\n' + script, { document: { getElementById: get, createElement: () => new Element(),
+  runInNewContext(readFileSync(require.resolve('../src/public/js/operationalDates.js'), 'utf8') + '\n' + readFileSync(require.resolve('../src/public/js/messages.js'), 'utf8') + '\n' + script, { document: { getElementById: get, createElement: () => new Element(),
     querySelector: () => ({ content: 'csrf-prueba' }) }, fetch: fetchImpl, window: { print: () => { impresiones += 1; } } });
   return {
     get,
@@ -199,7 +199,7 @@ test('Frontend: comprobante e impresión usan metadatos, detalle e importes devu
   const p = pantalla(async (url, options) => {
     cuerpo = JSON.parse(options.body);
     return { ok: true, json: async () => ({ venta: {
-      FacturaId: 15, Cliente: 'Cliente SQL', NIT: 'SQL-123', Cajero: 'admin_sql', FechaHora: '2026-10-01T12:00:00Z',
+      FacturaId: 15, Cliente: 'Cliente SQL', NIT: 'SQL-123', Cajero: 'admin_sql', FechaHora: '2026-10-22T04:19:00Z',
       Subtotal: '71.80', Descuento: '17.95', SubtotalNeto: '53.85', IVA: '6.46', Total: '60.31', MotivoDescuento: 'Cliente frecuente',
       Detalle: [{ Descripcion: '<img src=x> Cable SQL', Cantidad: 2, PrecioUnitario: '35.90', DescuentoPorcentaje: '25.00', DescuentoMonto: '17.95', SubtotalNeto: '53.85' }],
     } }) };
@@ -213,6 +213,7 @@ test('Frontend: comprobante e impresión usan metadatos, detalle e importes devu
   assert.equal(cuerpo.MotivoDescuento, 'Cliente frecuente');
   assert.equal(p.get('recibo-cliente').textContent, 'Cliente SQL');
   assert.equal(p.get('recibo-cajero').textContent, 'admin_sql');
+  assert.equal(p.get('recibo-fecha').textContent, '21/10/2026, 22:19:00');
   assert.equal(p.get('recibo-total').textContent, 'Q 60.31');
   assert.equal(p.get('recibo-detalle').children[0].children[0].textContent, '<img src=x> Cable SQL');
   assert.equal(p.get('venta-form').hidden, true);

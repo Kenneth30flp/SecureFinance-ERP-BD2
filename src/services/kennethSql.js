@@ -4,7 +4,16 @@ function executor(provider = getPool) {
   return async (procedure, actor, parameters = []) => {
     const request = (await provider()).request().input('ActorUsuarioId', sql.Int, actor);
     for (const [name, type, value] of parameters) request.input(name, type, value ?? null);
-    const result = await request.execute(procedure);
+    let result;
+    try {
+      result = await request.execute(procedure);
+    } catch (error) {
+      // No registrar parametros, mensajes SQL (pueden contener datos) ni credenciales.
+      console.error('ERP_SQL_FAILURE', JSON.stringify({ procedure, code: error.code,
+        number: error.number, state: error.state, class: error.class,
+        lineNumber: error.lineNumber, serverProcedure: error.procName }));
+      throw error;
+    }
     return (result.recordset || []).map(row => ({ ...row, ...(Buffer.isBuffer(row.Version) ? { Version: row.Version.toString('hex') } : {}) }));
   };
 }

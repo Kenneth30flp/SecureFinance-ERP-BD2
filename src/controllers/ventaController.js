@@ -1,6 +1,6 @@
 'use strict';
 
-const { randomBytes, timingSafeEqual } = require('node:crypto');
+const { randomBytes, randomUUID, timingSafeEqual } = require('node:crypto');
 
 const erroresSQL = new Map([
   [52012, 'El descuento máximo autorizado para tu rol es 10%.'],
@@ -35,8 +35,9 @@ function createVentaController(ventaService) {
         ]);
         // Token limitado a facturación, sin modificar autenticación ni sesiones globales.
         req.session.ventaCsrf ||= randomBytes(32).toString('hex');
+        req.session.ventaOperacion = randomUUID();
         return res.render('facturacion', {
-          usuario: req.session.usuario, clientes, productos, politica, csrf: req.session.ventaCsrf,
+          usuario: req.session.usuario, clientes, productos, politica, csrf: req.session.ventaCsrf, operacionId:req.session.ventaOperacion,
         });
       } catch (error) {
         if (error.number === 52013 || error.number === 52007) return res.status(403).type('text').send('No tienes permiso para registrar ventas.');
@@ -52,6 +53,8 @@ function createVentaController(ventaService) {
         return res.status(403).json({ error: 'Actualiza la página de facturación e inténtalo nuevamente.' });
       }
       const { ClienteId, Detalle, MotivoDescuento = null } = req.body || {};
+      const operacionId=req.body?.OperacionId||req.session.ventaOperacion;
+      if(typeof operacionId!=='string'||!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(operacionId))return res.status(400).json({error:'Actualiza el formulario para obtener una referencia de venta.'});
       const clienteId = enteroPositivo(ClienteId);
       const usuarioId = enteroPositivo(req.session.usuario.usuarioId);
       if (!clienteId || !usuarioId || !Array.isArray(Detalle) || Detalle.length < 1 || Detalle.length > 100) {
@@ -86,9 +89,10 @@ function createVentaController(ventaService) {
           return res.status(400).json({ error: `El descuento máximo autorizado para tu rol es ${Number(politica.MaxDescuento)}%.` });
         }
         const venta = await ventaService.procesarVenta(clienteId, usuarioId, lineas,
-          lineas.some((linea) => linea.DescuentoPorcentaje > 0) ? MotivoDescuento : null);
+          lineas.some((linea) => linea.DescuentoPorcentaje > 0) ? MotivoDescuento : null,operacionId);
         return res.status(201).json({ venta });
       } catch (error) {
+        if(error.number===54803)return res.status(409).json({error:'La referencia corresponde a otra venta o está ocupada. Consulta el comprobante antes de continuar.'});
         const message = erroresSQL.get(error.number);
         if (message) return res.status(error.number === 52013 || error.number === 52007 ? 403 : error.number === 52010 ? 409 : 400).json({ error: message });
         // Un timeout puede suceder después del COMMIT: no reintentar automáticamente.

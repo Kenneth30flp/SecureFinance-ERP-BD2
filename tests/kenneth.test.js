@@ -19,7 +19,7 @@ const supplier={ProveedorId:1,NIT:'TEST1',Nombre:'Proveedor de prueba',Activo:tr
 const customer={ClienteId:1,NIT:'CLIENTE1',Nombre:'Cliente de prueba',Activo:true,Version:product.Version,FechaCreacion:new Date('2026-10-01')};
 async function fixture(t,permisos=permissions){
  const calls=[], directory=await fs.mkdtemp(path.join(os.tmpdir(),'sf-photo-unit-'));
- const services={productos:{list:async(a,f)=>{calls.push(['products',a,f]);return[product];},save:async(a,d)=>{calls.push(['product-save',a,d]);return[product];}},proveedores:{list:async()=>[supplier],save:async(a,d)=>{calls.push(['supplier-save',a,d]);return[supplier];}},clientes:{list:async()=>[customer],save:async(a,d)=>{calls.push(['client-save',a,d]);return[customer];},update:async(a,d,inactive)=>{calls.push(['client',a,d,inactive]);return[customer];}},inventario:{state:async()=>[{Habilitado:false}],history:async()=>[],move:async(a,d)=>{calls.push(['move',a,d]);return[{KardexId:7}];}},photos:createFotografiaService(directory)};
+ const services={productos:{relations:async()=>[],list:async(a,f)=>{calls.push(['products',a,f]);return[product];},save:async(a,d)=>{calls.push(['product-save',a,d]);return[product];}},proveedores:{list:async()=>[supplier],save:async(a,d)=>{calls.push(['supplier-save',a,d]);return[supplier];}},clientes:{list:async()=>[customer],save:async(a,d)=>{calls.push(['client-save',a,d]);return[customer];},update:async(a,d,inactive)=>{calls.push(['client',a,d,inactive]);return[customer];}},inventario:{state:async()=>[{Habilitado:false}],history:async()=>[],receive:async(a,d)=>{calls.push(['receive',a,d]);return[{KardexId:7}];},move:async(a,d)=>{calls.push(['move',a,d]);return[{KardexId:7}];}},photos:createFotografiaService(directory)};
  const app=createApp({secret:'isolated-test-session-secret-32-characters',kennethServices:services,authService:{login:async()=>({codigo:0,usuario:{usuarioId:42,nombreUsuario:'Pruebas',permisos,debeCambiarPassword:false}})}});
  const server=app.listen(0,'127.0.0.1');await once(server,'listening');
  t.after(async()=>{await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});await fs.rm(directory,{recursive:true,force:true});});
@@ -44,7 +44,81 @@ test('Kenneth: todas las rutas requieren sesión y permisos, sin escrituras',asy
 test('Kenneth: CSRF aislado y rechazo antes del servicio',async t=>{
  const f=await fixture(t);assert.equal((await f.post('/productos',{},'bad')).status,403);assert.equal((await f.post('/clientes/1/nit',{},'a'.repeat(64))).status,403);assert(!f.calls.some(c=>c[0].endsWith('save')||c[0]==='client'));
 });
-const validProduct={Codigo:'PR1',Descripcion:'Producto',Precio:'12.30',PrecioCosto:'5.10',ProveedorId:'1',StockMinimo:'2',PuntoReorden:'3',GarantiaMeses:'12'};
+const validProduct={ModoCodigo:'MANUAL',Codigo:'PR1',Descripcion:'Producto',Precio:'12.30',PrecioCosto:'5.10',ProveedorId:'1',StockMinimo:'2',PuntoReorden:'3',GarantiaMeses:'12'};
+
+test('Clientes: reactivacion solo en inactivos, motivo, confirmacion y ficha actualizada',async t=>{
+ const f=await fixture(t,[...permissions,'CLIENTES_REACTIVAR']);let current={...customer,Activo:false,FechaInactivacion:new Date('2026-10-22T06:00:00Z'),MotivoInactivacion:'Anterior'};
+ f.services.clientes.list=async()=>[current];
+ f.services.clientes.stateHistory=async()=>[{FechaHora:new Date('2026-10-22T06:00:00Z'),EstadoAnterior:'Activo',EstadoNuevo:'Inactivo',Motivo:'Anterior',Responsable:'admin'}];
+ f.services.clientes.reactivate=async(actor,d)=>{f.calls.push(['reactivate',actor,d]);current={...current,Activo:true};return[current];};
+ const html=await(await f.request('/clientes?id=1&estado=inactivo')).text();
+ assert.match(html,/action="\/clientes\/1\/reactivar"/);assert.match(html,/Motivo de reactivación/);assert.match(html,/data-confirm="¿Reactivar/);
+ assert.doesNotMatch(html,/action="\/clientes\/1\/inactivar"/);assert.match(html,/Historial de cambios de estado/);
+ const operation=html.match(/name="OperacionId" value="([a-f0-9-]+)"/)[1];
+ const r=await f.post('/clientes/1/reactivar',{Version:customer.Version,Motivo:'Aprobación administrativa',OperacionId:operation,ActorUsuarioId:999,NIT:'NO-CAMBIAR'});
+ assert.equal(r.status,200);assert.deepEqual(await r.json(),{id:1,activo:true,mensaje:'Cliente reactivado correctamente.'});
+ const call=f.calls.find(c=>c[0]==='reactivate');assert.equal(call[1],42);assert.equal(call[2].id,1);assert.equal(call[2].NIT,undefined);assert.equal(call[2].OperacionId,operation);
+ const active=await(await f.request('/clientes?id=1')).text();assert.match(active,/action="\/clientes\/1\/inactivar"/);assert.doesNotMatch(active,/action="\/clientes\/1\/reactivar"/);assert.match(active,/Última inactivación/);
+});
+
+test('Clientes: reactivacion exige permiso propio, CSRF, version, motivo y UUID',async t=>{
+ const denied=await fixture(t,['CLIENTES_CONSULTAR','CLIENTES_INACTIVAR']);assert.equal((await denied.post('/clientes/1/reactivar',{})).status,403);
+ const f=await fixture(t,['CLIENTES_CONSULTAR','CLIENTES_REACTIVAR']);let calls=0;
+ const clientPage=await(await f.request('/clientes?id=1')).text();const token=clientPage.match(/name="csrf-token" content="([a-f0-9]+)"/)[1];
+ f.services.clientes.reactivate=async()=>{calls++;return[{Activo:true}];};
+ const valid={Version:customer.Version,Motivo:'Motivo requerido',OperacionId:require('node:crypto').randomUUID()};
+ assert.equal((await f.post('/clientes/1/reactivar',valid,'bad')).status,403);
+ for(const patch of [{Motivo:''},{Motivo:'x'.repeat(251)},{Version:'bad'},{OperacionId:'bad'},{OperacionId:null}])assert.equal((await f.post('/clientes/1/reactivar',{...valid,...patch},token)).status,400);
+ assert.equal(calls,0);
+ f.services.clientes.reactivate=async()=>{throw Object.assign(Error('SQL privado'),{number:54103});};
+ const conflict=await f.post('/clientes/1/reactivar',valid,token);assert.equal(conflict.status,409);assert.doesNotMatch(await conflict.text(),/SQL privado/);
+});
+
+test('Clientes: servicio de reactivacion parametrizado y sin NIT ni UPDATE directo',async()=>{
+ const calls=[];let proc;
+ const service=createClienteService(async()=>({request(){return{input(...args){calls.push(args);return this;},async execute(p){proc=p;return{recordset:[]};}};}}));
+ const data={id:3,Version:customer.Version,Motivo:'Motivo',OperacionId:require('node:crypto').randomUUID()};
+ await service.reactivate(42,data);assert.equal(proc,'dbo.sp_ReactivarCliente');
+ assert.deepEqual(calls.map(c=>c[0]),['ActorUsuarioId','ClienteId','VersionEsperada','Motivo','OperacionId']);
+ assert.ok(Buffer.isBuffer(calls[2][2]));assert.equal(calls[2][2].length,8);assert.equal(calls[4][2],data.OperacionId);
+ calls.length=0;await service.stateHistory(42,3);assert.equal(proc,'dbo.sp_ConsultarHistorialEstadoCliente');
+});
+
+test('Productos: SKU automatico predeterminado, opcion manual y codigo definitivo del servidor',async t=>{
+ const f=await fixture(t);
+ const html=await(await f.request('/productos?nuevo=1')).text();
+ assert.match(html, /value="AUTOMATICO" selected/);
+ assert.match(html, /Usar un SKU propio \(manual\)/);
+ assert.match(html, /id="Codigo"[^>]*disabled/);
+ const {ModoCodigo,...automatic}=validProduct;
+ f.services.productos.save=async(actor,d)=>{f.calls.push(['product-save',actor,d]);return [{ProductoId:5,Codigo:'PRD-000005'}];};
+ const response=await f.post('/productos',{...automatic,Codigo:'IGNORADO-EN-AUTOMATICO'});
+ assert.equal(response.status,201);
+ assert.deepEqual(await response.json(),{id:5,codigo:'PRD-000005'});
+ const data=f.calls.find(c=>c[0]==='product-save')[2];
+ assert.equal(data.Codigo,null);assert.equal(data.CodigoAutomatico,true);
+ assert.equal((await f.post('/productos',{...validProduct,ModoCodigo:'otro'})).status,400);
+});
+
+test('Productos: SKU manual validado, duplicado seguro y edicion sin regenerar codigo',async t=>{
+ const f=await fixture(t);
+ await f.post('/productos',validProduct);
+ const data=f.calls.find(c=>c[0]==='product-save')[2];assert.equal(data.Codigo,'PR1');assert.equal(data.CodigoAutomatico,false);
+ f.services.productos.save=async()=>{throw Object.assign(new Error('Detalle SQL privado'),{number:2627});};
+ const duplicate=await f.post('/productos',validProduct);assert.equal(duplicate.status,400);
+ assert.match((await duplicate.json()).error,/ya está registrado/);
+ f.services.productos.save=async(actor,d)=>{assert.equal(d.CodigoAutomatico,false);assert.equal(d.Codigo,product.Codigo);return [product];};
+ const response=await f.post('/productos/1',{...validProduct,Codigo:product.Codigo,Version:product.Version,Activo:'1'});
+ assert.equal(response.status,200);assert.equal((await response.json()).codigo,product.Codigo);
+});
+
+test('Productos: servicio usa wrapper SQL y parametro automatico solo en altas',async()=>{
+ const calls=[];const service=createProductoService(async()=>({request(){return {input(...p){calls.push(p);return this;},async execute(proc){calls.push(proc);return {recordset:[]};}};}}));
+ await service.save(42,{...validProduct});assert.equal(calls.at(-1),'dbo.sp_ERP_RegistrarProducto');
+ assert.equal(calls.find(p=>p[0]==='CodigoAutomatico')[2],true);
+ calls.length=0;await service.save(42,{...validProduct,CodigoAutomatico:false});assert.equal(calls.find(p=>p[0]==='CodigoAutomatico')[2],false);
+ calls.length=0;await service.save(42,{...validProduct,id:1,Version:product.Version});assert.equal(calls.at(-1),'dbo.sp_ActualizarProducto');assert(!calls.some(p=>p[0]==='CodigoAutomatico'));
+});
 test('Clientes: cada seleccion y drawer conserva su identidad y destino de edicion',async t=>{
  const f=await fixture(t);
  const clients=[1,2,3].map(id=>({...customer,ClienteId:id,Nombre:'Cliente '+id,NIT:'NIT'+id,Correo:'c'+id+'@example.invalid',Telefono:'5555-000'+id}));
@@ -89,8 +163,8 @@ test('Kenneth: conflicto y error SQL se presentan sin detalles privados',async t
  f.services.productos.list=async()=>{throw new Error('password=privado SQL interno');};const response=await f.request('/productos');assert.equal(response.status,503);const html=await response.text();assert.match(html,/No fue posible cargar la informaci/);assert.doesNotMatch(html,/password=|SQL interno/);
 });
 test('Kenneth: operación Kardex estable rechaza cambios en el reintento',async t=>{
- const f=await fixture(t);const html=await(await f.request('/inventario?id=1')).text();const op=html.match(/name="OperacionId" value="([a-f0-9-]+)"/)[1];const b={ProductoId:'1',Version:product.Version,TipoMovimiento:'COMPRA',Cantidad:'2',DocumentoRespaldo:'COMPRA-1',Motivo:'Ingreso',OperacionId:op};
- assert.equal((await f.post('/inventario/movimientos',b)).status,201);assert.equal((await f.post('/inventario/movimientos',b)).status,201);assert.equal((await f.post('/inventario/movimientos',{...b,Cantidad:'3'})).status,409);assert.equal(f.calls.filter(c=>c[0]==='move').length,2);
+ const f=await fixture(t);const html=await(await f.request('/inventario?id=1')).text();const op=html.match(/name="OperacionId" value="([a-f0-9-]+)"/)[1];const b={ProductoId:'1',Version:product.Version,TipoMovimiento:'COMPRA',ProveedorId:'1',Cantidad:'2',DocumentoRespaldo:'COMPRA-1',Motivo:'Ingreso',OperacionId:op};
+ assert.equal((await f.post('/inventario/movimientos',b)).status,201);assert.equal((await f.post('/inventario/movimientos',b)).status,201);assert.equal((await f.post('/inventario/movimientos',{...b,Cantidad:'3'})).status,409);assert.equal(f.calls.filter(c=>c[0]==='receive').length,2);
 });
 test('Kenneth: fotografías reales, MIME, decodificación y cancelación segura',async t=>{
  const f=await fixture(t);const png=await sharp({create:{width:8,height:8,channels:3,background:'#445566'}}).png().toBuffer();
@@ -112,8 +186,8 @@ test('Kenneth: servicios usan parámetros tipados y procedimientos reales',async
  const provider=async()=>pool;
  const ps=createProductoService(provider),ss=createProveedorService(provider),cs=createClienteService(provider),is=createInventarioService(provider);
  assert.equal((await ps.list(42,{buscar:"'; DROP TABLE Producto;--"}))[0].Version,product.Version);
- await ps.save(42,validProduct);await ss.list(42);await ss.save(42,{NIT:'T1',Nombre:'Proveedor'});await cs.list(42);await cs.update(42,{id:1,Version:product.Version,Motivo:'Solicitud'},true);await is.state(42);await is.history(42,{id:1,hasta:'2026-10-18'});await is.move(42,{id:1,Version:product.Version,TipoMovimiento:'COMPRA',Cantidad:1,OperacionId:'11111111-1111-4111-8111-111111111111'});
- assert.equal(calls.length,9);assert(calls.every(c=>c.procedure.startsWith('dbo.sp_')&&c.values[0][0]==='ActorUsuarioId'&&c.values[0][2]===42));assert.equal(calls[0].values[1][2],"'; DROP TABLE Producto;--");assert(calls.some(c=>c.procedure==='dbo.sp_RegistrarMovimientoKardex'));assert(calls.some(c=>c.procedure==='dbo.sp_InactivarCliente'));
+ await ps.save(42,validProduct);await ss.list(42);await ss.save(42,{NIT:'T1',Nombre:'Proveedor'});await cs.list(42);await cs.update(42,{id:1,Version:product.Version,Motivo:'Solicitud'},true);await is.state(42);await is.history(42,{id:1,hasta:'2026-10-18'});await is.move(42,{id:1,Version:product.Version,TipoMovimiento:'AJUSTE_INGRESO',Cantidad:1,OperacionId:'11111111-1111-4111-8111-111111111111'});
+ assert.equal(calls.length,9);assert(calls.every(c=>c.procedure.startsWith('dbo.sp_')&&c.values[0][0]==='ActorUsuarioId'&&c.values[0][2]===42));assert.equal(calls[0].values[1][2],"'; DROP TABLE Producto;--");assert(calls.some(c=>c.procedure==='dbo.sp_ERP_RegistrarAjuste'));assert(calls.some(c=>c.procedure==='dbo.sp_InactivarCliente'));
 });
 test('Kenneth: fechas reales y búsqueda no escalar rechazadas',()=>{for(const q of[{buscar:[]},{desde:'2026-02-30'},{desde:'2026-10-20',hasta:'2026-10-01'},{offset:'-1'}])assert.throws(()=>validation.filters(q));});
 
@@ -141,8 +215,8 @@ test('Kenneth: proveedor vacio, drawer y producto sin proveedores activos',async
 test('Kenneth: tabla de productos oculta costo sin permiso y Kardex muestra ocho columnas',async t=>{
  const f=await fixture(t,['PRODUCTOS_CONSULTAR','INVENTARIO_CONSULTAR']);
  const html=await(await f.request('/productos?vista=tabla')).text();assert.match(html,/Catálogo empresarial/);assert.doesNotMatch(html,/Costo Q/);assert.match(html,/Venta Q/);
- const inv=await(await f.request('/inventario')).text();for(const title of ['Fecha UTC','Movimiento','Documento','Actor','Ingreso','Egreso','Anterior','Resultante'])assert(inv.includes('>'+title+'</th>'));
- assert.match(inv,/UTC\+00:00/);
+ const inv=await(await f.request('/inventario')).text();for(const title of ['Fecha Guatemala','Movimiento','Documento','Actor','Ingreso','Egreso','Anterior','Resultante'])assert(inv.includes('>'+title+'</th>'));
+ assert.match(inv,/America\/Guatemala, UTC−6/);
 });
 test('Kenneth: servicio de clientes parametriza alta y edicion sin enviar NIT en edicion',async()=>{
  const calls=[],provider=async()=>({request(){const values=[];return{input(...v){values.push(v);return this;},async execute(procedure){calls.push({procedure,values});return{recordset:[]};}};}});

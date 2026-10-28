@@ -1,0 +1,20 @@
+.billing-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 24px;border-bottom:1px solid var(--border-color,#354052);padding-bottom:12px}
+.billing-tabs a{padding:10px 16px;border-radius:8px;color:inherit;text-decoration:none;border:1px solid transparent}
+.billing-tabs a[aria-current=page]{background:#1d3443;border-color:#456476;color:#fff;font-weight:700}
+.billing-tabs a:focus-visible{outline:2px solid #9dd6ca;outline-offset:3px}
+.facturacion-workspace:not(.invoice-workspace) .page-header{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:20px}
+.facturacion-workspace:not(.invoice-workspace) .page-header>p,.facturacion-workspace:not(.invoice-workspace) .page-header>h1{grid-column:1}
+.facturacion-workspace:not(.invoice-workspace) .page-header .billing-tabs{grid-column:2;grid-row:1 / span 2;margin:0;padding:0;border:0}
+.invoice-filter-grid{display:grid;grid-template-columns:1fr 2fr 1.3fr 1.3fr;gap:16px}
+.invoice-filter-grid label{display:block;margin-bottom:8px}.invoice-filter-actions{display:flex;gap:10px;grid-column:1/-1}
+.invoice-filters{margin-bottom:24px}.invoice-register-heading{display:flex;justify-content:space-between;gap:16px;align-items:baseline;flex-wrap:wrap}
+.invoice-history-table{min-width:1180px}.invoice-history-table td:nth-child(n+5):nth-child(-n+8){text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.invoice-pagination{display:flex;justify-content:center;align-items:center;gap:20px;margin-top:20px}.invoice-lines{min-width:800px}
+.invoice-workspace .btn-outline-secondary{color:#d4dfea;border-color:#708296}.invoice-workspace .btn-outline-secondary:hover{color:#fff;background:#304456}.invoice-workspace .btn-link{color:#a7ceff}
+.invoice-copy{max-width:1100px;margin:auto}.invoice-copy .receipt-information{overflow-wrap:anywhere}.invoice-workspace .empty-state{padding:32px}
+@media(max-width:900px){.invoice-filter-grid{grid-template-columns:1fr 1fr}.invoice-copy .receipt-information{grid-template-columns:1fr}}
+@media(max-width:480px){.invoice-filter-grid{grid-template-columns:1fr}.invoice-pagination{gap:10px}.invoice-copy .receipt-heading{display:block}}
+@media(max-width:600px){.facturacion-workspace:not(.invoice-workspace) .page-header{grid-template-columns:1fr}.facturacion-workspace:not(.invoice-workspace) .page-header .billing-tabs{grid-column:1;grid-row:auto;margin-top:12px}}
+@media print{.billing-tabs,.invoice-filters,.invoice-pagination{display:none!important}.invoice-copy{max-width:none!important}.invoice-copy .status-badge{display:inline!important;color:black!important;background:white!important}.invoice-disclaimer{font-size:9pt}.invoice-lines{min-width:0!important}.invoice-copy small{color:black!important}}
+.invoice-copy .table-responsive{height:auto;max-height:none}.invoice-copy .invoice-lines{font-variant-numeric:tabular-nums}.invoice-copy .invoice-lines td{white-space:nowrap}.invoice-copy .invoice-lines td:first-child{white-space:normal;min-width:150px}
+@media print{@page{size:auto;margin:12mm}.invoice-copy{width:100%!important;margin:0!important;padding:0!important;min-height:0!important}.invoice-copy .panel-body{padding:0!important}.invoice-copy .receipt-heading{padding-bottom:12px;margin-bottom:14px}.invoice-copy .invoice-lines{font-size:9pt!important;width:100%;table-layout:auto}.invoice-copy .invoice-lines td,.invoice-copy .invoice-lines th{padding:7px 4px!important;white-space:normal!important}.invoice-copy tr,.invoice-copy .receipt-totals,.invoice-disclaimer{break-inside:avoid}.invoice-copy .invoice-lines td:first-child{min-width:0}.invoice-copy .receipt-actions{display:none!important}.invoice-copy .receipt-information{font-size:10pt}.invoice-copy .receipt-totals{margin-top:16px}}

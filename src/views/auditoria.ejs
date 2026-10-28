@@ -14,7 +14,7 @@
 
   <main tabindex="-1" id="workspace" class="container audit-content page-content">
     <% const jsonLegible = (valor) => { if (!valor) return 'Sin valor'; try { return JSON.stringify(JSON.parse(valor), null, 2); } catch { return String(valor); } }; %>
-    <% const fechaLegible = (valor) => { const fecha = new Date(valor); return valor && !Number.isNaN(fecha.getTime()) ? fecha.toLocaleString('es-GT', { timeZone: 'America/Guatemala' }) : '-'; }; %>
+    <% const fechaLegible = value => include('partials/operational-date',{value}).trim(); %>
     <div class="page-header"><p class="eyebrow mb-2">Compliance operations center</p>
     <h1 class="h2 fw-bold mb-2">Control y trazabilidad</h1><p class="text-secondary">Control y trazabilidad del sistema</p></div>
 
@@ -26,11 +26,11 @@
         <form method="GET" action="/auditoria" class="filter-grid">
           <input type="hidden" name="vista" value="<%= vista %>">
           <div class="filter-field">
-            <label class="form-label" for="fechaInicial">Fecha inicial</label>
+            <label class="form-label" for="fechaInicial">Fecha inicial · Guatemala</label>
             <input id="fechaInicial" class="form-control" type="date" name="fechaInicial" value="<%= filtros.fechaInicial || '' %>">
           </div>
           <div class="filter-field">
-            <label class="form-label" for="fechaFinal">Fecha final</label>
+            <label class="form-label" for="fechaFinal">Fecha final · Guatemala</label>
             <input id="fechaFinal" class="form-control" type="date" name="fechaFinal" value="<%= filtros.fechaFinal || '' %>">
           </div>
           <% if (vista === 'acceso') { %>
@@ -69,7 +69,7 @@
           </div>
         </form>
       </div>
-        <p class="audit-context">Los filtros se aplican únicamente a la vista seleccionada. Fechas de filtro en UTC; horarios de Guatemala (UTC−6).</p></aside><div class="audit-records">    <nav class="audit-subnav" aria-label="Vistas de auditoría">
+        <p class="audit-context">Los filtros se aplican únicamente a la vista seleccionada. Fechas y filtros de Guatemala (America/Guatemala, UTC−6). La fecha final incluye el día local completo.</p></aside><div class="audit-records">    <nav class="audit-subnav" aria-label="Vistas de auditoría">
       <% [['acceso', '01', 'Bitácora de acceso'], ['dml', '02', 'Auditoría DML'], ['ventas', '03', 'Histórico de ventas']].forEach(([clave, indice, titulo]) => { %>
         <a href="/auditoria?vista=<%= clave %>" <%- vista === clave ? 'aria-current="page"' : '' %>><%- include('partials/icon',{nombre: clave === 'acceso' ? 'key' : clave === 'dml' ? 'activity' : 'receipt'}) %><%= titulo %><small class="tab-count" aria-label="Registros"><%= ({ acceso: bitacoraAcceso.length, dml: auditoriaDml.length, ventas: historicoVentas.length })[clave] %></small></a>
       <% }); %>
@@ -85,7 +85,7 @@
             <table class="table table-modern align-middle">
               <thead>
                 <tr>
-                  <th scope="col">Fecha y hora</th>
+                  <th scope="col">Fecha y hora · Guatemala (UTC−6)</th>
                   <th scope="col">Usuario intentado</th>
                   <th scope="col">Resultado</th>
                   <th scope="col">Equipo</th>
@@ -124,7 +124,7 @@
             <table class="table table-modern align-middle">
               <thead>
                 <tr>
-                  <th scope="col">Fecha y hora</th>
+                  <th scope="col">Fecha y hora · Guatemala (UTC−6)</th>
                   <th scope="col">Tabla afectada</th>
                   <th scope="col">Operación</th>
                   <th scope="col">Identificador</th>
@@ -168,7 +168,7 @@
               <thead>
                 <tr>
                   <th scope="col">Factura</th>
-                  <th scope="col">Fecha</th>
+                  <th scope="col">Fecha · Guatemala (UTC−6)</th>
                   <th scope="col">Cliente</th>
                   <th scope="col">Usuario</th>
                   <th scope="col" class="text-end">Subtotal bruto</th>

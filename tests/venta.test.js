@@ -40,7 +40,7 @@ test('Servicio de ventas: listas y TVP tipado con una o varias líneas', async (
   for (const lineas of [[{ ProductoId: 3, Cantidad: 2 }], [{ ProductoId: 4, Cantidad: 3 }, { ProductoId: 3, Cantidad: 2 }]]) {
     assert.deepEqual(await service.procesarVenta(1, 42, lineas), venta);
     const call = pool.calls.at(-1);
-    assert.equal(call.procedure, 'dbo.sp_ProcesarVentaTransaccional');
+    assert.equal(call.procedure, 'dbo.sp_ERP_ProcesarVenta');
     assert.deepEqual(call.inputs.slice(0, 2), [['ClienteId', sql.Int, 1], ['UsuarioId', sql.Int, 42]]);
     const [name, table] = call.inputs[2];
     assert.equal(name, 'Detalle');
@@ -53,7 +53,10 @@ test('Servicio de ventas: listas y TVP tipado con una o varias líneas', async (
     assert.equal(table.columns[2].precision, 5);
     assert.equal(table.columns[2].scale, 2);
     assert.deepEqual([...table.rows], lineas.map(({ ProductoId, Cantidad, DescuentoPorcentaje = 0 }) => [ProductoId, Cantidad, DescuentoPorcentaje]));
-    assert.equal(call.inputs.length, 4);
+    assert.equal(call.inputs.length, 5);
+    assert.equal(call.inputs[4][0], 'OperacionId');
+    assert.equal(call.inputs[4][1], sql.UniqueIdentifier);
+    assert.match(call.inputs[4][2], /^[a-f0-9-]{36}$/);
     assert.deepEqual(call.inputs[3], ['MotivoDescuento', sql.NVarChar(80), null]);
   }
   assert.deepEqual(pool.calls.slice(0, 2).map((call) => call.procedure),
@@ -128,14 +131,14 @@ test('HTTP: política real del Cajero, motivos opcionales y roles manipulados ig
     const body = entrada(); body.Detalle[0].DescuentoPorcentaje = porcentaje;
     assert.equal((await f.post(body)).status, 201);
   }
-  const before = f.pool.calls.filter((c) => c.procedure === 'dbo.sp_ProcesarVentaTransaccional').length;
+  const before = f.pool.calls.filter((c) => c.procedure === 'dbo.sp_ERP_ProcesarVenta').length;
   for (const porcentaje of [10.01, 25, 100]) {
     const body = entrada(); body.Detalle[0].DescuentoPorcentaje = porcentaje;
     body.RolId = 1; body.UsuarioId = 1; body.MaxDescuento = 100;
     const response = await f.post(body);
     assert.equal(response.status, 400); assert.match((await response.json()).error, /máximo.*10%/);
   }
-  assert.equal(f.pool.calls.filter((c) => c.procedure === 'dbo.sp_ProcesarVentaTransaccional').length, before);
+  assert.equal(f.pool.calls.filter((c) => c.procedure === 'dbo.sp_ERP_ProcesarVenta').length, before);
   assert.ok(f.pool.calls.filter((c) => c.procedure === 'dbo.sp_ObtenerPoliticaVenta').every((c) => c.inputs[0][2] === 42));
   const body = entrada(); body.Detalle[0].DescuentoPorcentaje = 10; body.MotivoDescuento = 'Cliente frecuente';
   assert.equal((await f.post(body)).status, 201);
@@ -196,7 +199,9 @@ test('HTTP: formulario, listados, escape HTML, enlace y venta multiproducto', as
   const inputs = f.pool.calls.at(-1).inputs;
   assert.deepEqual(inputs[1], ['UsuarioId', sql.Int, 42]);
   assert.deepEqual([...inputs[2][1].rows], [[3, 2, 0], [4, 3, 0]]);
-  assert.equal(inputs.length, 4);
+  assert.equal(inputs.length, 5);
+  assert.equal(inputs[4][0], 'OperacionId');
+  assert.match(inputs[4][2], /^[a-f0-9-]{36}$/);
   const single = await f.post({ ClienteId: '1', Detalle: [{ ProductoId: '3', Cantidad: '1' }] });
   assert.equal(single.status, 201);
   assert.deepEqual([...f.pool.calls.at(-1).inputs[2][1].rows], [[3, 1, 0]]);

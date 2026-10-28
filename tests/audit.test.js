@@ -204,8 +204,8 @@ test('Servicio: todos los filtros son tipados y los valores no son SQL', async (
   ];
   pool.calls.forEach((call, index) => {
     assert.deepEqual(call.inputs, [
-      {name: 'FechaInicial', type: sql.DateTime2(3), value: new Date('2026-01-01T00:00:00.000Z')},
-      {name: 'FechaFinal', type: sql.DateTime2(3), value: new Date('2026-01-02T23:59:59.999Z')},
+      {name: 'FechaInicial', type: sql.DateTime2(3), value: new Date('2026-01-01T06:00:00.000Z')},
+      {name: 'FechaFinal', type: sql.DateTime2(3), value: new Date('2026-01-03T05:59:59.999Z')},
       ...expected[index].map(([name,type,value]) => ({name,type,value})),
     ]);
   });

@@ -1,0 +1,6 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= title %> | SecureFinance ERP</title><link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css"><link rel="stylesheet" href="/css/styles.css"><link rel="stylesheet" href="/css/facturas.css"><script src="/js/visual.js" defer></script><script src="/js/facturas.js" defer></script></head>
+<body class="app-shell facturacion-workspace invoice-workspace" data-auto-print="<%= typeof autoPrint!=='undefined'&&autoPrint?'1':'0' %>"><a class="skip-link" href="#workspace">Ir al contenido</a>
+<%- include('navigation',{actual:'facturacion',rolesCuenta:''}) %>
+<main id="workspace" tabindex="-1" class="container page-content"><div class="page-header"><p class="eyebrow">Facturación / Archivo documental</p><h1><%= title %></h1><p>Consulta de documentos emitidos · Guatemala (UTC−6)</p></div>
+<%- include('facturacion-tabs',{active:'historial'}) %>
