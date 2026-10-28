@@ -1,0 +1,13 @@
+{
+  "momento": "Auditoria inicial antes de nuevas regresiones",
+  "database": "SecureFinanceERP_P3_COT_20261027213647_67c25f5a",
+  "clientesQA": 10,
+  "productosQA": 33,
+  "relaciones": {
+    "FacturasQA": 30,
+    "DetallesQA": 30,
+    "KardexQA": 61
+  },
+  "eventosCotizaciones": 139,
+  "accion": "Registros conservados; demostracion restaurada en otra base"
+}

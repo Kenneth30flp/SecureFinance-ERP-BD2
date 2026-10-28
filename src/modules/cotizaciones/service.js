@@ -10,6 +10,13 @@ function createCotizacionService(provider=getPool) {
     return (await r.execute(name)).recordsets;
   }
   return {
+    async form(actor){
+      return {politica:(await call('dbo.P3_COT_PrepararFormulario',actor))[0][0]};
+    },
+    async search(actor,clase,buscar,pagina=1){
+      const rows=(await call('dbo.P3_COT_BuscarCatalogo',actor,[['Clase',sql.VarChar(10),clase],['Buscar',sql.NVarChar(150),buscar],['Pagina',sql.Int,pagina],['Limite',sql.Int,8]]))[0];
+      return {rows:rows.slice(0,8),next:rows.length>8,pagina};
+    },
     async catalogs(actor) {
       const [clientes,productos,politicas]=await call('dbo.P3_COT_Catalogos',actor);
       return {clientes,productos,politica:politicas[0]};

@@ -27,6 +27,8 @@ const doc={CotizacionId:1,Numero:'COT-1',Estado:'ACTIVA',ClienteNombre:'Cliente 
 async function fixture(t,permisos=permissions){
  const calls=[],service={list:async(a,f)=>{calls.push(['list',a,f]);return [doc];},catalogs:async()=>({clientes:[{ClienteId:1,Nombre:'QA',NIT:'QA'}],productos:[{ProductoId:2,Codigo:'SKU',Descripcion:'Producto',Precio:'100.00',Stock:0}],politica:{MaxDescuento:10}}),create:async(a,d)=>{calls.push(['create',a,d]);return doc;},detail:async()=>({documento:doc,lineas:[],historial:[]}),cancel:async(...args)=>{calls.push(['cancel',...args]);return {...doc,Estado:'CANCELADA'};}};
  service.readiness=async()=>({installed:true,executable:true,allowed:true});
+ service.form=async()=>({politica:{MaxDescuento:10,Ahora:new Date('2026-10-27T18:00:00Z')}});
+ service.search=async(actor,clase,buscar,pagina)=>{calls.push(['search',actor,clase,buscar,pagina]);return {rows:[],next:false,pagina};};
  service.convert=async(a,id,operation)=>{calls.push(['convert',a,id,operation]);return {documento:{CotizacionId:id,FacturaId:77,Estado:'PROCESADA',OperacionId:operation},factura:{FacturaId:77}};};
  const app=createApp({secret:'cotizaciones-unit-test-secret-32-characters',production:false,cotizacionService:service,authService:{login:async()=>({codigo:0,usuario:{usuarioId:42,nombreUsuario:'QA',permisos,debeCambiarPassword:false}})}});
  const server=app.listen(0,'127.0.0.1');await once(server,'listening');t.after(()=>new Promise(r=>{server.close(r);server.closeAllConnections();}));const base='http://127.0.0.1:'+server.address().port;
@@ -76,6 +78,20 @@ test('UC09 servicio: resultado confirmado tipado, metadatos consistentes y detec
  assert.equal((await s.convert(42,2,op)).factura.Detalle[0].PrecioUnitario,'100.00');assert.equal(calls[0][2],42);assert.equal(calls.find(c=>c[0]==='CotizacionId')[2],2);
  results[2][0].FacturaId=9;await assert.rejects(()=>s.convert(42,2,op));
  const missing=createCotizacionService(async()=>({request:()=>({input(){return this;},execute:async()=>{throw Object.assign(Error(),{number:2812});}})}));assert.equal((await missing.readiness(42,2)).installed,false);
+});
+test('Cotizaciones: busqueda HTTP paginada valida catalogo, texto, pagina y permisos',async t=>{
+ const f=await fixture(t);const r=await f.request('/cotizaciones/buscar/productos?q=USB&pagina=2');assert.equal(r.status,200);assert.equal((await r.json()).pagina,2);assert.deepEqual(f.calls.find(c=>c[0]==='search'),['search',42,'productos','USB',2]);
+ for(const url of ['/cotizaciones/buscar/otro','/cotizaciones/buscar/clientes?pagina=0','/cotizaciones/buscar/clientes?q=a&q=b','/cotizaciones/buscar/clientes?pagina=100002'])assert.equal((await f.request(url)).status,400);
+ const denied=await fixture(t,['COTIZACIONES_CONSULTAR']);assert.equal((await denied.request('/cotizaciones/buscar/clientes')).status,403);
+});
+test('Cotizaciones: buscador no carga catalogo en HTML y formato GTQ mantiene centavos',async t=>{
+ const f=await fixture(t),html=await(await f.request('/cotizaciones/nueva')).text();assert.match(html,/role="combobox"/);assert.doesNotMatch(html,/<select[^>]+id="cot-(?:client|product)"/);assert.match(html,/id="cot-client-results"/);assert.match(html,/aria-autocomplete="list"/);
+ const {money}=require('../src/modules/cotizaciones/format');assert.equal(money('12345678901234567.89'),'Q 12,345,678,901,234,567.89');assert.equal(money('100.5'),'Q 100.50');assert.equal(money('1e3'),'No disponible');
+});
+test('Cotizaciones: servicio de busqueda usa parametros tipados y limita filas',async()=>{
+ const params=[];let proc;
+ const s=createCotizacionService(async()=>({request:()=>({input(...p){params.push(p);return this;},execute:async name=>{proc=name;return {recordsets:[Array.from({length:9},(_,i)=>({Id:i+1}))]};}})}));
+ const result=await s.search(42,'clientes',"a' OR 1=1 --",2);assert.equal(proc,'dbo.P3_COT_BuscarCatalogo');assert.equal(result.rows.length,8);assert.equal(result.next,true);assert.equal(params.find(p=>p[0]==='Limite')[2],8);assert.equal(params.find(p=>p[0]==='Buscar')[2],"a' OR 1=1 --");
 });
 test('Cotizaciones HTTP: creacion utiliza actor de sesion, referencia estable y mensajes SQL seguros',async t=>{
  const f=await fixture(t),html=await(await f.request('/cotizaciones/nueva')).text(),csrf=html.match(/name="csrf-token" content="([a-f0-9]+)"/)[1],b={...valid(),ActorUsuarioId:999};

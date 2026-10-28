@@ -1,28 +1,33 @@
-UC09 convierte una cotización vigente en factura de contado con precios pactados SQL, caja, inventario y Kardex en una sola transacción. El wrapper también cierra el documento si se invoca directamente. La interfaz confirma la operación, conserva el UUID ante respuesta incierta y permite abrir la factura.
+Cotizaciones ahora presenta una experiencia comercial coherente con el tema oscuro de SecureFinance: historial compacto, formulario organizado en tres secciones, buscadores accesibles y paginados, edición de cantidades/descuentos, detalle empresarial, confirmación modal e impresión limpia. La demostración tiene una base exclusiva sin los registros generados por QA.
 
-### Motor y seguridad
+### Experiencia y consultas
 
-- Nueva migración 43; 21/37/41/42 intactas. Parámetro final opcional @P3CotizacionId INT=NULL en wrapper y núcleo, sin cambiar TVP ni tablas/triggers de Facturación/Kardex.
-- Venta normal y hash histórico conservados; huella P3COT:v1 separada para cotizaciones. Un solo motor de Factura/detalle/caja/Kardex.
-- sp_ConvertirCotizacionAFactura, validación SQL de origen/importe/actor, cierre PROCESADA/FacturaId, historial y auditoría atómicos.
-- RBAC HTTP/SQL, CSRF, parámetros tipados, sesión, documento propio o Administrador, estado/vigencia/stock, reintentos y bloqueos. Botón condicionado a instalación y EXECUTE efectivos.
-- Kenneth autorizó expresamente el contrato en esta rama. No se requiere aprobación externa para esta implementación. Contado e inventario global; contratos futuros documentados para promociones, crédito y multibodega.
+- Buscar cliente por nombre/NIT y producto por SKU/descripción: ocho resultados por página, navegación de teclado, selección visible, precio/stock y estado vacío. El formulario no carga el catálogo completo.
+- Líneas editables y resumen exacto; precios definitivos y conversión siguen bajo autoridad SQL.
+- Total destacado, UUID plegados en información técnica, cancelación secundaria y continuidad a factura.
+- Cinco anchos: 1366/1024/768/390/320; paneles limitados, navegación móvil compacta, foco/Tab/Escape y contraste medido del buscador.
+- Migración 44: dos procedimientos de consulta y EXECUTE específico. Motor UC09, ventas, caja, Kardex y migraciones 41–43 intactos.
 
-### Validación ejecutada
+### Separación de datos
 
-- npm run check; npm test: 106/106 PASS; git diff --check.
-- SQL Server restaurado: 27 grupos UC09 y 14 independientes PASS. Precio pactado Q100 ×2, catálogo Q120, descuento 10%, factura Q201.60, stock 10→8, caja y Kardex únicos.
-- Concurrencia de dos actores, misma referencia simultánea, competencia por última unidad, vencimiento durante bloqueo, reintentos, origen manipulado/ajeno, RBAC, descuento revocado y colisiones entre venta normal y cotización.
-- Falla inyectada después de Factura al escribir Kardex: rollback completo y reintento recuperable. Trigger de prueba retirado.
-- Venta normal, firma posicional/NULL y reintento de venta emitida antes de instalar 43 conservan hash/JSON y efectos.
-- Reaplicación 41–43, SHA256 de documentos previos, auditoría, CHECKDB/CHECKCONSTRAINTS PASS.
-- Chromium con SQL real: 15 comprobaciones, 1366/768/390/320 px. HTTP 503 inyectado después del COMMIT y recuperación con el mismo UUID, sin duplicados. Autenticación QA identificada; no acredita login manual.
+Se conservaron los registros y evidencias de pruebas. La auditoría inicial identificó 10 clientes y 33 productos QA relacionados con 30 facturas y 61 Kardex; no se eliminaron ni se filtraron por prefijo en producción.
 
-### Ejecución local y evidencias
+DEMO fue restaurada desde respaldo COPY_ONLY verificado, a nombre/archivos nuevos. Reutiliza productos comerciales existentes y tres clientes claramente ficticios con identificadores DEMOCOT. Contiene cinco propuestas en distintos estados, stock suficiente y respaldo propio verificado. Las pruebas visuales escriben en una tercera copia VISUAL, por lo que DEMO permanece intacta.
 
-[Instrucciones para Chrome y PowerShell](https://github.com/Kenneth30flp/SecureFinance-ERP-BD2/blob/feature/p3-kenneth-cotizaciones/docs/parte3/cotizaciones/EJECUCION_CHROME.md).
-`npm.cmd run start:lab:cotizaciones -- --port 3103` inicia la copia indicada en .data, verifica DB_NAME y EXECUTE, conserva autenticación normal y no modifica .env. URL: http://localhost:3103/cotizaciones.
+### Validación
 
-Resultados, capturas auténticas, comprobante, contratos y recuperación en docs/parte3/cotizaciones/. El SKU/descripción de factura conserva la política de snapshot al facturar; la cotización mantiene su identidad propia.
+- npm run check; npm test: 109/109 PASS; git diff --check.
+- SQL real: 14 grupos independientes, 27 UC09 y 7 búsqueda PASS.
+- Chromium: 16 regresiones QA y 11 de diseño comercial PASS. Recorrido real con varias líneas, edición, guardado, conversión, factura, stock y Kardex; recuperación posterior a COMMIT intacta.
+- DEMO: DB_NAME, cero QA, cinco documentos, hash de facturas originales, EXECUTE, CHECKDB y restricciones verificados.
+- Capturas auténticas de historial, nueva, detalle, diálogo y PDF en cinco tamaños. Los ejecutores usan sesión de autenticación fixture identificada; los datos y operaciones comerciales son SQL real. El lanzador manual conserva login normal.
 
-No se migró ni escribió en SecureFinanceERP, no se cambiaron credenciales ni módulos de José/Dylan, no se modificó el PR #11 y no se hace merge automático. La validación corresponde a laboratorio; desplegar sobre la principal requiere una fase separada autorizada.
+### Probar en Chrome
+
+`npm.cmd run start:demo:cotizaciones -- --port 3104`
+
+http://localhost:3104/cotizaciones — no confundir con QA en 3103. No se modifica .env ni se detienen procesos existentes. `/laboratorio/estado` verifica de nuevo la base con sesión autenticada.
+
+[Diseño, datos, resultados, capturas y comandos PowerShell](https://github.com/Kenneth30flp/SecureFinance-ERP-BD2/blob/feature/p3-kenneth-cotizaciones/docs/parte3/cotizaciones/redisenio/README.md).
+
+UC09 continúa operativo con la extensión opcional autorizada, precios congelados, idempotencia y transacción única de contado/global. Promociones, crédito y multibodega futuros mantienen sus contratos documentados. No se escribió ni migró SecureFinanceERP, no se modificaron ramas ajenas ni el PR #11, no se publican credenciales/respaldos y no se hace merge automático.

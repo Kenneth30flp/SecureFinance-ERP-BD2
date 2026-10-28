@@ -1,5 +1,11 @@
 # Cotizaciones — Kenneth
 
+**Presentación vigente:** rediseño comercial con buscadores paginados, líneas
+editables y demostración aislada en el puerto **3104**. Consultar
+[redisenio/README.md](redisenio/README.md) para URL, base verificada, capturas,
+109 pruebas Node y separación QA/DEMO/VISUAL. El puerto 3103 corresponde a la
+instancia de pruebas anterior y no debe confundirse con la demostración.
+
 **Estado actual: UC09 implementado y validado en laboratorio.** La orden posterior
 de Kenneth autorizó el contrato y sustituyó la espera de aprobaciones externas.
 La documentación vigente está en [UC09_IMPLEMENTACION.md](UC09_IMPLEMENTACION.md),

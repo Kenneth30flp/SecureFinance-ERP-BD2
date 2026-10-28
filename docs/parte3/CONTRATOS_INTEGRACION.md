@@ -1,5 +1,16 @@
 # Contratos de integración — Parte III
 
+## Consulta comercial de Cotizaciones (44)
+
+El rediseño añade P3_COT_PrepararFormulario y P3_COT_BuscarCatalogo mediante 44,
+solo lectura y con COTIZACIONES_CREAR vigente. GET de búsqueda por cliente/NIT
+y producto/SKU devuelve como máximo ocho resultados y una indicación de página
+siguiente; el formulario no descarga el catálogo completo. No cambia los POST,
+precios definitivos, motor 43, caja ni Kardex. No hay filtro por prefijo QA.
+Los datos de demostración y pruebas se separan físicamente por base y archivo
+de estado; la demostración no recibe escrituras de los ejecutores automáticos.
+Ver [rediseño y entornos](cotizaciones/redisenio/README.md).
+
 ## Extensión UC09 autorizada en la rama de Kenneth
 
 Por orden expresa posterior de Kenneth, coordinador de integración, la rama

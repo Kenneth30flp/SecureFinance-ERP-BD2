@@ -1,5 +1,11 @@
 # Guía de evidencias para Rubén
 
+Para el rediseño comercial actual consultar
+[redisenio/README.md](redisenio/README.md) y las capturas auténticas de
+`redisenio/evidencias-comerciales/`. Estas se tomaron en una copia VISUAL
+separada; la demostración final conserva sus documentos iniciales. Las
+evidencias de UC09 que siguen se mantienen sin sobrescribir.
+
 Todas las capturas proceden de Chromium real contra una base aislada restaurada.
 La sesión `QA_COT_SESSION_FIXTURE` sustituye únicamente autenticación: no acredita
 inicio de sesión con contraseña real. Las operaciones comerciales consultan y

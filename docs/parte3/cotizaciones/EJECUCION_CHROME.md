@@ -1,5 +1,10 @@
 # Probar Cotizaciones desde Chrome — Windows PowerShell
 
+**Para la presentación comercial rediseñada usar ahora el puerto 3104** y el
+comando `npm.cmd run start:demo:cotizaciones -- --port 3104`.
+Ver [redisenio/README.md](redisenio/README.md). Lo que sigue conserva las
+instrucciones de la instancia QA anterior, separada deliberadamente.
+
 La copia utilizada en esta entrega es
 `SecureFinanceERP_P3_COT_20261027213647_67c25f5a`, migraciones 41–43 instaladas.
 El lanzador lee el laboratorio vigente de `.data/cotizaciones-lab.json`, fuerza
