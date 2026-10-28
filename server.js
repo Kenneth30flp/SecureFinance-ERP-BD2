@@ -33,6 +33,8 @@ const { createEdwardService } = require('./src/modules/edward/services');
 const { createEdwardRoutes } = require('./src/modules/edward/routes');
 const { createAnaliticaService } = require('./src/modules/jose/analiticaService');
 const { createAnaliticaRoutes } = require('./src/modules/jose/analiticaRoutes');
+const { createCotizacionService } = require('./src/modules/cotizaciones/service');
+const { createCotizacionRoutes } = require('./src/modules/cotizaciones/routes');
 
 function createApp({
   secret = process.env.SESSION_SECRET,
@@ -46,6 +48,7 @@ function createApp({
   edwardService = createEdwardService(),
   kennethServices = { productos:createProductoService(), proveedores:createProveedorService(), clientes:createClienteService(), inventario:createInventarioService(), photos:createFotografiaService() },
   analiticaService = createAnaliticaService(),
+  cotizacionService = createCotizacionService(),
   production = process.env.NODE_ENV === 'production',
 } = {}) {
   if (!secret || secret.trim().length < 32) {
@@ -97,6 +100,7 @@ function createApp({
 
   app.use(createUsuarioRoutes(usuarioService));
   app.use(createKennethRoutes(kennethServices));
+  app.use(createCotizacionRoutes(cotizacionService));
 
   app.get('/health', (req, res) =>
     res.json({ status: 'ok', phase: 3 })

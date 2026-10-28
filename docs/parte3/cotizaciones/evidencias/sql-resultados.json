@@ -1,0 +1,24 @@
+{
+  "lab": "SecureFinanceERP_P3_COT_20261027210601_0f1e9dec",
+  "actor": 3,
+  "productId": 39,
+  "clientId": 22,
+  "browserQuote": 32,
+  "passed": [
+    "creacion valida, precio SQL y totales DECIMAL",
+    "emision no modifica stock (producto propio sin existencias)",
+    "reintento identico y conflicto por referencia reutilizada",
+    "dos emisiones simultaneas con la misma referencia: un documento",
+    "cotizacion de varios productos",
+    "snapshot cotizacion 100 permanece tras cambiar catalogo a 120 (conversion pendiente)",
+    "historial y filtros por numero, cliente y estado",
+    "rechazos SQL: cliente/producto inexistente, sin lineas, cantidad, vigencia y RBAC",
+    "cliente inactivo rechazado por SQL",
+    "cuenta de aplicacion sin SELECT directo sobre documentos",
+    "rollback de emision con error en producto posterior",
+    "cancelacion auditada, idempotente y sin transicion repetida",
+    "TVF expira con reloj SQL sin modificar historial",
+    "paginacion SQL de 20 filas y una adicional sin duplicados entre paginas"
+  ],
+  "conversion": "NOT_IMPLEMENTED_PENDING_CONTRACT_APPROVAL"
+}

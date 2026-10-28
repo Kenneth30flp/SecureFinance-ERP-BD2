@@ -1,0 +1,16 @@
+{
+  "authentication": "SESSION_FIXTURE_NOT_REAL_LOGIN",
+  "database": "ISOLATED_P3_COT_LAB",
+  "checks": [
+    "menu, cliente, producto, descuento y calculo preliminar real",
+    "alta HTTP y documento persistido SQL con totales definitivos",
+    "comprobante imprimible sin presentar factura tributaria",
+    "historial y busqueda por numero",
+    "sin desborde global en listado, alta y detalle a 768px",
+    "sin desborde global en listado, alta y detalle a 390px",
+    "sin desborde global en listado, alta y detalle a 320px",
+    "confirmacion y cancelacion persistida con historial",
+    "cero excepciones JavaScript"
+  ],
+  "conversion": "PENDING_CONTRACT_APPROVAL"
+}
