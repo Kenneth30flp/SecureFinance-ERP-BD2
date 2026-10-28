@@ -1,5 +1,37 @@
 # Contratos de integración — Parte III
 
+## Consulta comercial de Cotizaciones (44)
+
+El rediseño añade P3_COT_PrepararFormulario y P3_COT_BuscarCatalogo mediante 44,
+solo lectura y con COTIZACIONES_CREAR vigente. GET de búsqueda por cliente/NIT
+y producto/SKU devuelve como máximo ocho resultados y una indicación de página
+siguiente; el formulario no descarga el catálogo completo. No cambia los POST,
+precios definitivos, motor 43, caja ni Kardex. No hay filtro por prefijo QA.
+Los datos de demostración y pruebas se separan físicamente por base y archivo
+de estado; la demostración no recibe escrituras de los ejecutores automáticos.
+Ver [rediseño y entornos](cotizaciones/redisenio/README.md).
+
+## Extensión UC09 autorizada en la rama de Kenneth
+
+Por orden expresa posterior de Kenneth, coordinador de integración, la rama
+feature/p3-kenneth-cotizaciones implementa el contrato de
+[UC09_IMPLEMENTACION.md](cotizaciones/UC09_IMPLEMENTACION.md) sin exigir
+aprobación de cuentas de José/Dylan como condición para desarrollar y validar.
+No se atribuye aprobación externa. Su incorporación a esta rama común sigue
+mediante PR #12, sin merge automático ni despliegue sobre la principal.
+
+La migración 43 añade al final `@P3CotizacionId INT=NULL` a ambos procedimientos
+de venta, conserva el camino NULL y sus hashes históricos, y reutiliza el motor
+único para contado/global con precios pactados SQL. No cambia el TVP ni Kardex.
+El wrapper cierra la cotización atómicamente incluso si se invoca directamente;
+UC09 orquesta la misma transacción. José debe evitar doble descuento al integrar
+promociones; Dylan debe extender explícitamente modalidad/bodega/huella sin
+invalidar los reintentos existentes. Los importes son históricos, mientras la
+identidad textual de la factura sigue capturándose al facturar según 39.
+
+Las firmas y fuentes descritas abajo corresponden a la base Parte II; para
+extender el motor después de UC09 partir de 43, conservando la compatibilidad.
+
 ## Base técnica y alcance
 
 El responsable de integración autorizó expresamente el commit

@@ -1,0 +1,15 @@
+﻿{
+    "quotes":  5,
+    "states":  {
+                   "ACTIVA":  2,
+                   "CANCELADA":  1,
+                   "PROCESADA":  1,
+                   "VENCIDA":  1
+               },
+    "applicationExecuteVerified":  true,
+    "database":  "SecureFinanceERP_P3_COT_DEMO_20261027231053_ca62df75",
+    "automationWritesToDemo":  "NONE",
+    "qaRecords":  0,
+    "integrity":  "PASS",
+    "invoiceHashPreserved":  true
+}

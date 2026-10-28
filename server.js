@@ -33,6 +33,8 @@ const { createEdwardService } = require('./src/modules/edward/services');
 const { createEdwardRoutes } = require('./src/modules/edward/routes');
 const { createAnaliticaService } = require('./src/modules/jose/analiticaService');
 const { createAnaliticaRoutes } = require('./src/modules/jose/analiticaRoutes');
+const { createCotizacionService } = require('./src/modules/cotizaciones/service');
+const { createCotizacionRoutes } = require('./src/modules/cotizaciones/routes');
 
 function createApp({
   secret = process.env.SESSION_SECRET,
@@ -46,6 +48,7 @@ function createApp({
   edwardService = createEdwardService(),
   kennethServices = { productos:createProductoService(), proveedores:createProveedorService(), clientes:createClienteService(), inventario:createInventarioService(), photos:createFotografiaService() },
   analiticaService = createAnaliticaService(),
+  cotizacionService = createCotizacionService(),
   production = process.env.NODE_ENV === 'production',
 } = {}) {
   if (!secret || secret.trim().length < 32) {
@@ -57,6 +60,8 @@ function createApp({
   app.disable('x-powered-by');
   app.set('view engine', 'ejs');
   app.set('views', path.join(__dirname, 'src/views'));
+  app.locals.moduleAreas = require('./src/config/moduleCatalog').visibleAreas;
+  app.locals.displayMoney = require('./src/modules/cotizaciones/format').money;
 
   app.use(express.urlencoded({ extended: false, limit: '10kb' }));
   app.use(express.json({ limit: '10kb' }));
@@ -83,6 +88,10 @@ function createApp({
   );
 
   // Autenticación de Kenneth
+  app.get('/modulos', require('./src/middleware/authMiddleware').requireAuth, (req,res)=>{
+    res.set('Cache-Control','no-store');
+    res.render('modulos',{usuario:req.session.usuario});
+  });
   app.use(createAuthRoutes(authService));
   app.use(createDashboardRoutes(dashboardService));
   app.use(createAnaliticaRoutes(analiticaService));
@@ -97,6 +106,7 @@ function createApp({
 
   app.use(createUsuarioRoutes(usuarioService));
   app.use(createKennethRoutes(kennethServices));
+  app.use(createCotizacionRoutes(cotizacionService));
 
   app.get('/health', (req, res) =>
     res.json({ status: 'ok', phase: 3 })

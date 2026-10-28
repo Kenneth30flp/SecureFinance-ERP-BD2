@@ -1,0 +1,6 @@
+<% let rawValidity=value;
+if(typeof rawValidity==='string' && /^\d{4}-\d{2}-\d{2}T/.test(rawValidity) && !/(?:Z|[+-]\d{2}:\d{2})$/i.test(rawValidity))rawValidity+='Z';
+const expiry=new Date(rawValidity);
+const validExpiry=rawValidity && Number.isFinite(expiry.getTime());
+const midnight=validExpiry && new Intl.DateTimeFormat('en-GB',{timeZone:'America/Guatemala',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(expiry)==='00:00:00';
+%><% if(midnight){ %>Válida hasta el <%= new Intl.DateTimeFormat('es-GT',{timeZone:'America/Guatemala',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(expiry.getTime()-1)) %>, inclusive.<% }else{ %>Vence el <%- include('operational-date',{value}) %><% } %>
