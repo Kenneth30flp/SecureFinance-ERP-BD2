@@ -36,7 +36,7 @@ async function run(){
   const multi=await service.create(actor,{...data(),Detalle:[{ProductoId:p.ProductoId,Cantidad:1,DescuentoPorcentaje:0},{ProductoId:p2.ProductoId,Cantidad:3,DescuentoPorcentaje:0}]});assert.equal((await service.detail(actor,multi.CotizacionId)).lineas.length,2);pass('cotizacion de varios productos');
   const source=(await products.list(actor,{id:p.ProductoId,costo:true}))[0];
   await products.save(actor,{...source,id:source.ProductoId,Precio:'120.00',Fotografia:null});
-  assert.equal((await service.detail(actor,quote.CotizacionId)).lineas[0].PrecioUnitario,'100.00');assert.equal((await service.catalogs(actor)).productos.find(x=>x.ProductoId===p.ProductoId).Precio,'120.00');pass('snapshot cotizacion 100 permanece tras cambiar catalogo a 120 (conversion pendiente)');
+  assert.equal((await service.detail(actor,quote.CotizacionId)).lineas[0].PrecioUnitario,'100.00');assert.equal((await service.catalogs(actor)).productos.find(x=>x.ProductoId===p.ProductoId).Precio,'120.00');pass('snapshot cotizacion 100 permanece tras cambiar catalogo a 120 (UC09 se prueba por separado)');
   const f={numero:quote.Numero,cliente:client.Nombre,estado:'ACTIVA',pagina:1};const found=await service.list(actor,f);assert.equal(found.length,1);assert.equal(found[0].CotizacionId,quote.CotizacionId);pass('historial y filtros por numero, cliente y estado');
   await reject(()=>service.create(actor,{...data(),ClienteId:2147483647}),54904);
   await reject(()=>service.create(actor,{...data(),Detalle:[{ProductoId:2147483647,Cantidad:1,DescuentoPorcentaje:0}]}),54904);
@@ -59,7 +59,7 @@ async function run(){
   assert.equal(page1.length,21);assert.ok(page2.length>0);assert.equal(page1[20].CotizacionId,page2[0].CotizacionId);assert(!page1.slice(0,20).some(q=>page2.some(r=>r.CotizacionId===q.CotizacionId)));pass('paginacion SQL de 20 filas y una adicional sin duplicados entre paginas');
   // Dedicated records for real browser capture, without changing the principal.
   const browserQuote=await service.create(actor,{...data(),Detalle:[{ProductoId:p.ProductoId,Cantidad:2,DescuentoPorcentaje:0}],Observaciones:'QA navegador real SQL - no es documento operativo'});
-  fs.writeFileSync('.data/cotizaciones-sql.json',JSON.stringify({lab:state.lab,actor,productId:p.ProductoId,clientId:client.ClienteId,browserQuote:browserQuote.CotizacionId,passed:results,conversion:'NOT_IMPLEMENTED_PENDING_CONTRACT_APPROVAL'},null,2));
+  fs.writeFileSync('.data/cotizaciones-sql.json',JSON.stringify({lab:state.lab,actor,productId:p.ProductoId,clientId:client.ClienteId,browserQuote:browserQuote.CotizacionId,passed:results,conversion:'TESTED_SEPARATELY_BY_CotizacionesUC09Integration'},null,2));
  } finally{await closePool();}
 }
 run().catch(e=>{console.error('SQL FAIL',e.number||e.code||e.name,e.number?e.message:'');process.exitCode=1;});

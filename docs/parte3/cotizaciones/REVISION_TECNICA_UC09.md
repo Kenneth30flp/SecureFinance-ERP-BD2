@@ -1,5 +1,12 @@
 # UC09: contrato final propuesto para aprobación
 
+**Actualización posterior autorizada:** Kenneth aprobó expresamente implementar
+esta revisión en la rama individual y dispensó aprobaciones previas de José/Dylan.
+El contrato implementado, pruebas y límites están en
+[UC09_IMPLEMENTACION.md](UC09_IMPLEMENTACION.md). Las condiciones de aprobación
+que siguen se conservan como registro histórico y quedaron sustituidas por esa
+orden; no son un bloqueo vigente ni representan aprobaciones de terceros.
+
 Revisión 2, 2026-10-27. **PROPUESTA, NO IMPLEMENTACIÓN NI APROBACIÓN FINAL.**
 Código revisado: `1c6f813b470283c3b8bf54108163688392ae20bb`.
 Rama: `feature/p3-kenneth-cotizaciones`. Destino: `integracion/parte3`.

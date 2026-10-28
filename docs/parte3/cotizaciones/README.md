@@ -1,5 +1,13 @@
 # Cotizaciones — Kenneth
 
+**Estado actual: UC09 implementado y validado en laboratorio.** La orden posterior
+de Kenneth autorizó el contrato y sustituyó la espera de aprobaciones externas.
+La documentación vigente está en [UC09_IMPLEMENTACION.md](UC09_IMPLEMENTACION.md),
+[RESULTADOS_UC09.md](RESULTADOS_UC09.md) y [EJECUCION_CHROME.md](EJECUCION_CHROME.md).
+Se utilizan 41, 42 y 43; 106 pruebas Node, 27 grupos SQL UC09 y Chromium PASS.
+El contenido siguiente documenta la entrega independiente anterior a UC09 y
+sus limitaciones históricas; sus menciones de bloqueo no rigen la versión actual.
+
 Rama: `feature/p3-kenneth-cotizaciones`, desde `integracion/parte3` en
 `a8afeb2e0c485f8cc4448b47a306001309ce5119`.
 

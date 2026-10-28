@@ -1,5 +1,26 @@
 # Contratos de integración — Parte III
 
+## Extensión UC09 autorizada en la rama de Kenneth
+
+Por orden expresa posterior de Kenneth, coordinador de integración, la rama
+feature/p3-kenneth-cotizaciones implementa el contrato de
+[UC09_IMPLEMENTACION.md](cotizaciones/UC09_IMPLEMENTACION.md) sin exigir
+aprobación de cuentas de José/Dylan como condición para desarrollar y validar.
+No se atribuye aprobación externa. Su incorporación a esta rama común sigue
+mediante PR #12, sin merge automático ni despliegue sobre la principal.
+
+La migración 43 añade al final `@P3CotizacionId INT=NULL` a ambos procedimientos
+de venta, conserva el camino NULL y sus hashes históricos, y reutiliza el motor
+único para contado/global con precios pactados SQL. No cambia el TVP ni Kardex.
+El wrapper cierra la cotización atómicamente incluso si se invoca directamente;
+UC09 orquesta la misma transacción. José debe evitar doble descuento al integrar
+promociones; Dylan debe extender explícitamente modalidad/bodega/huella sin
+invalidar los reintentos existentes. Los importes son históricos, mientras la
+identidad textual de la factura sigue capturándose al facturar según 39.
+
+Las firmas y fuentes descritas abajo corresponden a la base Parte II; para
+extender el motor después de UC09 partir de 43, conservando la compatibilidad.
+
 ## Base técnica y alcance
 
 El responsable de integración autorizó expresamente el commit

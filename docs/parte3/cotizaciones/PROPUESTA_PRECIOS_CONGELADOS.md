@@ -1,5 +1,10 @@
 # Propuesta de extensión de Facturación para UC09
 
+**Estado vigente:** contrato autorizado por Kenneth e implementado mediante 43.
+Ver [UC09_IMPLEMENTACION.md](UC09_IMPLEMENTACION.md). La espera de aprobación
+externa descrita abajo corresponde a la propuesta histórica y quedó dispensada
+por instrucción posterior del coordinador; no constituye bloqueo actual.
+
 Estado: **APROBACIÓN CONDICIONADA DEL INTEGRADOR; PENDIENTES JOSÉ Y DYLAN**.
 La revisión final propuesta para aprobación es
 [REVISION_TECNICA_UC09.md](REVISION_TECNICA_UC09.md), que precisa y prevalece

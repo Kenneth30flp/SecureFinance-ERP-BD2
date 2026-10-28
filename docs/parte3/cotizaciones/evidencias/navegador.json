@@ -10,7 +10,20 @@
     "sin desborde global en listado, alta y detalle a 390px",
     "sin desborde global en listado, alta y detalle a 320px",
     "confirmacion y cancelacion persistida con historial",
+    "cancelar confirmacion de conversion no genera factura",
+    "HTTP 503 inyectado despues de COMMIT mantiene UUID y permite recuperar resultado real",
+    "conversion desde UI y reintento generan factura a 100, catalogo 120 y una salida de dos unidades",
+    "Kardex real accesible desde navegador",
+    "HTTP real: reintento idempotente y CSRF invalido rechazado",
+    "cotizacion procesada y factura en movil 390/320 sin desborde",
     "cero excepciones JavaScript"
   ],
-  "conversion": "PENDING_CONTRACT_APPROVAL"
+  "conversion": "PASS",
+  "faultInjection": "One post-COMMIT service response fails with HTTP 503; all business operations use real SQL",
+  "quoteId": 109,
+  "invoiceId": 7042,
+  "priceInvoice": "100.00",
+  "priceCatalog": "120.00",
+  "stockBefore": 12,
+  "stockAfter": 10
 }

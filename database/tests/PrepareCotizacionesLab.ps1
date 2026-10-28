@@ -1,4 +1,4 @@
-param([string]$Server='localhost')
+param([string]$Server='localhost',[switch]$IncludeConversion)
 $ErrorActionPreference='Stop'
 $root=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 function Connect([string]$db){
@@ -33,6 +33,7 @@ try{
  $names=@()
  if([DBNull]::Value -eq (Read $copy "SELECT OBJECT_ID('dbo.sp_ReactivarCliente','P') O").Rows[0].O){$names+='40_ERP_ReactivarCliente.sql'}
  $names+=@('41_P3_COT_EstructuraCotizaciones.sql','42_P3_COT_Operaciones.sql')
+ if($IncludeConversion){$names+='43_P3_COT_ConversionFactura.sql'}
  foreach($name in $names){
   $content=Get-Content (Join-Path $root "database/$name") -Raw -Encoding UTF8
   if($content -match '(?im)^\s*USE\s'){throw 'Migracion no puede cambiar de base'}

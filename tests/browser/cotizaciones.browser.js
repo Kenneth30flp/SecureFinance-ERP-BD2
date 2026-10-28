@@ -12,15 +12,18 @@ process.env.DB_NAME=state.lab;
 const {getPool,closePool,sql}=require('../../src/config/database');
 const {createApp}=require('../../server');
 const {createCotizacionService}=require('../../src/modules/cotizaciones/service');
+const {createProductoService}=require('../../src/services/productoService');
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
 async function run(){
  let server,browser,socket;
- const results={authentication:'SESSION_FIXTURE_NOT_REAL_LOGIN',database:'ISOLATED_P3_COT_LAB',checks:[],conversion:'PENDING_CONTRACT_APPROVAL'};
+ const results={authentication:'SESSION_FIXTURE_NOT_REAL_LOGIN',database:'ISOLATED_P3_COT_LAB',checks:[],conversion:'NOT_RUN',faultInjection:'One post-COMMIT service response fails with HTTP 503; all business operations use real SQL'};
  const artifacts='docs/parte3/cotizaciones/evidencias';fs.mkdirSync(artifacts,{recursive:true});
  try{
  const pool=await getPool();assert.equal((await pool.request().query('SELECT DB_NAME() N')).recordset[0].N,state.lab);
  const permisos=(await pool.request().input('UsuarioId',sql.Int,state.actor).execute('dbo.sp_ObtenerPermisosUsuario')).recordset.map(p=>p.Codigo);
- const app=createApp({production:false,authService:{login:async()=>({codigo:0,usuario:{usuarioId:state.actor,nombreUsuario:'QA_COT_SESSION_FIXTURE',permisos,debeCambiarPassword:false}})}});
+ const realService=createCotizacionService();let loseResponseFor=null,lostResponse=false;
+ const cotizacionService={...realService,async convert(actor,id,operation){const result=await realService.convert(actor,id,operation);if(id===loseResponseFor&&!lostResponse){lostResponse=true;throw Error('QA respuesta perdida despues de COMMIT');}return result;}};
+ const app=createApp({production:false,cotizacionService,authService:{login:async()=>({codigo:0,usuario:{usuarioId:state.actor,nombreUsuario:'QA_COT_SESSION_FIXTURE',permisos,debeCambiarPassword:false}})}});
  server=app.listen(0,'127.0.0.1');await once(server,'listening');const base='http://127.0.0.1:'+server.address().port;
  const chrome=['C:/Program Files/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(fs.existsSync);assert.ok(chrome,'Chromium instalado');
  const reserve=net.createServer().listen(0,'127.0.0.1');await once(reserve,'listening');const port=reserve.address().port;await new Promise(r=>reserve.close(r));
@@ -49,6 +52,33 @@ async function run(){
  // Confirm dialog is handled explicitly; cancellation is the only document mutation here.
  await cdp('Page.enable');let dialogResolve;const dialog=new Promise(r=>{dialogResolve=r;});socket.addEventListener('message',e=>{const m=JSON.parse(e.data);if(m.method==='Page.javascriptDialogOpening')dialogResolve();});
  const submit=evaluate("document.querySelector('#cot-reason').value='Cancelacion QA navegador';document.querySelector('#cot-cancel').requestSubmit();true");await dialog;await cdp('Page.handleJavaScriptDialog',{accept:true});await submit;await wait('document.body.innerText.includes("CANCELADA")&&!document.querySelector("#cot-cancel")');assert.equal((await service.detail(state.actor,id)).documento.Estado,'CANCELADA');await capture('06-cancelacion-movil');pass('confirmacion y cancelacion persistida con historial');
+ const uc09=JSON.parse(fs.readFileSync('.data/uc09-sql.json','utf8'));assert.equal(uc09.lab,state.lab);
+ await cdp('Emulation.setDeviceMetricsOverride',{width:1366,height:900,deviceScaleFactor:1,mobile:false});await navigate('/cotizaciones/nueva');
+ await evaluate(`document.querySelector('#cot-client').value=${JSON.stringify(String(uc09.clientId))};document.querySelector('#cot-product').value=${JSON.stringify(String(uc09.productId))};document.querySelector('#cot-quantity').value='2';document.querySelector('#cot-discount').value='10';document.querySelector('#cot-expiry').value=${JSON.stringify(new Date(Date.now()+2*86400000).toISOString().slice(0,10))};document.querySelector('#cot-notes').value='QA UC09: precio pactado 100 y conversion de contado';document.querySelector('#cot-add').click();document.querySelector('#cot-create').requestSubmit();`);
+ await wait('/^\\/cotizaciones\\/\\d+$/.test(location.pathname)&&document.readyState==="complete"&&Boolean(document.querySelector("#cot-convert"))');
+ const conversionId=await evaluate('Number(location.pathname.split("/").pop())'),operation=await evaluate('document.querySelector("#cot-convert").dataset.operation');
+ const productService=createProductoService(),current=(await productService.list(state.actor,{id:uc09.productId,costo:true}))[0];
+ const beforeStock=current.Stock;await productService.save(state.actor,{...current,id:current.ProductoId,Precio:'120.00',Fotografia:null});
+ await capture('07-conversion-precio-pactado-100');
+ async function submitConfirmation(accept){
+  let timer,resolve;const opened=new Promise((r,j)=>{resolve=r;timer=setTimeout(()=>j(Error('No confirmation dialog')),12000);});
+  const listener=e=>{if(JSON.parse(e.data).method==='Page.javascriptDialogOpening')resolve();};socket.addEventListener('message',listener);
+  const pending=evaluate('document.querySelector("#cot-convert").requestSubmit();true');
+  try{await opened;await cdp('Page.handleJavaScriptDialog',{accept});await pending;}finally{clearTimeout(timer);socket.removeEventListener('message',listener);}
+ }
+ await submitConfirmation(false);assert.equal((await service.detail(state.actor,conversionId)).documento.Estado,'ACTIVA');pass('cancelar confirmacion de conversion no genera factura');
+ loseResponseFor=conversionId;await submitConfirmation(true);
+ await wait('!document.querySelector("#cot-message").hidden&&document.querySelector("#cot-message").innerText.includes("Referencia conservada")');
+ assert.equal((await service.detail(state.actor,conversionId)).documento.Estado,'PROCESADA');assert.equal(await evaluate('document.querySelector("#cot-convert").dataset.operation'),operation);await capture('08-respuesta-incierta-referencia-conservada');pass('HTTP 503 inyectado despues de COMMIT mantiene UUID y permite recuperar resultado real');
+ await submitConfirmation(true);await wait('document.readyState==="complete"&&document.body.innerText.includes("PROCESADA")&&!document.querySelector("#cot-convert")');
+ const converted=await service.detail(state.actor,conversionId),invoice=converted.documento.FacturaId;assert.ok(invoice);await capture('09-cotizacion-procesada');
+ await navigate('/facturacion/facturas/'+invoice);assert.ok(await evaluate('document.body.innerText.includes("100.00")&&document.body.innerText.includes("201.60")'));await capture('10-factura-precio-historico');
+ const afterProduct=(await productService.list(state.actor,{id:uc09.productId,costo:true}))[0];assert.equal(Number(afterProduct.Precio),120);assert.equal(afterProduct.Stock,beforeStock-2);pass('conversion desde UI y reintento generan factura a 100, catalogo 120 y una salida de dos unidades');
+ await navigate('/inventario?id='+uc09.productId);assert.ok(await evaluate('document.body.innerText.includes("VENTA")'));await capture('11-kardex-salida-unica');pass('Kardex real accesible desde navegador');
+ await navigate('/cotizaciones/'+conversionId);const manual=await evaluate(`(async()=>{const r=await fetch('/cotizaciones/${conversionId}/convertir',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':document.querySelector('meta[name="csrf-token"]').content},body:JSON.stringify({OperacionId:${JSON.stringify(operation)}})});return {status:r.status,data:await r.json()};})()`);assert.equal(manual.status,200);assert.equal(manual.data.documento.FacturaId,invoice);
+ const badCsrf=await evaluate(`(async()=>{const r=await fetch('/cotizaciones/${conversionId}/convertir',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':'bad'},body:JSON.stringify({OperacionId:${JSON.stringify(operation)}})});return r.status;})()`);assert.equal(badCsrf,403);pass('HTTP real: reintento idempotente y CSRF invalido rechazado');
+ for(const width of [390,320]){await cdp('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await navigate('/cotizaciones/'+conversionId);assert.ok(await evaluate('document.documentElement.scrollWidth<=document.documentElement.clientWidth'));await capture('12-procesada-'+width);await navigate('/facturacion/facturas/'+invoice);assert.ok(await evaluate('document.documentElement.scrollWidth<=document.documentElement.clientWidth'));await capture('13-factura-'+width);}
+ pass('cotizacion procesada y factura en movil 390/320 sin desborde');results.conversion='PASS';results.quoteId=conversionId;results.invoiceId=invoice;results.priceInvoice='100.00';results.priceCatalog='120.00';results.stockBefore=beforeStock;results.stockAfter=afterProduct.Stock;
  assert.deepEqual(errors,[]);pass('cero excepciones JavaScript');
  }finally{
  fs.writeFileSync(path.join(artifacts,'navegador.json'),JSON.stringify(results,null,2));socket?.close();browser?.kill();if(server)await new Promise(r=>{server.close(r);server.closeAllConnections();});await closePool();

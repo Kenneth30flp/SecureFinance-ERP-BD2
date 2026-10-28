@@ -30,6 +30,24 @@ function createCotizacionService(provider=getPool) {
     async cancel(actor,id,operation,reason) {
       return (await call('dbo.P3_COT_Cancelar',actor,[['CotizacionId',sql.Int,id],['OperacionId',sql.UniqueIdentifier,operation],['Motivo',sql.NVarChar(sql.MAX),reason]]))[0][0];
     },
+    async readiness(actor,id) {
+      try {
+        const sets=await call('dbo.P3_COT_EstadoConversion',actor,[['CotizacionId',sql.Int,id]]);
+        const row=sets[0]?.[0];
+        return {installed:row?.Instalado===true,executable:row?.Ejecutar===true,allowed:row?.Permitido===true,database:row?.BaseDatos};
+      } catch(error) {
+        if(error.number===2812) return {installed:false,executable:false,allowed:false};
+        throw error;
+      }
+    },
+    async convert(actor,id,operation) {
+      const [header,lines,metadata]=await call('dbo.sp_ConvertirCotizacionAFactura',actor,[['CotizacionId',sql.Int,id],['OperacionId',sql.UniqueIdentifier,operation]]);
+      const factura=header?.[0],documento=metadata?.[0];
+      if(!documento||documento.CotizacionId!==id||documento.Estado!=='PROCESADA'
+        ||!Number.isInteger(documento.FacturaId)||documento.FacturaId<1||factura?.FacturaId!==documento.FacturaId
+        ||String(documento.OperacionId).toLowerCase()!==operation.toLowerCase()) throw Error('Respuesta de conversion incompatible.');
+      return {documento,factura:{...factura,Detalle:lines||[]}};
+    },
   };
 }
 module.exports={createCotizacionService};

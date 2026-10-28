@@ -1,5 +1,8 @@
 # Validación ejecutada — 2026-10-27
 
+Este archivo conserva la validación de la entrega independiente. Para la versión
+completa con conversión consultar [RESULTADOS_UC09.md](RESULTADOS_UC09.md).
+
 Base de laboratorio: `SecureFinanceERP_P3_COT_20261027210601_0f1e9dec`.
 Restauración nueva desde respaldo COPY_ONLY existente; 40 instalada solo en
 copia porque el respaldo la precedía. No se aplicó SQL a SecureFinanceERP.

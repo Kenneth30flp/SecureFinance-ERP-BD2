@@ -8,6 +8,16 @@
     if(!r.ok)throw Error(result.error);return result;
   }
   $('cot-print')?.addEventListener('click',()=>window.print());
+  const conversion=$('cot-convert');
+  conversion?.addEventListener('submit',async e=>{
+    e.preventDefault();const button=conversion.querySelector('button');if(button.disabled)return;
+    if(!window.confirm('¿Convertir esta cotización a factura de contado? Se registrará el cobro y la salida de inventario.'))return;
+    button.disabled=true;
+    try {
+      await post('/cotizaciones/'+conversion.dataset.id+'/convertir',{OperacionId:conversion.dataset.operation});
+      location.assign('/cotizaciones/'+conversion.dataset.id+'?convertida=1');
+    }catch(err){show(err.message+' Referencia conservada: '+conversion.dataset.operation+'. Puedes consultar el estado actual o reintentar con la misma referencia.');button.disabled=false;}
+  });
   const cancel=$('cot-cancel');
   cancel?.addEventListener('submit',async e=>{e.preventDefault();if(!cancel.reportValidity()||!window.confirm('¿Cancelar definitivamente esta cotización?'))return;const button=cancel.querySelector('button');button.disabled=true;try{await post('/cotizaciones/'+cancel.dataset.id+'/cancelar',{OperacionId:cancel.dataset.operation,Motivo:$('cot-reason').value});location.reload();}catch(err){show(err.message);button.disabled=false;}});
   const form=$('cot-create');if(!form)return;
