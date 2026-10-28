@@ -1,6 +1,10 @@
 # Propuesta de extensión de Facturación para UC09
 
-Estado: **PENDIENTE DE APROBACIÓN**. Responsable: Kenneth. Revisores afectados:
+Estado: **APROBACIÓN CONDICIONADA DEL INTEGRADOR; PENDIENTES JOSÉ Y DYLAN**.
+La revisión final propuesta para aprobación es
+[REVISION_TECNICA_UC09.md](REVISION_TECNICA_UC09.md), que precisa y prevalece
+sobre este planteamiento inicial. Aún no autoriza implementar el cambio.
+Responsable: Kenneth. Revisores afectados:
 integrador, José (Promociones) y Dylan (Créditos y Multibodega).
 No autoriza modificar el motor compartido. Base: a8afeb2.
 
@@ -21,8 +25,11 @@ COTIZACIONES_CONVERTIR además de VENTAS_REGISTRAR; valida cliente, vigencia y
 estado. Toda llamada con P3CotizacionId, incluso una directa al wrapper, debe
 validar este mismo origen, permiso y correspondencia completa de líneas.
 
-En el núcleo, únicamente se sustituye la fuente de precio y descripción:
+En el núcleo se sustituye la fuente del precio:
 para origen válido se usa el snapshot de `P3_COT_Detalle`, no Producto.Precio.
+El SKU y la descripción de la factura seguirán capturándose al facturar como
+establece el trigger 39; la cotización conserva su propia identidad histórica.
+Esta decisión explícita requiere aprobación y evita cambiar ese trigger.
 No aceptar precios vía parámetros ni SESSION_CONTEXT como autorización.
 El núcleo mantiene validaciones de existencia, actividad, stock, orden de
 bloqueos, Factura/DetalleFactura, caja y Kardex existentes. Debe cotejar los
@@ -53,7 +60,9 @@ La conversión conserva UUID y actor; mismo UUID/cotización/actor devuelve la
 misma factura. Otro UUID sobre documento procesado se rechaza. UUID usado por
 otra cotización falla. Bloquear documento UPDLOCK/HOLDLOCK; luego wrapper
 ERP y productos por PK ascendente; no adquirir locks en orden inverso.
-Marcar PROCESADA y vincular FacturaId dentro de la transacción externa. El
+El wrapper debe marcar PROCESADA y vincular FacturaId dentro de la misma
+transacción, incluso en llamadas directas autorizadas; UC09 no repite esa
+actualización. Así se impide facturar sin cerrar la cotización. El
 wrapper no confirma la transacción externa por sí solo; cualquier error del
 núcleo o Kardex puede revertirla íntegra. No capturar errores para confirmar
 parcialmente. El comprobante idempotente sigue en SolicitudVentaERP.

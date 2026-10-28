@@ -11,6 +11,15 @@ La rama incorpora la parte independiente del módulo de Cotizaciones: emisión c
 
 ### Coordinación requerida antes de UC09
 
+Revisión técnica 2 publicada: [contrato final propuesto y decisiones pendientes](https://github.com/Kenneth30flp/SecureFinance-ERP-BD2/blob/feature/p3-kenneth-cotizaciones/docs/parte3/cotizaciones/REVISION_TECNICA_UC09.md).
+Se verificaron revisiones, conversación y comentarios de código del PR #12:
+no se encontraron aprobaciones expresas de José ni Dylan. El integrador aceptó
+condicionalmente el enfoque, sin dispensar esas aprobaciones. El PR permanece
+en borrador y no cambia SQL ni habilita UC09 con esta actualización documental.
+La revisión precisa compatibilidad NULL/hash histórico, cierre atómico incluso
+desde wrapper directo, descuentos/motivo, identidad descriptiva, autorizaciones,
+contado/inventario global y matriz A–O de aceptación pendiente de ejecución.
+
 Revisar [propuesta de precios congelados](https://github.com/Kenneth30flp/SecureFinance-ERP-BD2/blob/feature/p3-kenneth-cotizaciones/docs/parte3/cotizaciones/PROPUESTA_PRECIOS_CONGELADOS.md): parámetro opcional de origen cotización en el wrapper y núcleo actuales, sin sustituir TVP ni duplicar venta. José debe acordar descuentos/promociones congelados; Dylan, contado/crédito y futura bodega. La propuesta sigue pendiente de aprobación escrita del integrador y coordinación con responsables afectados.
 
 ### Validación real
