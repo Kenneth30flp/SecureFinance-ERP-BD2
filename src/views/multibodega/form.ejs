@@ -1,0 +1,10 @@
+<form class="bod-form bod-no-print" action="<%= action %>" method="post" data-bod-flow="<%= flow %>">
+<h3><%= title %></h3><input type="hidden" name="OperacionId" value="<%= newOperation() %>">
+<% for(const field of fields){ const fid=flow+'-'+field.name; if(field.type==='hidden'){ %><input type="hidden" name="<%= field.name %>" value="<%= field.value %>"><% }else{ %>
+<label for="<%= fid %>"><%= field.label %>
+<% if(field.options){ %><select id="<%= fid %>" name="<%= field.name %>" class="form-select"><% for(const [value,label] of field.options){ %><option value="<%= value %>" <%- String(field.value??'0')===String(value)?'selected':'' %>><%= label %></option><% } %></select>
+<% }else{ %><input id="<%= fid %>" class="form-control" name="<%= field.name %>" type="<%= field.type||'text' %>" value="<%= field.value??'' %>" <%- field.optional?'':'required' %> maxlength="<%= field.max||250 %>" <%- field.type==='number'?'min="1" max="2147483647" step="1"':'' %> <%- field.name==='CostoUnitario'?'inputmode="decimal"':'' %>><% } %></label><% }} %>
+<p class="bod-form-note">Antes de enviar confirma los identificadores. Se conserva la misma referencia y carga para reintentos manuales.</p>
+<div class="bod-actions"><button type="submit" class="btn btn-primary"><%= submit %></button><button type="button" class="btn btn-outline-primary" data-bod-retry hidden>Reintentar la misma carga</button><button type="button" class="btn btn-outline-primary" data-bod-new hidden>Iniciar otra solicitud</button></div>
+<p class="bod-reference" data-bod-reference></p><a data-bod-status hidden>Consultar referencia</a>
+</form>
