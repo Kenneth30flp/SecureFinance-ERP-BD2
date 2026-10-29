@@ -1,6 +1,25 @@
 # Evidencia Y Validacion Mod5
 
-Fecha: 2026-10-28. Rama `feature/p3-dylan-multibodega`, HEAD/base `1bca099`. Entrega local sin commit ni despliegue. Este documento registra salidas observadas; no son resultados SQL simulados presentados como reales.
+Fecha: 2026-10-28 (ampliada 2026-10-29). Rama `feature/p3-dylan-multibodega`, HEAD/base `1bca099`. Entrega local sin commit ni despliegue. Este documento registra salidas observadas; no son resultados SQL simulados presentados como reales.
+
+## ADICION 2026-10-29: Integracion E2E multibodega ejecutada EN EL LAB (6/6 PASS)
+
+El ciclo completo de integracion se ejecuto REAL contra `SecureFinanceERP_Lab_Dylan`
+con `database/tests/P3_BOD_Integraciones.ps1` (ADO.NET, dos contextos de sesion,
+actor sintetico `P3_DYLAN_QA_ADMIN`, queries relativas antes/despues para que la
+suite sea re-ejecutable). Resultado: 6/6 fases PASS.
+
+- F1 transferencia completa Central->Z10 (8 uds): RECIBIDA, stock local destino +8, global invariante.
+- F2 venta con ubicacion (PRUEBA 19): P3_COT_Crear -> P3_BOD_ConvertirCotizacion con contexto de bodega -> factura y salida Kardex/Ledger en Z10 (local -2, global -2); verificado que el motor de Kenneth asigna su PROPIO OperacionId al Kardex de venta (la resta se deriva via P3_BOD_Ledger, no se asumo el GUID del wrapper).
+- F3 devolucion APTA con reingreso en Z10 (PRUEBA 20, proc de Edward 24 usado tal cual): Kardex DEVOLUCION + Ledger vinculados via DevolucionKardex, nota de credito, +1 local y +1 global.
+- F4 devolucion DEFECTUOSA sin reingreso (PRUEBA 21): Reingresar=false, 0 filas Kardex/0 Ledger, stock intacto, nota de credito emitida y evento DML auditado.
+- F5 consistencia Ledger<->Kardex: mismatches=0, duplicados=0.
+- F6 conciliacion integral 0 diferencia tras el ciclo completo, con eventos DML cruzados por cada operacion (transferencia/cotizacion/devoluciones).
+
+Evidencia con numeros exactos: `docs/parte3/multibodega/EVIDENCIA_SQL_BOD_INTEGRACIONES.txt`
+(JSON crudo en `%TEMP%\opencode\P3_BOD_Integraciones.json`). No se modifico ninguna
+migracion del modulo (80-89) ni procs de Kenneth/Edward; los convertidores y el
+wrapper se ejecutaron tal cual.
 
 ## Ejecutado Localmente
 
