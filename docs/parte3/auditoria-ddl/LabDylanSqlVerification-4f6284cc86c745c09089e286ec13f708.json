@@ -1,0 +1,220 @@
+{
+    "runId":  "4f6284cc86c745c09089e286ec13f708",
+    "utc":  "2026-10-29T04:38:49.4410973Z",
+    "status":  "FAIL",
+    "cases":  [
+                  {
+                      "case":  "ExistingRuntimeMapping",
+                      "code":  0,
+                      "metrics":  {
+                                      "count":  1
+                                  }
+                  },
+                  {
+                      "case":  "DDL_SelectDenied",
+                      "code":  229,
+                      "expected":  229,
+                      "metrics":  {
+                                      "tranCount":  0,
+                                      "contextClean":  1
+                                  }
+                  },
+                  {
+                      "case":  "DDL_UpdateDenied",
+                      "code":  229,
+                      "expected":  229,
+                      "metrics":  {
+                                      "tranCount":  0,
+                                      "contextClean":  1
+                                  }
+                  },
+                  {
+                      "case":  "DDL_DeleteDenied",
+                      "code":  229,
+                      "expected":  229,
+                      "metrics":  {
+                                      "tranCount":  0,
+                                      "contextClean":  1
+                                  }
+                  },
+                  {
+                      "case":  "DDL_NoInsertOrAlter",
+                      "code":  0,
+                      "expected":  0,
+                      "metrics":  {
+                                      "tranCount":  0,
+                                      "contextClean":  1
+                                  }
+                  },
+                  {
+                      "case":  "DDL_ListAuthorized_1",
+                      "code":  0,
+                      "expected":  0,
+                      "metrics":  {
+                                      "tranCount":  0,
+                                      "contextClean":  1
+                                  }
+                  },
+                  {
+                      "case":  "DDL_DetailAuthorized_1",
+                      "code":  0,
+                      "expected":  0,
+                      "metrics":  {
+                                      "tranCount":  0,
+                                      "contextClean":  1
+                                  }
+                  },
+                  {
+                      "case":  "DDL_ListAuthorized_2",
+                      "code":  0,
+                      "expected":  0,
+                      "metrics":  {
+                                      "tranCount":  0,
+                                      "contextClean":  1
+                                  }
+                  },
+                  {
+                      "case":  "DDL_DetailAuthorized_2",
+                      "code":  0,
+                      "expected":  0,
+                      "metrics":  {
+                                      "tranCount":  0,
+                                      "contextClean":  1
+                                  }
+                  },
+                  {
+                      "case":  "DDL_ListActorDenied",
+                      "code":  54101,
+                      "expected":  54101,
+                      "metrics":  {
+                                      "tranCount":  0,
+                                      "contextClean":  1
+                                  }
+                  },
+                  {
+                      "case":  "DDL_DetailActorDenied",
+                      "code":  54101,
+                      "expected":  54101,
+                      "metrics":  {
+                                      "tranCount":  0,
+                                      "contextClean":  1
+                                  }
+                  },
+                  {
+                      "case":  "Credit_QueryActorDenied",
+                      "code":  54101,
+                      "expected":  54101,
+                      "metrics":  {
+                                      "tranCount":  0,
+                                      "contextClean":  1
+                                  }
+                  },
+                  {
+                      "case":  "Credit_PaymentActorDenied",
+                      "code":  54101,
+                      "expected":  54101,
+                      "metrics":  {
+                                      "tranCount":  0,
+                                      "contextClean":  1
+                                  }
+                  },
+                  {
+                      "case":  "BOD_QueryActorDenied",
+                      "code":  54101,
+                      "expected":  54101,
+                      "metrics":  {
+                                      "tranCount":  0,
+                                      "contextClean":  1
+                                  }
+                  },
+                  {
+                      "case":  "BOD_MutatorActorDenied",
+                      "code":  54101,
+                      "expected":  54101,
+                      "metrics":  {
+                                      "tranCount":  0,
+                                      "contextClean":  1
+                                  }
+                  },
+                  {
+                      "case":  "Credit_Setup",
+                      "code":  0,
+                      "metrics":  {
+                                      "QA":  1,
+                                      "ClientId":  27,
+                                      "ProductId":  29,
+                                      "QuoteId":  26,
+                                      "InvoiceId":  17
+                                  }
+                  },
+                  {
+                      "case":  "Credit_OuterRollback",
+                      "code":  0,
+                      "metrics":  {
+                                      "QA":  1,
+                                      "TranCount":  0,
+                                      "ContextClean":  1
+                                  }
+                  },
+                  {
+                      "case":  "Credit_SameUUID",
+                      "code":  0,
+                      "expected":  0,
+                      "metrics":  {
+                                      "msB":  4005,
+                                      "codeB":  0,
+                                      "aWaitforObserved":  1,
+                                      "bBlockedByAObserved":  1,
+                                      "msA":  4019,
+                                      "codeA":  0,
+                                      "sessionB":  75,
+                                      "cleanA":  1,
+                                      "sessionA":  73,
+                                      "cleanB":  1
+                                  }
+                  },
+                  {
+                      "case":  "Credit_SameUUID_ImmutableSingleReceipt",
+                      "code":  0,
+                      "metrics":  {
+                                      "QA":  1,
+                                      "AbonoId":  13,
+                                      "ReciboId":  13,
+                                      "SaldoPosterior":  1500.00
+                                  }
+                  },
+                  {
+                      "case":  "Credit_DistinctUUID_Overpayment",
+                      "code":  57006,
+                      "expected":  57006,
+                      "metrics":  {
+                                      "msB":  3983,
+                                      "codeB":  57006,
+                                      "aWaitforObserved":  1,
+                                      "bBlockedByAObserved":  1,
+                                      "msA":  4016,
+                                      "codeA":  0,
+                                      "sessionB":  75,
+                                      "cleanA":  1,
+                                      "sessionA":  73,
+                                      "cleanB":  1
+                                  }
+                  },
+                  {
+                      "case":  "Credit_FinalReconciliation",
+                      "code":  0,
+                      "metrics":  {
+                                      "QA":  1,
+                                      "Payments":  2,
+                                      "Receipts":  2,
+                                      "AmountSum":  2000.00,
+                                      "Available":  5000.00,
+                                      "Balance":  0.00
+                                  }
+                  }
+              ],
+    "failure":  {
+                    "line":  69,
+                    "harnessCode":  "ASSERTION_OR_HARNESS_FAILURE"
+                }
+}
