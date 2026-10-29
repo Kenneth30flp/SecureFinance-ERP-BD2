@@ -7,6 +7,10 @@
   let enviando = false;
   let confirmando = false;
   let registrada = false;
+  // Promociones (José, 63): vista previa SQL de solo lectura; la venta recalcula al confirmar.
+  const promocionesActivas = $('venta-form').dataset.promociones === 'true';
+  let vistaSecuencia = 0;
+  let vistaTimer;
   const moneda = (valor) => 'Q ' + valor / 100n + '.' + (valor % 100n).toString().padStart(2, '0');
   const centavos = (precio) => BigInt(precio.replace('.', ''));
   const dineroSQL = (valor) => valor == null ? '-' : 'Q ' + valor;
@@ -36,6 +40,7 @@
     $('subtotal-neto').textContent = moneda(neto);
     $('iva').textContent = moneda(iva);
     $('total').textContent = moneda(neto + iva);
+    programarVista();
     $('sin-lineas').hidden = lineas.size > 0;
     $('procesar').disabled = lineas.size === 0;
     const conDescuento = [...lineas.values()].some((linea) => linea.descuento > 0n);
@@ -58,7 +63,8 @@
       const nombre = document.createElement('strong'); nombre.textContent = linea.descripcion;
       const stock = document.createElement('small'); stock.className = 'line-stock';
       const stockBadge = document.createElement('span'); stockBadge.className = 'stock-low-badge'; stockBadge.textContent = 'STOCK BAJO';
-      producto.append(nombre); producto.append(stock); producto.append(stockBadge); row.append(producto);
+      const promo = document.createElement('small'); promo.className = 'pro-sale-badge'; promo.hidden = true;
+      producto.append(nombre); producto.append(stock); producto.append(stockBadge); producto.append(promo); row.append(producto);
       const cantidadCell = celda('');
       const cantidad = document.createElement('input');
       cantidad.type = 'number'; cantidad.min = '1'; cantidad.max = String(linea.stock); cantidad.step = '1'; cantidad.required = true;
@@ -75,6 +81,7 @@
       grupo.append(input); grupo.append(signo); descuentoCell.append(grupo); row.append(descuentoCell);
       const ahorroCell = celda('', 'discount-reduction'); row.append(ahorroCell);
       const netoCell = celda('', 'line-net'); row.append(netoCell);
+      linea.vista = { ahorroCell, netoCell, promo };
       const actualizar = () => {
         const monto = ahorro(linea);
         ahorroCell.textContent = '− ' + moneda(monto);
@@ -110,6 +117,39 @@
       actualizar();
     }
     resumen();
+  }
+  function programarVista() {
+    if (!promocionesActivas) return;
+    clearTimeout(vistaTimer);
+    const actual = ++vistaSecuencia;
+    for (const linea of lineas.values()) if (linea.vista) linea.vista.promo.hidden = true;
+    if (!lineas.size || [...lineas.values()].some((l) => !l.cantidadValida || !l.descuentoValido)) return;
+    vistaTimer = setTimeout(async () => {
+      try {
+        const detalle = JSON.stringify([...lineas.values()].map(({ ProductoId, Cantidad, DescuentoPorcentaje }) => ({ ProductoId, Cantidad, DescuentoPorcentaje })));
+        const response = await fetch('/promociones/vista-previa?' + new URLSearchParams({ detalle }), { headers: { Accept: 'application/json' } });
+        if (!response.ok || actual !== vistaSecuencia) return;
+        const data = await response.json();
+        if (actual !== vistaSecuencia) return;
+        for (const fila of data.lineas) {
+          const linea = lineas.get(fila.ProductoId);
+          if (!linea?.vista || linea.Cantidad !== fila.Cantidad) return;
+          linea.vista.ahorroCell.textContent = '− ' + dineroSQL(fila.DescuentoMonto);
+          linea.vista.netoCell.textContent = dineroSQL(fila.SubtotalNeto);
+          const texto = fila.Origen === 'PROMOCION'
+            ? 'Promoción ' + fila.Codigo + ' · ' + fila.Promocion + (fila.UnidadesBonificadas ? ' · ' + fila.UnidadesBonificadas + ' bonificada(s)' : '')
+            : fila.PromocionDescartada ? 'Promoción ' + fila.PromocionDescartada + ' no aplica: tu descuento es mayor' : '';
+          linea.vista.promo.textContent = texto;
+          linea.vista.promo.classList.toggle('pro-sale-discarded', fila.Origen !== 'PROMOCION');
+          linea.vista.promo.hidden = !texto;
+        }
+        $('subtotal').textContent = dineroSQL(data.totales.Subtotal);
+        $('descuento-total').textContent = '− ' + dineroSQL(data.totales.Descuento);
+        $('subtotal-neto').textContent = dineroSQL(data.totales.SubtotalNeto);
+        $('iva').textContent = dineroSQL(data.totales.IVA);
+        $('total').textContent = dineroSQL(data.totales.Total);
+      } catch { /* La vista previa es informativa: SQL valida al confirmar. */ }
+    }, 250);
   }
   function buscar(inputId, selectId) {
     const select = $(selectId);
@@ -182,6 +222,15 @@
     }
     $('recibo-descuento').textContent = '− ' + dineroSQL(venta.Descuento);
     $('recibo-detalle').replaceChildren();
+    $('recibo-promociones').replaceChildren();
+    for (const promo of venta.Promociones || []) {
+      const item = document.createElement('li');
+      const linea = (venta.Detalle || []).find((d) => d.ProductoId === promo.ProductoId);
+      item.textContent = 'Promoción ' + promo.Codigo + ' · ' + promo.Promocion + ' en ' + (linea?.Descripcion || 'producto ' + promo.ProductoId)
+        + (promo.UnidadesBonificadas ? ' · ' + promo.UnidadesBonificadas + ' bonificada(s)' : '') + ' · − ' + dineroSQL(promo.DescuentoMonto);
+      $('recibo-promociones').append(item);
+    }
+    $('recibo-promociones').hidden = !(venta.Promociones || []).length;
     for (const linea of venta.Detalle || []) {
       const row = document.createElement('tr');
       for (const texto of [linea.Descripcion, linea.Cantidad, dineroSQL(linea.PrecioUnitario), linea.DescuentoPorcentaje + '%',

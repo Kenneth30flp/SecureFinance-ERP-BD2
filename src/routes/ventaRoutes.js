@@ -5,14 +5,14 @@ const { requireAuth } = require('../middleware/authMiddleware');
 const { createVentaController } = require('../controllers/ventaController');
 const { createFacturaController } = require('../controllers/facturaController');
 
-function createVentaRoutes(ventaService, facturaService) {
+function createVentaRoutes(ventaService, facturaService, promocionService = null) {
   const router = express.Router();
   const controller = createVentaController(ventaService);
   router.use('/facturacion', requireAuth, (req, res, next) => {
     res.set('Cache-Control', 'no-store');
     return next();
   });
-  const invoices = createFacturaController(facturaService);
+  const invoices = createFacturaController(facturaService, promocionService);
   const consult = (req,res,next) => req.session.usuario.permisos?.includes('FACTURAS_CONSULTAR') ? next() : res.status(403).type('text').send('No tienes permiso para consultar facturas.');
   const sell = (req,res,next) => {
     if (!req.session.usuario.permisos?.includes('VENTAS_REGISTRAR')) {
