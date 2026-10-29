@@ -18,6 +18,8 @@ const { createVentaRoutes } = require('./src/routes/ventaRoutes');
 
 const { createAuditoriaService } = require('./src/services/auditoriaService');
 const { createAuditoriaRoutes } = require('./src/routes/auditoriaRoutes');
+const { createAuditoriaDdlService } = require('./src/services/auditoriaDdlService');
+const { createAuditoriaDdlRoutes } = require('./src/routes/auditoriaDdlRoutes');
 
 const { createUsuarioService } = require('./src/services/usuarioService');
 const { createUsuarioRoutes } = require('./src/routes/usuarioRoutes');
@@ -45,6 +47,7 @@ function createApp({
   ventaService = createVentaService(),
   facturaService = createFacturaService(),
   auditoriaService = createAuditoriaService(),
+  auditoriaDdlService = createAuditoriaDdlService(),
   usuarioService = createUsuarioService(),
   passwordService = createPasswordService(),
   edwardService = createEdwardService(),
@@ -106,6 +109,7 @@ function createApp({
 
   // Auditoría de José
   app.use(createAuditoriaRoutes(auditoriaService));
+  app.use(createAuditoriaDdlRoutes(auditoriaDdlService));
 
   app.use(createUsuarioRoutes(usuarioService));
   app.use(createKennethRoutes(kennethServices));
