@@ -1,0 +1,87 @@
+{
+  "date": "2026-10-29T09:09:13.073Z",
+  "base": "main@b5cca8d",
+  "runtime": "npm.cmd start",
+  "url": "http://localhost:3000",
+  "database": "SecureFinanceERP",
+  "authenticatedUser": "admin",
+  "passwordChanged": false,
+  "passwordRead": false,
+  "syntheticAccountsCreated": false,
+  "fullBackupChecksum": true,
+  "backupVerifyOnlyPassed": true,
+  "actualRestoreAndCheckdbPassed": true,
+  "rehearsalPassed": true,
+  "everyPreexistingRowPreserved": true,
+  "productionOperationsPassed": true,
+  "essentialOperations": [
+    "promotion and cash invoice",
+    "quote credit conversion preserving pact",
+    "credit payment and cash receipt",
+    "three-stage warehouse transfer and reconciliation",
+    "all six DDL events"
+  ],
+  "operationWritesRolledBack": true,
+  "persistentValidationBusinessDocuments": 0,
+  "stockDiscrepancies": 0,
+  "browserChecks": [
+    {
+      "path": "/modulos",
+      "status": 200,
+      "loginRedirect": false,
+      "error": false
+    },
+    {
+      "path": "/cotizaciones",
+      "status": 200,
+      "loginRedirect": false,
+      "error": false
+    },
+    {
+      "path": "/promociones",
+      "status": 200,
+      "loginRedirect": false,
+      "error": false
+    },
+    {
+      "path": "/creditos",
+      "status": 200,
+      "loginRedirect": false,
+      "error": false
+    },
+    {
+      "path": "/multibodega",
+      "status": 200,
+      "loginRedirect": false,
+      "error": false
+    },
+    {
+      "path": "/auditoria/ddl",
+      "status": 200,
+      "loginRedirect": false,
+      "error": false
+    }
+  ],
+  "moduleLinks": [
+    {
+      "path": "/cotizaciones",
+      "present": true
+    },
+    {
+      "path": "/promociones",
+      "present": true
+    },
+    {
+      "path": "/creditos",
+      "present": true
+    },
+    {
+      "path": "/multibodega",
+      "present": true
+    },
+    {
+      "path": "/auditoria/ddl",
+      "present": true
+    }
+  ]
+}

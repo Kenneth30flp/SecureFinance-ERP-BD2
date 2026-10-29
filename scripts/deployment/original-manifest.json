@@ -1,0 +1,178 @@
+{
+  "base": "b5cca8d",
+  "planHash": "fbf64ce4561734367aa296dce6b3e2714eb136c7c9b03b57c622c25e24f17191",
+  "atomic": true,
+  "requires": [
+    "verified COPY_ONLY CHECKSUM full backup",
+    "actual restore and CHECKDB",
+    "rehearsal with all existing rows preserved",
+    "successful essential operation tests"
+  ],
+  "files": [
+    {
+      "file": "41_P3_COT_EstructuraCotizaciones.sql",
+      "sourceSHA256": "991fdae07e2dc119bbcda6b836cc12e7cbb3e5c04d058ba97dc9e0b04bdc7f92",
+      "renderedSHA256": "991fdae07e2dc119bbcda6b836cc12e7cbb3e5c04d058ba97dc9e0b04bdc7f92"
+    },
+    {
+      "file": "42_P3_COT_Operaciones.sql",
+      "sourceSHA256": "b94a0006491f1b7b17a10e68f04a0484465392fc58dc7281c303b7f89475409f",
+      "renderedSHA256": "b94a0006491f1b7b17a10e68f04a0484465392fc58dc7281c303b7f89475409f"
+    },
+    {
+      "file": "43_P3_COT_ConversionFactura.sql",
+      "sourceSHA256": "de9aa4a674308a0be04db69ca2472b99f1555cdb9fb7fb0997085d483e0845af",
+      "renderedSHA256": "de9aa4a674308a0be04db69ca2472b99f1555cdb9fb7fb0997085d483e0845af"
+    },
+    {
+      "file": "44_P3_COT_BusquedaComercial.sql",
+      "sourceSHA256": "b6bb37f04490cf73e0044755caf5094766fa8baf95f5dfb9f71116f3e98a4b7c",
+      "renderedSHA256": "b6bb37f04490cf73e0044755caf5094766fa8baf95f5dfb9f71116f3e98a4b7c"
+    },
+    {
+      "file": "60_P3_PRO_EstructuraPromociones.sql",
+      "sourceSHA256": "8bc31ff842dbdf76518d104e0a8fe5f4fd28451b79915805cd748469534f5bd1",
+      "renderedSHA256": "8bc31ff842dbdf76518d104e0a8fe5f4fd28451b79915805cd748469534f5bd1"
+    },
+    {
+      "file": "61_P3_PRO_MotorPromociones.sql",
+      "sourceSHA256": "a02e64e48a8e1bb799bec89376bde787de9f919058407f3c43559898600fe509",
+      "renderedSHA256": "a02e64e48a8e1bb799bec89376bde787de9f919058407f3c43559898600fe509"
+    },
+    {
+      "file": "62_P3_PRO_Administracion.sql",
+      "sourceSHA256": "18d50e016a9c316050a962b9de375af8c9241c81968a323367a89e72d4f09fde",
+      "renderedSHA256": "18d50e016a9c316050a962b9de375af8c9241c81968a323367a89e72d4f09fde"
+    },
+    {
+      "file": "63_P3_PRO_IntegracionFacturacion.sql",
+      "sourceSHA256": "29c78956403866eb5a122147cd3fdf50938688dafd8b23fff490ec7b85bdea2d",
+      "renderedSHA256": "29c78956403866eb5a122147cd3fdf50938688dafd8b23fff490ec7b85bdea2d"
+    },
+    {
+      "file": "70_P3_CRE_Estructura.sql",
+      "sourceSHA256": "02b4241cf074c7c1c150a9de343eb057c8a57f069b9defeefced1a363d438b59",
+      "renderedSHA256": "02b4241cf074c7c1c150a9de343eb057c8a57f069b9defeefced1a363d438b59"
+    },
+    {
+      "file": "71_P3_CRE_Perfiles.sql",
+      "sourceSHA256": "dfa8e52dd00c6232575f4b457131ba2186fcd37dff9d39738e2e1391e994cb86",
+      "renderedSHA256": "dfa8e52dd00c6232575f4b457131ba2186fcd37dff9d39738e2e1391e994cb86"
+    },
+    {
+      "file": "72_P3_CRE_Financiacion.sql",
+      "sourceSHA256": "d9d029d116696f8f452e97d76481be30e9a83770a9588d79ea18c087e0a6a66b",
+      "renderedSHA256": "d9d029d116696f8f452e97d76481be30e9a83770a9588d79ea18c087e0a6a66b"
+    },
+    {
+      "file": "73_P3_CRE_Abonos.sql",
+      "sourceSHA256": "14e6d8eea50eb1e0f0df257eb7d7f70788838deb5aeb003c9efb0c33a9e78e5b",
+      "renderedSHA256": "14e6d8eea50eb1e0f0df257eb7d7f70788838deb5aeb003c9efb0c33a9e78e5b"
+    },
+    {
+      "file": "74_P3_CRE_Consultas.sql",
+      "sourceSHA256": "d50805ad60f682f173fe057bb26e03a335632233a9db05cb1e67cb770fae477d",
+      "renderedSHA256": "d50805ad60f682f173fe057bb26e03a335632233a9db05cb1e67cb770fae477d"
+    },
+    {
+      "file": "75_P3_CRE_Seguridad.sql",
+      "sourceSHA256": "831f7dc54a2453e1b7001b2f1e296c084a230816f876f3c2e7c2410675bda069",
+      "renderedSHA256": "831f7dc54a2453e1b7001b2f1e296c084a230816f876f3c2e7c2410675bda069"
+    },
+    {
+      "file": "76_P3_CRE_Ventas_PROPUESTA.sql",
+      "sourceSHA256": "ce80b3d8da30963aee492ecb60ec48c747b91aad411ee94d8c58c2c737851868",
+      "renderedSHA256": "ce80b3d8da30963aee492ecb60ec48c747b91aad411ee94d8c58c2c737851868"
+    },
+    {
+      "file": "77_P3_CRE_ConversionPublica.sql",
+      "sourceSHA256": "4ac96802d68ae60d6281eb6575ec867334890a5ebd03b657715710bfd9281b33",
+      "renderedSHA256": "4ac96802d68ae60d6281eb6575ec867334890a5ebd03b657715710bfd9281b33"
+    },
+    {
+      "file": "78_P3_CRE_AjustesConsultas.sql",
+      "sourceSHA256": "f9540f5f2e7520fca9cab85b6732f8a8b0828bb71e0f8d8fbddefee458640a5f",
+      "renderedSHA256": "f9540f5f2e7520fca9cab85b6732f8a8b0828bb71e0f8d8fbddefee458640a5f"
+    },
+    {
+      "file": "80_P3_BOD_Estructura.sql",
+      "sourceSHA256": "cefdac70e1d05b71f6d5f71a729ddbc2897d2032f71c7a585f6d8d45b1df22a6",
+      "renderedSHA256": "cefdac70e1d05b71f6d5f71a729ddbc2897d2032f71c7a585f6d8d45b1df22a6"
+    },
+    {
+      "file": "81_P3_BOD_Contratos.sql",
+      "sourceSHA256": "1b12fecd6c5d25701d89a21b8e83b1056c739d38238f2a04c6abcf2b8494e362",
+      "renderedSHA256": "1b12fecd6c5d25701d89a21b8e83b1056c739d38238f2a04c6abcf2b8494e362"
+    },
+    {
+      "file": "82_P3_BOD_Transferencias.sql",
+      "sourceSHA256": "206e3c33710f08cf77672c5f3ba49a26a2e9f67418634c93ae8c78363f11cd98",
+      "renderedSHA256": "206e3c33710f08cf77672c5f3ba49a26a2e9f67418634c93ae8c78363f11cd98"
+    },
+    {
+      "file": "83_P3_BOD_Administracion.sql",
+      "sourceSHA256": "9b5a3437ceb78f4a767c3c3be95e688aa8d138c2d3c8dbd192297c491ee700e2",
+      "renderedSHA256": "9b5a3437ceb78f4a767c3c3be95e688aa8d138c2d3c8dbd192297c491ee700e2"
+    },
+    {
+      "file": "84_P3_BOD_EspejoKardex.sql",
+      "sourceSHA256": "41b1394cf49001bf8720e43e077e8d192d6a0005c1035ea3f333bce9dfe81374",
+      "renderedSHA256": "41b1394cf49001bf8720e43e077e8d192d6a0005c1035ea3f333bce9dfe81374"
+    },
+    {
+      "file": "85_P3_BOD_Integraciones.sql",
+      "sourceSHA256": "a8b06962ac021135352cb347607cba6eb1938a208a2ecbdfef54ea063a9f4d3b",
+      "renderedSHA256": "a8b06962ac021135352cb347607cba6eb1938a208a2ecbdfef54ea063a9f4d3b"
+    },
+    {
+      "file": "86_P3_BOD_Consultas.sql",
+      "sourceSHA256": "e66d2e1df22c49dd1a4147118c88432320ad7656a9c0a327a00dd4f46f9fc600",
+      "renderedSHA256": "e66d2e1df22c49dd1a4147118c88432320ad7656a9c0a327a00dd4f46f9fc600"
+    },
+    {
+      "file": "87_P3_BOD_Permisos.sql",
+      "sourceSHA256": "b844a076abafb625bff2318f6b4b9446a1024e497d51838d428b2b4d7e088dd0",
+      "renderedSHA256": "b844a076abafb625bff2318f6b4b9446a1024e497d51838d428b2b4d7e088dd0"
+    },
+    {
+      "file": "88_P3_BOD_SnapshotInicial.sql",
+      "sourceSHA256": "93c2ccd275a8bef8ae4ff93e4a4d4a115a57e42c6305bae172d6df5fc34121c2",
+      "renderedSHA256": "93c2ccd275a8bef8ae4ff93e4a4d4a115a57e42c6305bae172d6df5fc34121c2"
+    },
+    {
+      "file": "89_P3_BOD_Complementos.sql",
+      "sourceSHA256": "2eeff5ad66ae3ad605d3df33a03632015ee1fdc22968993e417a4a61f4d2b319",
+      "renderedSHA256": "2eeff5ad66ae3ad605d3df33a03632015ee1fdc22968993e417a4a61f4d2b319"
+    },
+    {
+      "file": "90_P3_DDL_Estructura.sql",
+      "sourceSHA256": "c4e803f1632c1e43ff092163b3ae9cfe28e65d8b9b99ae7b076ae01689745990",
+      "renderedSHA256": "fa63cde7f9e269809ac4f8e04b9ac59af3472a7c8940291396d63c2ce699f06b"
+    },
+    {
+      "file": "91_P3_DDL_Consultas.sql",
+      "sourceSHA256": "2e5aa3beae9660477bd9a3311be75db3d9d2705a1b131d21a6f7133c1d1daa0f",
+      "renderedSHA256": "94a63dd851511cefabd73f9f23c4e4eab107f442a714b3358ea85a4ca5cae445"
+    },
+    {
+      "file": "92_P3_DDL_Permisos.sql",
+      "sourceSHA256": "8c0d7cf172c1535c4a7cc58fc29d8eb49ce377ba9165f6ef89eb3d69942e1513",
+      "renderedSHA256": "ebbff26857774bed9b1ea3fbc9ecd5e2bf490fc9491bc24c83589806e3507041"
+    },
+    {
+      "file": "93_P3_DDL_TextoExacto.sql",
+      "sourceSHA256": "378fa1dfef9b2f1fafe7a2a6e5da5f1e4a5f3a841e6dc5a5ee82e9f945841b03",
+      "renderedSHA256": "a128c68fc654041ff8772c56fb94c1d4dca58e5bb7e4fe8eb54d8280436eab5f"
+    },
+    {
+      "file": "94_P3_DDL_Captura.sql",
+      "sourceSHA256": "3ed4adf484016328214a67f82b608fae6e9aeffd097e2cb60bf7dc0ded8b2062",
+      "renderedSHA256": "d078db83ad1b6e5eecea73ccb13b77d5c370cc615bcffd25dccc613a4345089b"
+    },
+    {
+      "file": "95_P3_DDL_CapturaAplicable.sql",
+      "sourceSHA256": "7a4b095c4dfe93e4e1aeacbdc35ee619575323004e9209a7ca024fa37a8c74e6",
+      "renderedSHA256": "7a4b095c4dfe93e4e1aeacbdc35ee619575323004e9209a7ca024fa37a8c74e6"
+    }
+  ]
+}
