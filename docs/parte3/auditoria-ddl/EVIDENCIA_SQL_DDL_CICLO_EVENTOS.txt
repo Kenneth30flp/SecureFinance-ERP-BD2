@@ -17,7 +17,7 @@ RESUMEN: 7/7 VERIFICACIONES EN PASS (G1..G6 y G8; G7 aplica la propuesta 95)
   G7 (instalacion 95): batches=3, guardaSuave=True, triggerEventos=6
 
 G0 - BASELINE (estado previo del lab en esta corrida)
-  Bitacora_DDL=28 filas (los nueve eventos previos + corridas de              
+  Bitacora_DDL=28 filas (los nueve eventos previos + corridas de
   verificacion anteriores), Bitacora_Transacciones=200, Bitacora_Acceso=3,
   trigger con los 6 eventos de rutina vigentes.
 
