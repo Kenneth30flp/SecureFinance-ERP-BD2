@@ -1,0 +1,70 @@
+producto=4 origen=1 destino=2 stock=100
+---- RESULTADO ----
+C1_PASS=True
+C2_PASS=True
+C3_PASS=True
+C4_PASS=True
+CONCILIACION_PASS=True
+{
+    "contexto":  {
+                     "producto":  4,
+                     "origen":  1,
+                     "destino":  2,
+                     "stock":  100
+                 },
+    "C1_mismo_uuid":  {
+                          "t":  9,
+                          "sesionB":  {
+                                          "sesionB_ok":  true,
+                                          "number":  null,
+                                          "respuesta":  "{\"TransferenciaId\":9,\"Estado\":\"DESPACHADA\",\"Version\":\"0000000000000C61\",\"OperacionId\":\"54EEB985-2292-4D60-B566-E6C575941B6F\"}",
+                                          "bloqueoMs":  3516
+                                      },
+                          "operacion":  1,
+                          "ledger":  1,
+                          "estado":  "DESPACHADA"
+                      },
+    "C1_PASS":  true,
+    "C2_uuid_otra_carga":  {
+                               "t":  10,
+                               "sesionB":  {
+                                               "sesionB_ok":  false,
+                                               "number":  58003,
+                                               "respuesta":  null,
+                                               "bloqueoMs":  3518
+                                           },
+                               "operacion":  1
+                           },
+    "C2_PASS":  true,
+    "C3_doble_recepcion":  {
+                               "t":  9,
+                               "sesionB":  {
+                                               "ok":  false,
+                                               "number":  58003,
+                                               "respuesta":  null
+                                           },
+                               "ledgerB":  0,
+                               "estado":  "RECIBIDA"
+                           },
+    "C3_PASS":  true,
+    "C4_dos_despachos":  {
+                             "t3":  11,
+                             "t4":  12,
+                             "sesionB":  {
+                                             "sesionB_ok":  false,
+                                             "number":  58005,
+                                             "respuesta":  null,
+                                             "bloqueoMs":  3498
+                                         },
+                             "ledgerT4":  0,
+                             "estadoT4":  "PREPARADA",
+                             "cantidad":  51
+                         },
+    "C4_PASS":  true,
+    "conciliacion":  {
+                         "filasConDiferencia":  0,
+                         "filasTotal":  22
+                     },
+    "CONCILIACION_PASS":  true,
+    "timestamp_local":  "2026-10-29T01:56:13.0710679-06:00"
+}

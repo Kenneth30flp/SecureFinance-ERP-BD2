@@ -1,0 +1,38 @@
+RecepcionId|OperacionId|FechaHora|ProveedorId|Proveedor|ProveedorNITEmision|Actor|KardexId|Cantidad|StockAnterior|StockResultante|DocumentoRespaldo
+-----------|-----------|---------|-----------|---------|-------------------|-----|--------|--------|-------------|---------------|-----------------
+1|33AC327B-D52E-4667-8FED-BB0F0BE10199|2026-10-29 07:54:11.821|1|Proveedor sintetico integracion|P3BODQA100|P3_DYLAN_QA_ADMIN|46|25|100|125|QA compra bodega
+Respuesta
+---------
+{"RecepcionId":"1","OperacionId":"33AC327B-D52E-4667-8FED-BB0F0BE10199","BodegaId":2,"CostoUnitario":"30.00","CostoPromedio":"22.00","PrecioCostoResultante":"22.00","CostoPromedioAplicado":true,"PoliticaCosto":"PONDERADO"}
+Respuesta
+---------
+{"RecepcionId":"1","OperacionId":"33AC327B-D52E-4667-8FED-BB0F0BE10199","BodegaId":2,"CostoUnitario":"30.00","CostoPromedio":"22.00","PrecioCostoResultante":"22.00","CostoPromedioAplicado":true,"PoliticaCosto":"PONDERADO"}
+PASS 100@20 + 25@30 = 125@22, documento 30 y replay unico (solo si se ejecuta manualmente).
+RecepcionId|OperacionId|FechaHora|ProveedorId|Proveedor|ProveedorNITEmision|Actor|KardexId|Cantidad|StockAnterior|StockResultante|DocumentoRespaldo
+-----------|-----------|---------|-----------|---------|-------------------|-----|--------|--------|-------------|---------------|-----------------
+2|98C63FCF-12BA-4641-82AA-8B1D94FF6CE9|2026-10-29 07:54:11.854|1|Proveedor sintetico integracion|P3BODQA100|P3_DYLAN_QA_ADMIN|47|25|100|125|QA sin costo
+Respuesta
+---------
+{"RecepcionId":"2","OperacionId":"98C63FCF-12BA-4641-82AA-8B1D94FF6CE9","BodegaId":2,"CostoUnitario":null,"CostoPromedio":null,"PrecioCostoResultante":"20.00","CostoPromedioAplicado":false,"PoliticaCosto":"SIN_COSTO_RECEPCION"}
+RecepcionId|OperacionId|FechaHora|ProveedorId|Proveedor|ProveedorNITEmision|Actor|KardexId|Cantidad|StockAnterior|StockResultante|DocumentoRespaldo
+-----------|-----------|---------|-----------|---------|-------------------|-----|--------|--------|-------------|---------------|-----------------
+3|D0806B3A-0F8E-4157-B8A9-C96FE6E6A89C|2026-10-29 07:54:11.858|1|Proveedor sintetico integracion|P3BODQA100|P3_DYLAN_QA_ADMIN|48|25|0|25|QA costo inicial
+Respuesta
+---------
+{"RecepcionId":"3","OperacionId":"D0806B3A-0F8E-4157-B8A9-C96FE6E6A89C","BodegaId":2,"CostoUnitario":"30.00","CostoPromedio":"30.00","PrecioCostoResultante":"30.00","CostoPromedioAplicado":true,"PoliticaCosto":"INICIAL"}
+RecepcionId|OperacionId|FechaHora|ProveedorId|Proveedor|ProveedorNITEmision|Actor|KardexId|Cantidad|StockAnterior|StockResultante|DocumentoRespaldo
+-----------|-----------|---------|-----------|---------|-------------------|-----|--------|--------|-------------|---------------|-----------------
+4|419F7AFC-0F3E-4221-8678-E615237318E1|2026-10-29 07:54:11.861|1|Proveedor sintetico integracion|P3BODQA100|P3_DYLAN_QA_ADMIN|49|1|100|101|QA redondeo
+Respuesta
+---------
+{"RecepcionId":"4","OperacionId":"419F7AFC-0F3E-4221-8678-E615237318E1","BodegaId":2,"CostoUnitario":"20.50","CostoPromedio":"20.00","PrecioCostoResultante":"20.00","CostoPromedioAplicado":true,"PoliticaCosto":"PONDERADO"}
+RecepcionId|OperacionId|FechaHora|ProveedorId|Proveedor|ProveedorNITEmision|Actor|KardexId|Cantidad|StockAnterior|StockResultante|DocumentoRespaldo
+-----------|-----------|---------|-----------|---------|-------------------|-----|--------|--------|-------------|---------------|-----------------
+5|FAEA162E-DEEC-423E-8180-DEF8171F1EDA|2026-10-29 07:54:11.871|1|Proveedor sintetico integracion|P3BODQA100|P3_DYLAN_QA_ADMIN|50|1|100|101|QA redondeo
+Respuesta
+---------
+{"RecepcionId":"5","OperacionId":"FAEA162E-DEEC-423E-8180-DEF8171F1EDA","BodegaId":2,"CostoUnitario":"20.51","CostoPromedio":"20.01","PrecioCostoResultante":"20.01","CostoPromedioAplicado":true,"PoliticaCosto":"PONDERADO"}
+Respuesta
+---------
+{"TransferenciaId":7,"Estado":"DESPACHADA","Version":"00000000000009A3","OperacionId":"E2ABA8ED-A8F2-45BD-A0F3-EC7E27A3A98A"}
+PASS rechazo local atomico y propiedad del contexto (ejecucion manual, no concurrencia).

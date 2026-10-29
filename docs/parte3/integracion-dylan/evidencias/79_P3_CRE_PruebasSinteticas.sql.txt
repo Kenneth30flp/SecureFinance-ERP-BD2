@@ -1,0 +1,600 @@
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+4|1|5000.00|30||AFFF9D64-64C7-4565-9493-75278F694F2A
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+4|1|5000.00|30||AFFF9D64-64C7-4565-9493-75278F694F2A
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+1|COT-1|ACTIVA|2000.00
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+1|2026-10-29 07:54:04.714|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CRE7821844FE7C947FC8DBC|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+7|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+1|1|PROCESADA|41DB110E-3339-4E28-ADBC-7A97223ED6E4
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+1|2026-10-29 07:54:04.714|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CRE7821844FE7C947FC8DBC|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+7|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+1|1|PROCESADA|41DB110E-3339-4E28-ADBC-7A97223ED6E4
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+1|1|AA9603C7-23D9-434D-8808-F909D11C5A79|4|1|1|2026-10-29 07:54:04.809|Pago inicial|500.00|1500.00
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+1|1|AA9603C7-23D9-434D-8808-F909D11C5A79|4|1|1|2026-10-29 07:54:04.809|Pago inicial|500.00|1500.00
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+2|2|0DBF6AAF-411C-416D-AD20-F23BB2B27056|4|1|1|2026-10-29 07:54:04.822|Liquidacion|1500.00|0.00
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+1|1|AA9603C7-23D9-434D-8808-F909D11C5A79|4|1|1|2026-10-29 07:54:04.809|Pago inicial|500.00|1500.00
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+1|PASS (solo si este script se ejecuto realmente)|NULL
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+5|1|5000.00|30||B0F29351-4D7D-4DFC-8BB9-CF59DA51DBB5
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+5|1|5000.00|30||B0F29351-4D7D-4DFC-8BB9-CF59DA51DBB5
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+2|COT-2|ACTIVA|2000.00
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+2|2026-10-29 07:54:04.851|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CRE9D804677C88440768940|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+8|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+2|2|PROCESADA|5B02A415-B80E-4A25-9B70-4D57BBC21F31
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+2|2026-10-29 07:54:04.851|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CRE9D804677C88440768940|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+8|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+2|2|PROCESADA|5B02A415-B80E-4A25-9B70-4D57BBC21F31
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+2|PASS (solo si este script se ejecuto realmente)|57006
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+6|1|5000.00|30||BF301849-6B40-4FCA-BA75-1F9FF14D847A
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+6|1|5000.00|30||BF301849-6B40-4FCA-BA75-1F9FF14D847A
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+3|COT-3|ACTIVA|2000.00
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+3|2026-10-29 07:54:04.861|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CREBA105A90BD57475FB81A|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+9|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+3|3|PROCESADA|0FA10269-84B1-444E-9E1E-39E2CAA4EF4C
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+3|2026-10-29 07:54:04.861|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CREBA105A90BD57475FB81A|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+9|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+3|3|PROCESADA|0FA10269-84B1-444E-9E1E-39E2CAA4EF4C
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+3|PASS (solo si este script se ejecuto realmente)|57002
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+7|1|5000.00|30||D74565F5-7142-424B-A3F8-943EE266C96D
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+7|1|5000.00|30||D74565F5-7142-424B-A3F8-943EE266C96D
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+4|COT-4|ACTIVA|2000.00
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+4|2026-10-29 07:54:04.878|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CREF09ED872E832411C9ECC|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+10|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+4|4|PROCESADA|74443B54-390C-4EFD-9F38-C2D0E8BFC90E
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+4|2026-10-29 07:54:04.878|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CREF09ED872E832411C9ECC|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+10|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+4|4|PROCESADA|74443B54-390C-4EFD-9F38-C2D0E8BFC90E
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+4|PASS (solo si este script se ejecuto realmente)|57002
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+8|1|5000.00|30||FDB84AFD-83C8-4217-A224-4AFF5CDD9BDF
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+8|1|5000.00|30||FDB84AFD-83C8-4217-A224-4AFF5CDD9BDF
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+5|COT-5|ACTIVA|2000.00
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+5|2026-10-29 07:54:04.892|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CREDCD994A1D5284997B6A9|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+11|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+5|5|PROCESADA|77866CAF-E369-4836-954E-D3A07C80E966
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+5|2026-10-29 07:54:04.892|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CREDCD994A1D5284997B6A9|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+11|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+5|5|PROCESADA|77866CAF-E369-4836-954E-D3A07C80E966
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+9|1|5000.00|30||C2545187-2406-4E45-866F-4B35B37412E3
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+5|PASS (solo si este script se ejecuto realmente)|57004
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+10|1|5000.00|30||50AF8332-8807-41AB-865B-0E0E322B1A9D
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+10|1|5000.00|30||50AF8332-8807-41AB-865B-0E0E322B1A9D
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+6|COT-6|ACTIVA|2000.00
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+6|2026-10-29 07:54:04.910|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CRE1CAB178B86DD48D5BC7F|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+12|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+6|6|PROCESADA|6637F915-E9F7-4EBD-ACFB-BE85C6BE97D0
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+6|2026-10-29 07:54:04.910|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CRE1CAB178B86DD48D5BC7F|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+12|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+6|6|PROCESADA|6637F915-E9F7-4EBD-ACFB-BE85C6BE97D0
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+3|3|7C100695-8D1F-4311-BB8A-C3432F791A91|10|6|1|2026-10-29 07:54:04.916|Pago inicial|500.00|1500.00
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+3|3|7C100695-8D1F-4311-BB8A-C3432F791A91|10|6|1|2026-10-29 07:54:04.916|Pago inicial|500.00|1500.00
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+6|PASS (solo si este script se ejecuto realmente)|57003
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+11|1|1000.00|30||3E2A066B-9473-41B4-8BBD-3C72C63B4B1B
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+11|1|1000.00|30||3E2A066B-9473-41B4-8BBD-3C72C63B4B1B
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+7|COT-7|ACTIVA|2000.00
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+7|PASS (solo si este script se ejecuto realmente)|57005
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+12|1|5000.00|30||D4B33840-37AD-41CB-9220-4C6CD9EA7F85
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+12|1|5000.00|30||D4B33840-37AD-41CB-9220-4C6CD9EA7F85
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+8|COT-8|ACTIVA|2000.00
+CotizacionId|Estado
+------------|------
+8|CANCELADA
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+8|PASS (solo si este script se ejecuto realmente)|54903
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+13|1|5000.00|30||3CD55415-A8B2-4EC6-BBC0-15D8CC7948D3
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+13|1|5000.00|30||3CD55415-A8B2-4EC6-BBC0-15D8CC7948D3
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+9|COT-9|ACTIVA|2000.00
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+9|PASS (solo si este script se ejecuto realmente)|54910
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+14|1|5000.00|30||4318477B-7A30-4A11-A546-EAF9343E1778
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+14|1|5000.00|30||4318477B-7A30-4A11-A546-EAF9343E1778
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+10|COT-10|ACTIVA|2000.00
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+7|2026-10-29 07:54:08.976|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CRE566D9E38077B4C45BF66|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+16|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+10|7|PROCESADA|3FC196CE-060D-428E-BFB1-90D09CF5A907
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+7|2026-10-29 07:54:08.976|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CRE566D9E38077B4C45BF66|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+16|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+10|7|PROCESADA|3FC196CE-060D-428E-BFB1-90D09CF5A907
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+10|PASS (solo si este script se ejecuto realmente)|57003
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+15|1|5000.00|30||696B2EF9-8639-4CA1-8326-1FD44995F22B
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+15|1|5000.00|30||696B2EF9-8639-4CA1-8326-1FD44995F22B
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+11|COT-11|ACTIVA|2000.00
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+8|2026-10-29 07:54:08.988|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CRE758209EE01CE451F8458|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+17|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+11|8|PROCESADA|F7462E84-F94C-4CDE-A633-44F5794DF9C8
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+8|2026-10-29 07:54:08.988|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CRE758209EE01CE451F8458|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+17|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+11|8|PROCESADA|F7462E84-F94C-4CDE-A633-44F5794DF9C8
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+4|4|1D7CE320-0E42-486F-91DA-9554428A6C55|15|8|1|2026-10-29 07:54:08.993|Pago inicial|500.00|1500.00
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+4|4|1D7CE320-0E42-486F-91DA-9554428A6C55|15|8|1|2026-10-29 07:54:08.993|Pago inicial|500.00|1500.00
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+11|PASS (solo si este script se ejecuto realmente)|57007
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+16|1|5000.00|30||F36F7CF3-7B56-401F-9016-3435E4B2D04E
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+16|1|5000.00|30||F36F7CF3-7B56-401F-9016-3435E4B2D04E
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+12|COT-12|ACTIVA|2000.00
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+9|2026-10-29 07:54:09.007|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CREDB5508D556344A5D84B9|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+18|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+12|9|PROCESADA|1E4C54F7-7BA2-45D6-B139-08B8A3132F61
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+12|PASS (solo si este script se ejecuto realmente)|54803
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+17|1|5000.00|30||EA23F906-C45F-40D2-96F9-63F93339BED5
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+17|1|5000.00|30||EA23F906-C45F-40D2-96F9-63F93339BED5
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+13|COT-13|ACTIVA|2000.00
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+13|PASS (solo si este script se ejecuto realmente)|52010
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+18|1|5000.00|30||11565067-217C-4120-8786-81E838884215
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+18|1|5000.00|30||11565067-217C-4120-8786-81E838884215
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+14|COT-14|ACTIVA|2000.00
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+10|2026-10-29 07:54:09.029|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CRE100ABA1772954F3EA1C3|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+20|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+14|10|PROCESADA|66939384-180A-4A4E-B00A-E4D2DFE86F8A
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+10|2026-10-29 07:54:09.029|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CRE100ABA1772954F3EA1C3|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+20|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+14|10|PROCESADA|66939384-180A-4A4E-B00A-E4D2DFE86F8A
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+5|5|F96BB618-91AE-4ACB-AC85-97B8749989D3|18|10|1|2026-10-29 07:54:09.042|Pago inicial|500.00|1500.00
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+5|5|F96BB618-91AE-4ACB-AC85-97B8749989D3|18|10|1|2026-10-29 07:54:09.042|Pago inicial|500.00|1500.00
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+6|6|0C7440E7-2BA9-44F1-A07B-B8EFC3F9A3B2|18|10|1|2026-10-29 07:54:09.044|Liquidacion|1500.00|0.00
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+5|5|F96BB618-91AE-4ACB-AC85-97B8749989D3|18|10|1|2026-10-29 07:54:09.042|Pago inicial|500.00|1500.00
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+14|PASS (solo si este script se ejecuto realmente)|NULL
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+19|1|5000.00|30||8BFFB923-4BA5-4034-8AB9-E8F499D9E6BA
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+19|1|5000.00|30||8BFFB923-4BA5-4034-8AB9-E8F499D9E6BA
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+15|COT-15|ACTIVA|2000.00
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+19|0|5000.00|30||2A138FF5-D562-4997-A4B8-3562C5EFF7E4
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+15|PASS (solo si este script se ejecuto realmente)|57005
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+20|1|5000.00|30||AE698153-98D2-442C-9B5F-1F04F40945CF
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+20|1|5000.00|30||AE698153-98D2-442C-9B5F-1F04F40945CF
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+16|COT-16|ACTIVA|2000.00
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+16|PASS (solo si este script se ejecuto realmente)|57004
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+21|1|5000.00|30||5ACB6681-51EE-4027-A73B-427DACAAB1DF
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+21|1|5000.00|30||5ACB6681-51EE-4027-A73B-427DACAAB1DF
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+17|COT-17|ACTIVA|2000.00
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+11|2026-10-29 07:54:09.070|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CREA2E6031412AD4993B165|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+23|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+17|11|PROCESADA|5042E01E-FF48-4882-8D4E-32A79B7396D0
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+11|2026-10-29 07:54:09.070|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CREA2E6031412AD4993B165|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+23|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+17|11|PROCESADA|5042E01E-FF48-4882-8D4E-32A79B7396D0
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+21|0|5000.00|30||549D5273-9BD4-4C6F-ACD9-2DB24871A256
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+11|2026-10-29 07:54:09.070|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CREA2E6031412AD4993B165|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+23|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+17|11|PROCESADA|5042E01E-FF48-4882-8D4E-32A79B7396D0
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+7|7|8C9A8D56-3178-4AE9-B82A-7E5E598C8B71|21|11|1|2026-10-29 07:54:09.082|Pago inicial|500.00|1500.00
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+7|7|8C9A8D56-3178-4AE9-B82A-7E5E598C8B71|21|11|1|2026-10-29 07:54:09.082|Pago inicial|500.00|1500.00
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+8|8|B69B8641-0136-4753-A060-499D900BC9EC|21|11|1|2026-10-29 07:54:09.083|Liquidacion|1500.00|0.00
+AbonoId|ReciboId|OperacionId|ClienteId|FacturaId|ActorUsuarioId|FechaHora|Referencia|Monto|SaldoPosterior
+-------|--------|-----------|---------|---------|--------------|---------|----------|-----|--------------
+7|7|8C9A8D56-3178-4AE9-B82A-7E5E598C8B71|21|11|1|2026-10-29 07:54:09.082|Pago inicial|500.00|1500.00
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+17|PASS (solo si este script se ejecuto realmente)|NULL
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+22|1|5000.00|30||2EA9C27F-A570-4A99-84AB-B8037CAF63F7
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+22|1|5000.00|30||2EA9C27F-A570-4A99-84AB-B8037CAF63F7
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+18|COT-18|ACTIVA|2000.00
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+12|2026-10-29 07:54:09.091|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CRE452033B8C7214F54A3C3|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+24|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+18|12|PROCESADA|32D2BB8E-1941-4F2D-98C3-D70279FAEFD1
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+12|2026-10-29 07:54:09.091|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CRE452033B8C7214F54A3C3|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+24|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+18|12|PROCESADA|32D2BB8E-1941-4F2D-98C3-D70279FAEFD1
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+18|PASS (solo si este script se ejecuto realmente)|57005
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+23|1|5000.00|30||BB445025-88AF-4B77-A211-E3279144C257
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+23|1|5000.00|30||BB445025-88AF-4B77-A211-E3279144C257
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+19|COT-19|ACTIVA|2000.00
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+19|PASS (solo si este script se ejecuto realmente)|57005
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+24|1|5000.00|30||2E0AFA77-5784-4D8E-AF54-C2B1A21F195A
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+24|1|5000.00|30||2E0AFA77-5784-4D8E-AF54-C2B1A21F195A
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+20|COT-20|ACTIVA|2000.00
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+13|2026-10-29 07:54:09.113|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CRE24230A5506A349199D1C|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+26|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+20|13|PROCESADA|AECDA41E-DFFE-4B3A-8417-494677D59778
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+20|PASS (solo si este script se ejecuto realmente)|54803
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+25|1|5000.00|30||84A69CA0-6DDC-4557-BAC8-41A611D4821A
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+25|1|5000.00|30||84A69CA0-6DDC-4557-BAC8-41A611D4821A
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+21|COT-21|ACTIVA|2000.00
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+21|PASS (solo si este script se ejecuto realmente)|57009
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+26|1|5000.00|30||B71BEDA4-5B48-461C-B232-FDC29E420540
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+26|1|5000.00|30||B71BEDA4-5B48-461C-B232-FDC29E420540
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+22|COT-22|ACTIVA|0.00
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+22|PASS (solo si este script se ejecuto realmente)|57005
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+27|1|5000.00|30||DCD45560-D733-4329-9B7F-06F834A0138F
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+27|1|5000.00|30||DCD45560-D733-4329-9B7F-06F834A0138F
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+23|COT-23|ACTIVA|0.00
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+14|2026-10-29 07:54:09.141|1785.71|1785.71|0.00|0.00|0.00|Sintetico P3 CRE rollback|CRE0746E75EDC5D4860878F|admin|Ajuste comercial
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+29|Sintetico P3 CRE rollback|1|1785.71|1785.71|100.00|1785.71|0.00
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+23|14|PROCESADA|84AE631F-3F30-41BE-9194-5EEB8DEC3161
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+14|2026-10-29 07:54:09.141|1785.71|1785.71|0.00|0.00|0.00|Sintetico P3 CRE rollback|CRE0746E75EDC5D4860878F|admin|Ajuste comercial
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+29|Sintetico P3 CRE rollback|1|1785.71|1785.71|100.00|1785.71|0.00
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+23|14|PROCESADA|84AE631F-3F30-41BE-9194-5EEB8DEC3161
+Escenario|Resultado
+---------|---------
+23|PASS (solo si este script se ejecuto realmente)
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+28|1|5000.00|30||6FEDE997-E4DF-4158-9BEA-260CE2CC333C
+ClienteId|Activo|Limite|PlazoDias|Version|OperacionId
+---------|------|------|---------|-------|-----------
+28|1|5000.00|30||6FEDE997-E4DF-4158-9BEA-260CE2CC333C
+CotizacionId|Numero|Estado|Total
+------------|------|------|-----
+24|COT-24|ACTIVA|2000.00
+FacturaId|FechaHora|Subtotal|Descuento|SubtotalNeto|IVA|Total|Cliente|NIT|Cajero|MotivoDescuento
+---------|---------|--------|---------|------------|---|-----|-------|---|------|---------------
+15|2026-10-29 07:54:09.162|1785.71|0.00|1785.71|214.29|2000.00|Sintetico P3 CRE rollback|CREF74D89570A1B4396846B|admin|NULL
+ProductoId|Descripcion|Cantidad|PrecioUnitario|Subtotal|DescuentoPorcentaje|DescuentoMonto|SubtotalNeto
+----------|-----------|--------|--------------|--------|-------------------|--------------|------------
+30|Sintetico P3 CRE rollback|1|1785.71|1785.71|0.00|0.00|1785.71
+CotizacionId|FacturaId|Estado|OperacionId
+------------|---------|------|-----------
+24|15|PROCESADA|084BD974-0597-4F13-999C-D76348121CAD
+Escenario|Resultado|CodigoEsperado
+---------|---------|--------------
+24|PASS (solo si este script se ejecuto realmente)|54803

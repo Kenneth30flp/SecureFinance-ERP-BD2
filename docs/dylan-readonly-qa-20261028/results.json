@@ -1,0 +1,1097 @@
+{
+  "authentication": "SESSION_FIXTURE_NOT_REAL_LOGIN",
+  "realSqlServices": true,
+  "database": "SecureFinanceERP_Lab_Dylan",
+  "checks": [
+    {
+      "name": "Guarded synthetic actor and actual role permissions",
+      "pass": true
+    },
+    {
+      "name": "HTTP GET /auditoria/ddl?objeto=__none_qa__",
+      "pass": true,
+      "status": 200
+    },
+    {
+      "name": "HTTP GET /creditos",
+      "pass": true,
+      "status": 200
+    },
+    {
+      "name": "HTTP GET /creditos/caja",
+      "pass": true,
+      "status": 200
+    },
+    {
+      "name": "HTTP GET /multibodega?seccion=inventario",
+      "pass": true,
+      "status": 200
+    },
+    {
+      "name": "HTTP GET /multibodega?seccion=bodegas",
+      "pass": true,
+      "status": 200
+    },
+    {
+      "name": "HTTP GET /multibodega?seccion=transferencias",
+      "pass": true,
+      "status": 200
+    },
+    {
+      "name": "HTTP GET /multibodega?seccion=kardex",
+      "pass": true,
+      "status": 200
+    },
+    {
+      "name": "HTTP GET /multibodega?seccion=integraciones",
+      "pass": true,
+      "status": 200
+    },
+    {
+      "name": "Actual SQL settled credit invoices",
+      "pass": true,
+      "rows": 3,
+      "settled": 3
+    },
+    {
+      "name": "HTTP renders actual SQL invoice identities",
+      "pass": true,
+      "rows": 3
+    },
+    {
+      "name": "Actual SQL warehouse transit reconciles",
+      "pass": true,
+      "rows": 8,
+      "transitProducts": 1
+    },
+    {
+      "name": "DDL missing detail real SQL",
+      "pass": true
+    },
+    {
+      "name": "DDL bitacora real data responds and detail resolves",
+      "pass": true,
+      "rows": 7,
+      "total": "7",
+      "firstEvent": "ALTER_PROCEDURE",
+      "detailResolved": true
+    },
+    {
+      "name": "SQL credit actor zero rejected directly",
+      "pass": true,
+      "number": 54101
+    },
+    {
+      "name": "Unknown warehouse operation real SQL",
+      "pass": true
+    },
+    {
+      "name": "Bridge blocks mutating procedure",
+      "pass": true
+    },
+    {
+      "name": "Actual receipt HTTP GET",
+      "pass": true,
+      "status": 200
+    },
+    {
+      "name": "Actual transfer detail HTTP GET",
+      "pass": true,
+      "status": 200
+    },
+    {
+      "name": "Permission denied /auditoria/ddl",
+      "pass": true,
+      "status": 403
+    },
+    {
+      "name": "Permission denied /creditos",
+      "pass": true,
+      "status": 403
+    },
+    {
+      "name": "Permission denied /multibodega",
+      "pass": true,
+      "status": 403
+    },
+    {
+      "name": "SQL rejects actor zero /auditoria/ddl",
+      "pass": true,
+      "status": 403,
+      "reachesSql": true
+    },
+    {
+      "name": "Service validates actor zero /creditos",
+      "pass": true,
+      "status": 400,
+      "reachesSql": false
+    },
+    {
+      "name": "SQL rejects actor zero /multibodega",
+      "pass": true,
+      "status": 403,
+      "reachesSql": true
+    },
+    {
+      "name": "Missing CSRF denied /creditos/abonos",
+      "pass": true,
+      "status": 403
+    },
+    {
+      "name": "Missing CSRF denied /multibodega/transferencias",
+      "pass": true,
+      "status": 403
+    },
+    {
+      "name": "Empty credit and cash screenshot privacy gate",
+      "pass": true
+    },
+    {
+      "name": "Synthetic-only warehouse screenshot gate",
+      "pass": true
+    },
+    {
+      "name": "Browser responsive 1366 /auditoria/ddl?objeto=__none_qa__",
+      "pass": true,
+      "width": 1366,
+      "scroll": 1351,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 1366 /creditos?clienteId=2147483647&facturaId=2147483647&desde=2099-01-01&hasta=2099-01-01",
+      "pass": true,
+      "width": 1366,
+      "scroll": 1351,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 1366 /creditos/caja?desde=2099-01-01&hasta=2099-01-01",
+      "pass": true,
+      "width": 1366,
+      "scroll": 1366,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 1366 /multibodega?seccion=inventario&ProductoId=1",
+      "pass": true,
+      "width": 1366,
+      "scroll": 1366,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 1024 /auditoria/ddl?objeto=__none_qa__",
+      "pass": true,
+      "width": 1024,
+      "scroll": 1009,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 1024 /creditos?clienteId=2147483647&facturaId=2147483647&desde=2099-01-01&hasta=2099-01-01",
+      "pass": true,
+      "width": 1024,
+      "scroll": 1009,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 1024 /creditos/caja?desde=2099-01-01&hasta=2099-01-01",
+      "pass": true,
+      "width": 1024,
+      "scroll": 1024,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 1024 /multibodega?seccion=inventario&ProductoId=1",
+      "pass": true,
+      "width": 1024,
+      "scroll": 1009,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 768 /auditoria/ddl?objeto=__none_qa__",
+      "pass": true,
+      "width": 768,
+      "scroll": 753,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 768 /creditos?clienteId=2147483647&facturaId=2147483647&desde=2099-01-01&hasta=2099-01-01",
+      "pass": true,
+      "width": 768,
+      "scroll": 753,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 768 /creditos/caja?desde=2099-01-01&hasta=2099-01-01",
+      "pass": true,
+      "width": 768,
+      "scroll": 768,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 768 /multibodega?seccion=inventario&ProductoId=1",
+      "pass": true,
+      "width": 768,
+      "scroll": 753,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 390 /auditoria/ddl?objeto=__none_qa__",
+      "pass": true,
+      "width": 390,
+      "scroll": 375,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 390 /creditos?clienteId=2147483647&facturaId=2147483647&desde=2099-01-01&hasta=2099-01-01",
+      "pass": true,
+      "width": 390,
+      "scroll": 375,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 390 /creditos/caja?desde=2099-01-01&hasta=2099-01-01",
+      "pass": true,
+      "width": 390,
+      "scroll": 375,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 390 /multibodega?seccion=inventario&ProductoId=1",
+      "pass": true,
+      "width": 390,
+      "scroll": 375,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 320 /auditoria/ddl?objeto=__none_qa__",
+      "pass": true,
+      "width": 320,
+      "scroll": 305,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 320 /creditos?clienteId=2147483647&facturaId=2147483647&desde=2099-01-01&hasta=2099-01-01",
+      "pass": true,
+      "width": 320,
+      "scroll": 305,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 320 /creditos/caja?desde=2099-01-01&hasta=2099-01-01",
+      "pass": true,
+      "width": 320,
+      "scroll": 305,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser responsive 320 /multibodega?seccion=inventario&ProductoId=1",
+      "pass": true,
+      "width": 320,
+      "scroll": 305,
+      "main": true,
+      "styles": true
+    },
+    {
+      "name": "Browser JavaScript exceptions absent",
+      "pass": true,
+      "count": 0
+    },
+    {
+      "name": "Browser assets return success",
+      "pass": true,
+      "failed": 0
+    },
+    {
+      "name": "Credit panel headings meet WCAG AA contrast",
+      "pass": true,
+      "samples": 45,
+      "minimumRatio": 15.12
+    }
+  ],
+  "screenshots": [
+    "docs\\dylan-readonly-qa-20261028\\view-1-1366.png",
+    "docs\\dylan-readonly-qa-20261028\\view-2-1366.png",
+    "docs\\dylan-readonly-qa-20261028\\view-3-1366.png",
+    "docs\\dylan-readonly-qa-20261028\\view-4-1366.png",
+    "docs\\dylan-readonly-qa-20261028\\view-1-1024.png",
+    "docs\\dylan-readonly-qa-20261028\\view-2-1024.png",
+    "docs\\dylan-readonly-qa-20261028\\view-3-1024.png",
+    "docs\\dylan-readonly-qa-20261028\\view-4-1024.png",
+    "docs\\dylan-readonly-qa-20261028\\view-1-768.png",
+    "docs\\dylan-readonly-qa-20261028\\view-2-768.png",
+    "docs\\dylan-readonly-qa-20261028\\view-3-768.png",
+    "docs\\dylan-readonly-qa-20261028\\view-4-768.png",
+    "docs\\dylan-readonly-qa-20261028\\view-1-390.png",
+    "docs\\dylan-readonly-qa-20261028\\view-2-390.png",
+    "docs\\dylan-readonly-qa-20261028\\view-3-390.png",
+    "docs\\dylan-readonly-qa-20261028\\view-4-390.png",
+    "docs\\dylan-readonly-qa-20261028\\view-1-320.png",
+    "docs\\dylan-readonly-qa-20261028\\view-2-320.png",
+    "docs\\dylan-readonly-qa-20261028\\view-3-320.png",
+    "docs\\dylan-readonly-qa-20261028\\view-4-320.png"
+  ],
+  "rpc": [
+    {
+      "procedure": "dbo.P3_DDL_ConsultarBitacora",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        0,
+        1
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        3,
+        0,
+        0,
+        6,
+        12
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_ConsultarCaja",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        6
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_ConsultarCaja",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        6
+      ]
+    },
+    {
+      "procedure": "dbo.P3_BOD_Autorizar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": []
+    },
+    {
+      "procedure": "dbo.P3_BOD_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        8,
+        1
+      ]
+    },
+    {
+      "procedure": "dbo.P3_BOD_Autorizar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": []
+    },
+    {
+      "procedure": "dbo.P3_BOD_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        3
+      ]
+    },
+    {
+      "procedure": "dbo.P3_BOD_Autorizar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": []
+    },
+    {
+      "procedure": "dbo.P3_BOD_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        6
+      ]
+    },
+    {
+      "procedure": "dbo.P3_BOD_Autorizar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": []
+    },
+    {
+      "procedure": "dbo.P3_BOD_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        10
+      ]
+    },
+    {
+      "procedure": "dbo.P3_BOD_Autorizar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": []
+    },
+    {
+      "procedure": "dbo.P3_CRE_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        3,
+        0,
+        0,
+        6,
+        12
+      ]
+    },
+    {
+      "procedure": "dbo.P3_BOD_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        8,
+        1
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        3,
+        0,
+        0,
+        6,
+        12
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_ConsultarCaja",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        6
+      ]
+    },
+    {
+      "procedure": "dbo.P3_DDL_ConsultarDetalle",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_DDL_ConsultarBitacora",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        7,
+        1
+      ]
+    },
+    {
+      "procedure": "dbo.P3_DDL_ConsultarDetalle",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1
+      ]
+    },
+    {
+      "procedure": "dbo.P3_BOD_ConsultarOperacion",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_ConsultarRecibo",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        1
+      ]
+    },
+    {
+      "procedure": "dbo.P3_BOD_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        6
+      ]
+    },
+    {
+      "procedure": "dbo.P3_BOD_Autorizar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": []
+    },
+    {
+      "procedure": "dbo.P3_BOD_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_BOD_Autorizar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": []
+    },
+    {
+      "procedure": "dbo.P3_CRE_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_ConsultarCaja",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_DDL_ConsultarBitacora",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        0,
+        1
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_ConsultarCaja",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_ConsultarCaja",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_BOD_Autorizar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": []
+    },
+    {
+      "procedure": "dbo.P3_BOD_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        1
+      ]
+    },
+    {
+      "procedure": "dbo.P3_DDL_ConsultarBitacora",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        0,
+        1
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_ConsultarCaja",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_ConsultarCaja",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_BOD_Autorizar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": []
+    },
+    {
+      "procedure": "dbo.P3_BOD_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        1
+      ]
+    },
+    {
+      "procedure": "dbo.P3_DDL_ConsultarBitacora",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        0,
+        1
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_ConsultarCaja",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_ConsultarCaja",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_BOD_Autorizar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": []
+    },
+    {
+      "procedure": "dbo.P3_BOD_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        1
+      ]
+    },
+    {
+      "procedure": "dbo.P3_DDL_ConsultarBitacora",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        0,
+        1
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_ConsultarCaja",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_ConsultarCaja",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_BOD_Autorizar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": []
+    },
+    {
+      "procedure": "dbo.P3_BOD_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        1
+      ]
+    },
+    {
+      "procedure": "dbo.P3_DDL_ConsultarBitacora",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        0,
+        1
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_ConsultarCaja",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_CRE_ConsultarCaja",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        0
+      ]
+    },
+    {
+      "procedure": "dbo.P3_BOD_Autorizar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": []
+    },
+    {
+      "procedure": "dbo.P3_BOD_Consultar",
+      "guard": true,
+      "applicationToken": true,
+      "rowCounts": [
+        1,
+        1
+      ]
+    }
+  ],
+  "screenshotScope": {
+    "ddl": "empty object filter",
+    "credit": "verified empty future filters; populated SQL checked via HTTP only",
+    "warehouse": "P3BOD-QA-100 synthetic product only"
+  },
+  "browser": true,
+  "creditHeadingContrast": [
+    {
+      "width": 1366,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1366,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1366,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1366,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1366,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1366,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1366,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1366,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1366,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1024,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1024,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1024,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1024,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1024,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1024,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1024,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1024,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 1024,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 768,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 768,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 768,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 768,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 768,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 768,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 768,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 768,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 768,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 390,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 390,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 390,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 390,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 390,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 390,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 390,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 390,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 390,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 320,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 320,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 320,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 320,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 320,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 320,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 320,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 320,
+      "ratio": 15.12,
+      "threshold": 4.5
+    },
+    {
+      "width": 320,
+      "ratio": 15.12,
+      "threshold": 4.5
+    }
+  ],
+  "profileCleaned": true,
+  "total": 52,
+  "passed": 52,
+  "failed": 0
+}

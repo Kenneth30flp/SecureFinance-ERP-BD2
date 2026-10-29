@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> | SecureFinance ERP</title>
+  <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/auditoria-ddl.css">
+  <script src="/js/visual.js" defer></script>
+</head>
+<body class="app-shell ddl-workspace">
+  <a class="skip-link" href="#workspace">Ir al contenido</a>
+  <%- include('navigation', { actual: 'auditoria-ddl', rolesCuenta: '' }) %>
+  <main id="workspace" tabindex="-1" class="container page-content">
+    <header class="page-header ddl-heading">
+      <div><p class="eyebrow">Administracion / Trazabilidad estructural</p><h1><%= title %></h1>
+      <p>Eventos estructurales y comandos registrados. Sin ejecucion de SQL desde la web.</p></div>
+      <span class="status-badge status-warning">Acceso restringido</span>
+    </header>
+    <aside class="ddl-notice" role="note" aria-label="Estado de la entrega">
+      <strong>Texto T-SQL integro: informacion de acceso restringido.</strong>
+      <p>El comando exacto puede contener informacion sensible. Uso autorizado solo en un
+      laboratorio sin secretos reales. No compartas comandos ni capturas fuera del equipo autorizado.</p>
+    </aside>

@@ -1,0 +1,86 @@
+-- Mod5. Preparado, NO desplegado. Requiere transaccion externa en UNA conexion.
+SET NOCOUNT ON; SET XACT_ABORT ON; SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
+SET ANSI_PADDING ON; SET ANSI_WARNINGS ON; SET ARITHABORT ON; SET CONCAT_NULL_YIELDS_NULL ON; SET NUMERIC_ROUNDABORT OFF;
+IF DB_NAME() COLLATE Latin1_General_100_BIN2 <> dbo.P3_INT_Destino()
+ OR DATALENGTH(DB_NAME())<>DATALENGTH(dbo.P3_INT_Destino())
+ OR @@TRANCOUNT=0 OR XACT_STATE()<>1 THROW 58000,'Instalacion requiere laboratorio Dylan y transaccion externa.',1;
+IF OBJECT_ID('dbo.sp_RegistrarRecepcionCompra','P') IS NULL
+ OR OBJECT_ID('dbo.sp_ConvertirCotizacionAFactura','P') IS NULL
+ OR OBJECT_ID('dbo.Kardex_Inventario','U') IS NULL THROW 58000,'Requiere base hasta 43.',1;
+-- Instalacion unica: no admitir una estructura parcial ni repetir el snapshot.
+IF OBJECT_ID('dbo.P3_BOD_Bodega','U') IS NOT NULL THROW 58000,'Mod5 ya existe. No reinstalar sobre datos.',1;
+CREATE TABLE dbo.P3_BOD_Bodega(
+ BodegaId INT IDENTITY CONSTRAINT P3_BOD_PK_Bodega PRIMARY KEY,
+ Nombre NVARCHAR(100) NOT NULL CONSTRAINT P3_BOD_UQ_Nombre UNIQUE,
+ Activo BIT NOT NULL CONSTRAINT P3_BOD_DF_Activo DEFAULT 1,
+ IsCentral BIT NOT NULL CONSTRAINT P3_BOD_DF_Central DEFAULT 0,
+ Version ROWVERSION NOT NULL,
+ CONSTRAINT P3_BOD_CK_Nombre CHECK(LEN(LTRIM(RTRIM(Nombre)))>0),
+ CONSTRAINT P3_BOD_CK_CentralActiva CHECK(IsCentral=0 OR Activo=1)
+);
+CREATE UNIQUE INDEX P3_BOD_UX_Central ON dbo.P3_BOD_Bodega(IsCentral) WHERE IsCentral=1;
+CREATE TABLE dbo.P3_BOD_Configuracion(
+ ConfiguracionId TINYINT CONSTRAINT P3_BOD_PK_Config PRIMARY KEY CONSTRAINT P3_BOD_CK_Config CHECK(ConfiguracionId=1),
+ CentralId INT NOT NULL CONSTRAINT P3_BOD_FK_ConfigCentral REFERENCES dbo.P3_BOD_Bodega(BodegaId),
+ SnapshotId UNIQUEIDENTIFIER NOT NULL,
+ FechaSnapshot DATETIME2(3) NOT NULL,
+ Version ROWVERSION NOT NULL
+);
+CREATE TABLE dbo.P3_BOD_Stock(
+ ProductoId INT NOT NULL CONSTRAINT P3_BOD_FK_StockProducto REFERENCES dbo.Producto(ProductoId),
+ BodegaId INT NOT NULL CONSTRAINT P3_BOD_FK_StockBodega REFERENCES dbo.P3_BOD_Bodega(BodegaId),
+ Cantidad INT NOT NULL CONSTRAINT P3_BOD_CK_Stock CHECK(Cantidad>=0),
+ Version ROWVERSION NOT NULL,
+ CONSTRAINT P3_BOD_PK_Stock PRIMARY KEY(ProductoId,BodegaId)
+);
+CREATE TABLE dbo.P3_BOD_Snapshot(
+ ProductoId INT CONSTRAINT P3_BOD_PK_Snapshot PRIMARY KEY CONSTRAINT P3_BOD_FK_SnapshotProducto REFERENCES dbo.Producto(ProductoId),
+ BodegaId INT NOT NULL CONSTRAINT P3_BOD_FK_SnapshotBodega REFERENCES dbo.P3_BOD_Bodega(BodegaId),
+ Cantidad INT NOT NULL CONSTRAINT P3_BOD_CK_SnapshotCantidad CHECK(Cantidad>=0),
+ SnapshotId UNIQUEIDENTIFIER NOT NULL,
+ FechaHora DATETIME2(3) NOT NULL
+);
+CREATE TABLE dbo.P3_BOD_Transferencia(
+ TransferenciaId INT IDENTITY CONSTRAINT P3_BOD_PK_Transferencia PRIMARY KEY,
+ ProductoId INT NOT NULL CONSTRAINT P3_BOD_FK_TransferProducto REFERENCES dbo.Producto(ProductoId),
+ OrigenId INT NOT NULL CONSTRAINT P3_BOD_FK_TransferOrigen REFERENCES dbo.P3_BOD_Bodega(BodegaId),
+ DestinoId INT NOT NULL CONSTRAINT P3_BOD_FK_TransferDestino REFERENCES dbo.P3_BOD_Bodega(BodegaId),
+ Cantidad INT NOT NULL CONSTRAINT P3_BOD_CK_TransferCantidad CHECK(Cantidad>0),
+ Estado VARCHAR(12) NOT NULL CONSTRAINT P3_BOD_CK_TransferEstado CHECK(Estado IN('PREPARADA','DESPACHADA','RECIBIDA')),
+ Motivo NVARCHAR(250) NOT NULL CONSTRAINT P3_BOD_CK_TransferMotivo CHECK(LEN(LTRIM(RTRIM(Motivo)))>0),
+ ActorUsuarioId INT NOT NULL CONSTRAINT P3_BOD_FK_TransferActor REFERENCES dbo.Usuario(UsuarioId),
+ FechaHora DATETIME2(3) NOT NULL CONSTRAINT P3_BOD_DF_TransferFecha DEFAULT SYSUTCDATETIME(),
+ Version ROWVERSION NOT NULL,
+ CONSTRAINT P3_BOD_CK_Distintas CHECK(OrigenId<>DestinoId)
+);
+CREATE INDEX P3_BOD_IX_Pendientes ON dbo.P3_BOD_Transferencia(ProductoId,Estado) INCLUDE(OrigenId,DestinoId,Cantidad);
+CREATE INDEX P3_BOD_IX_Origen ON dbo.P3_BOD_Transferencia(OrigenId,Estado);
+CREATE INDEX P3_BOD_IX_Destino ON dbo.P3_BOD_Transferencia(DestinoId,Estado);
+CREATE TABLE dbo.P3_BOD_Operacion(
+ OperacionId UNIQUEIDENTIFIER CONSTRAINT P3_BOD_PK_Operacion PRIMARY KEY,
+ ActorUsuarioId INT NOT NULL CONSTRAINT P3_BOD_FK_OperacionActor REFERENCES dbo.Usuario(UsuarioId),
+ Carga NVARCHAR(MAX) NOT NULL CONSTRAINT P3_BOD_CK_OperacionCarga CHECK(ISJSON(Carga)=1),
+ Respuesta NVARCHAR(MAX) NOT NULL CONSTRAINT P3_BOD_CK_OperacionRespuesta CHECK(ISJSON(Respuesta)=1),
+ FechaHora DATETIME2(3) NOT NULL CONSTRAINT P3_BOD_DF_OperacionFecha DEFAULT SYSUTCDATETIME()
+);
+CREATE TABLE dbo.P3_BOD_Ledger(
+ MovimientoId BIGINT IDENTITY CONSTRAINT P3_BOD_PK_Ledger PRIMARY KEY,
+ ProductoId INT NOT NULL CONSTRAINT P3_BOD_FK_LedgerProducto REFERENCES dbo.Producto(ProductoId),
+ BodegaId INT NOT NULL CONSTRAINT P3_BOD_FK_LedgerBodega REFERENCES dbo.P3_BOD_Bodega(BodegaId),
+ Tipo VARCHAR(25) NOT NULL CONSTRAINT P3_BOD_CK_LedgerTipo CHECK(Tipo IN('COMPRA','VENTA','AJUSTE_INGRESO','AJUSTE_EGRESO','DEVOLUCION','TRANSFERENCIA_SALIDA','TRANSFERENCIA_ENTRADA')),
+ Cantidad INT NOT NULL CONSTRAINT P3_BOD_CK_LedgerCantidad CHECK(Cantidad>0),
+ SaldoAnterior INT NOT NULL CONSTRAINT P3_BOD_CK_LedgerAnterior CHECK(SaldoAnterior>=0),
+ SaldoResultante INT NOT NULL CONSTRAINT P3_BOD_CK_LedgerResultante CHECK(SaldoResultante>=0),
+ ActorUsuarioId INT NOT NULL CONSTRAINT P3_BOD_FK_LedgerActor REFERENCES dbo.Usuario(UsuarioId),
+ OperacionId UNIQUEIDENTIFIER NOT NULL,
+ FechaHora DATETIME2(3) NOT NULL CONSTRAINT P3_BOD_DF_LedgerFecha DEFAULT SYSUTCDATETIME(),
+ Referencia NVARCHAR(100) NOT NULL,
+ Motivo NVARCHAR(250) NOT NULL,
+ TransferenciaId INT NULL CONSTRAINT P3_BOD_FK_LedgerTransfer REFERENCES dbo.P3_BOD_Transferencia(TransferenciaId),
+ KardexId BIGINT NULL CONSTRAINT P3_BOD_FK_LedgerKardex REFERENCES dbo.Kardex_Inventario(KardexId),
+ CONSTRAINT P3_BOD_CK_Saldo CHECK(CONVERT(BIGINT,SaldoResultante)=CONVERT(BIGINT,SaldoAnterior)+CASE WHEN Tipo IN('VENTA','AJUSTE_EGRESO','TRANSFERENCIA_SALIDA') THEN -CONVERT(BIGINT,Cantidad) ELSE CONVERT(BIGINT,Cantidad) END),
+ CONSTRAINT P3_BOD_CK_Fuente CHECK((KardexId IS NOT NULL AND TransferenciaId IS NULL AND Tipo NOT IN('TRANSFERENCIA_SALIDA','TRANSFERENCIA_ENTRADA')) OR (KardexId IS NULL AND TransferenciaId IS NOT NULL AND Tipo IN('TRANSFERENCIA_SALIDA','TRANSFERENCIA_ENTRADA')))
+);
+CREATE UNIQUE INDEX P3_BOD_UX_Kardex ON dbo.P3_BOD_Ledger(KardexId) WHERE KardexId IS NOT NULL;
+CREATE UNIQUE INDEX P3_BOD_UX_Fase ON dbo.P3_BOD_Ledger(TransferenciaId,Tipo) WHERE TransferenciaId IS NOT NULL;
+CREATE INDEX P3_BOD_IX_Ledger ON dbo.P3_BOD_Ledger(ProductoId,BodegaId,FechaHora,MovimientoId);

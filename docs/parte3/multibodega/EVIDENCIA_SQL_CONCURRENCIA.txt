@@ -1,0 +1,115 @@
+EVIDENCIA SQL REAL - PRUEBAS DE CONCURRENCIA P3_BOD (Modulo 5, Multibodega)
+==============================================================================
+Generada por: database/tests/P3_BOD_Concurrencias.ps1 (corrida del 2026-10-28 23:52)
+Destino EXCLUSIVO: SecureFinanceERP_Lab_Dylan (verificado por DB_NAME() + DATALENGTH
+antes de cualquier operacion). Actor sintetico P3_DYLAN_QA_ADMIN, producto/transferencias
+sinteticos. No se toco ninguna de las 5 bases protegidas ni se ejecuto migracion global.
+
+METODO
+------
+Dos sesiones SqlClient reales (ApplicationName Dylan-Concurrencias-P3BOD) sobre la MISMA
+transferencia. Sesion A retiene su transaccion 5s (WAITFOR) y Sesion B entra 1.5s despues,
+replicando el patron del servicio: BEGIN TRAN -> P3_BOD_AvanzarTransferencia/Reintento ->
+COMMIT. Cada fase usa su PROPIO OperacionId (el de la propuesta es otro GUID).
+Sincronizacion real: sp_getapplock exclusivo (P3_BOD_Reintento, timeout 10s) +
+UPDLOCK/HOLDLOCK del Producto (P3_BOD_BloquearUbicaciones).
+
+CASOS
+-----
+C1  Replay idempotente: A y B despachan con el MISMO OperacionId y MISMA carga.
+    Esperado: B espera el applock (~3.5s), recibe el recibo identico de A,
+    sin segunda entrada de ledger. Resultado: PASS (operacion=1, ledger=1,
+    estado DESPACHADA, recibo JSON identico con Version hex 16 chars).
+C2  Mismo OperacionId con carga DISTINTA (motivo alterno de B).
+    Esperado: P3_BOD_Reintento rechaza con error 58003, sin fila adicional.
+    Resultado: PASS (58003, operacion=1).
+C3  Doble recepcion con version obsoleta (stale rowversion).
+    Esperado: la fase RECIBIR de B (version anterior al despacho) rechaza 58003,
+    sin entrada de ledger por el intento fallido y estado final RECIBIDA.
+    Resultado: PASS (58003, ledger=0, estado RECIBIDA).
+C4  Dos despachos compiten por el mismo origen (T3 de A toma el saldo; T4 de B).
+    Esperado: B bloquea por UPDLOCK y rechaza 58005 por existencia insuficiente,
+    sin entrada de ledger y estado PREPARADA conservado.
+    Resultado: PASS (58005, ledger=0, estado PREPARADA).
+
+CONCILIACION FINAL
+------------------
+dbo.P3_BOD_Conciliacion: filasTotal=8, filasConDiferencia=0 (inventario cuadrado).
+
+DEFECTOS REALES DESCUBIERTOS Y CORREGIDOS DURING ESTE QA
+--------------------------------------------------------
+1. CONVERT(VARCHAR(16), Version, 2) sobre una columna rowversion entrega los 8 bytes
+   RAW (no hex no imprimible) en SQL Server 2025: el campo Version del recibo JSON
+   (82/83) salia corrupto y el servicio (regex ^[0-9a-f]{16}$ en validation.js) no
+   podia usarlo para el bloqueo optimista. Fix aplicado en 82_P3_BOD_Transferencias.sql
+   (L26/L75) y 83_P3_BOD_Administracion.sql (L34):
+   CONVERT(VARCHAR(16), CAST(Version AS varbinary(8)), 2)  -> hex sin 0x, 16 chars.
+   Confirmado en vivo: recibo { "...Version":"0000000000000A35", ... }.
+   Reinstalacion unica de procs 82/83 en el lab via database/tests/
+   P3_BOD_ReaplicarTransferencias.sql (transaccion externa, sin tocar tablas).
+
+JSON COMPLETO DE LA ULTIMA CORRIDA
+----------------------------------
+{
+    "contexto":  {
+                     "producto":  28,
+                     "origen":  1,
+                     "destino":  2,
+                     "stock":  96
+                 },
+    "C1_mismo_uuid":  {
+                          "t":  30,
+                          "sesionB":  {
+                                          "sesionB_ok":  true,
+                                          "number":  null,
+                                          "respuesta":  "{\"TransferenciaId\":30,\"Estado\":\"DESPACHADA\",\"Version\":\"0000000000000A42\",\"OperacionId\":\"F020B95C-4735-4CBD-9E29-D8842C1BF4D9\"}",
+                                          "bloqueoMs":  3686
+                                      },
+                          "operacion":  1,
+                          "ledger":  1,
+                          "estado":  "DESPACHADA"
+                      },
+    "C1_PASS":  true,
+    "C2_uuid_otra_carga":  {
+                               "t":  31,
+                               "sesionB":  {
+                                               "sesionB_ok":  false,
+                                               "number":  58003,
+                                               "respuesta":  null,
+                                               "bloqueoMs":  3525
+                                           },
+                               "operacion":  1
+                           },
+    "C2_PASS":  true,
+    "C3_doble_recepcion":  {
+                               "t":  30,
+                               "sesionB":  {
+                                               "ok":  false,
+                                               "number":  58003,
+                                               "respuesta":  null
+                                           },
+                               "ledgerB":  0,
+                               "estado":  "RECIBIDA"
+                           },
+    "C3_PASS":  true,
+    "C4_dos_despachos":  {
+                             "t3":  32,
+                             "t4":  33,
+                             "sesionB":  {
+                                             "sesionB_ok":  false,
+                                             "number":  58005,
+                                             "respuesta":  null,
+                                             "bloqueoMs":  3514
+                                         },
+                             "ledgerT4":  0,
+                             "estadoT4":  "PREPARADA",
+                             "cantidad":  49
+                         },
+    "C4_PASS":  true,
+    "conciliacion":  {
+                         "filasConDiferencia":  0,
+                         "filasTotal":  8
+                     },
+    "CONCILIACION_PASS":  true,
+    "timestamp_local":  "2026-10-28T23:51:52.1791089-06:00"
+}

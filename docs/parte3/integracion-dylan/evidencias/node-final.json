@@ -1,0 +1,18 @@
+{
+  "node": "v24.14.0",
+  "date": "2026-10-29T08:10:24.532Z",
+  "checks": [
+    {
+      "name": "check",
+      "exit": 0
+    },
+    {
+      "name": "test",
+      "exit": 0
+    },
+    {
+      "name": "diff",
+      "exit": 0
+    }
+  ]
+}
