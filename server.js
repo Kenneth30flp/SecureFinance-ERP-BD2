@@ -37,6 +37,8 @@ const { createAnaliticaService } = require('./src/modules/jose/analiticaService'
 const { createAnaliticaRoutes } = require('./src/modules/jose/analiticaRoutes');
 const { createCotizacionService } = require('./src/modules/cotizaciones/service');
 const { createCotizacionRoutes } = require('./src/modules/cotizaciones/routes');
+const { createComprasService } = require('./src/modules/compras/service');
+const { createComprasRoutes } = require('./src/modules/compras/routes');
 const { createPromocionService } = require('./src/modules/promociones/service');
 const { createPromocionRoutes } = require('./src/modules/promociones/routes');
 const { createCreditoService } = require('./src/modules/creditos/service');
@@ -58,6 +60,7 @@ function createApp({
   kennethServices = { productos:createProductoService(), proveedores:createProveedorService(), clientes:createClienteService(), inventario:createInventarioService(), photos:createFotografiaService() },
   analiticaService = createAnaliticaService(),
   cotizacionService = createCotizacionService(),
+  comprasService = createComprasService(),
   promocionService = createPromocionService(),
   creditoService = createCreditoService(),
   multibodegaService = createMultibodegaService(),
@@ -75,6 +78,7 @@ function createApp({
   app.locals.moduleAreas = require('./src/config/moduleCatalog').visibleAreas;
   app.locals.displayMoney = require('./src/modules/cotizaciones/format').money;
 
+  app.use('/compras',express.json({limit:'64kb'}));
   app.use(express.urlencoded({ extended: false, limit: '10kb' }));
   app.use(express.json({ limit: '10kb' }));
   app.use(express.static(path.join(__dirname, 'src/public')));
@@ -120,6 +124,7 @@ function createApp({
   app.use(createUsuarioRoutes(usuarioService));
   app.use(createKennethRoutes(kennethServices));
   app.use(createCotizacionRoutes(cotizacionService));
+  app.use(createComprasRoutes(comprasService));
   // Promociones de José (Parte III, migraciones 60-63)
   app.use(createPromocionRoutes(promocionService));
   app.use(createCreditoRoutes(creditoService));
