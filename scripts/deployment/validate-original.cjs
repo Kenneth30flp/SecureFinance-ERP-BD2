@@ -1,7 +1,7 @@
 ﻿'use strict';
 const fs=require('fs'),path=require('path'),assert=require('assert/strict'),{randomUUID}=require('crypto');const deploy=require('./original-upgrade.cjs');
 const dotenv=require('dotenv'),sql=require('mssql');
-async function validate(db){const s=deploy.state();assert(db===s.clone||db===s.source);const env=dotenv.parse(fs.readFileSync(path.join(deploy.ORIGINAL,'.env')));assert.equal(env.DB_NAME,s.source);const pool=await new sql.ConnectionPool({server:env.DB_SERVER,port:Number(env.DB_PORT||1433),database:db,user:env.DB_USER,password:env.DB_PASSWORD,options:{encrypt:env.DB_ENCRYPT==='true',trustServerCertificate:env.DB_TRUST_SERVER_CERTIFICATE==='true',appName:'SecureFinance-Original-Deployment-Validation'},requestTimeout:30000}).connect();
+async function validate(db,options={}){const s=options.state||deploy.state();assert(db===s.clone||db===s.source);const env=dotenv.parse(fs.readFileSync(path.join(deploy.ORIGINAL,'.env')));assert.equal(env.DB_NAME,s.source);const pool=await new sql.ConnectionPool({server:env.DB_SERVER,port:Number(env.DB_PORT||1433),database:db,user:env.DB_USER,password:env.DB_PASSWORD,options:{encrypt:env.DB_ENCRYPT==='true',trustServerCertificate:env.DB_TRUST_SERVER_CERTIFICATE==='true',appName:'SecureFinance-Original-Deployment-Validation'},requestTimeout:30000}).connect();
  const results=[];let tx;
  try{
  assert.equal((await pool.request().query('SELECT DB_NAME() N')).recordset[0].N,db);
@@ -33,7 +33,7 @@ async function validate(db){const s=deploy.state();assert(db===s.clone||db===s.s
  const ddl=`BEGIN TRANSACTION;DECLARE @Cut BIGINT=(SELECT ISNULL(MAX(BitacoraDdlId),0) FROM dbo.Bitacora_DDL);EXEC(N'CREATE TABLE dbo.P3_Deployment_Verify (Id INT)');EXEC(N'ALTER TABLE dbo.P3_Deployment_Verify ADD Label NVARCHAR(10)');EXEC(N'DROP TABLE dbo.P3_Deployment_Verify');EXEC(N'CREATE PROCEDURE dbo.P3_Deployment_VerifyProc AS SELECT 1 V');EXEC(N'ALTER PROCEDURE dbo.P3_Deployment_VerifyProc AS SELECT 2 V');EXEC(N'DROP PROCEDURE dbo.P3_Deployment_VerifyProc');IF (SELECT COUNT(DISTINCT TipoEvento) FROM dbo.Bitacora_DDL WHERE BitacoraDdlId>@Cut)<>6 THROW 59904,'Six DDL event verification failed',1;ROLLBACK;`;
  await deploy.exec(ddl,db);results.push('All six DDL events captured, with verification objects/events rolled back');
  const doc={database:db,date:new Date().toISOString(),results,passwordChanged:false,syntheticAccountsCreated:false};fs.writeFileSync(path.join(deploy.PRIVATE,db===s.clone?'rehearsal-validation.json':'production-validation.json'),JSON.stringify(doc,null,2));
- if(db===s.clone){s.rehearsalOperationsPassed=true;s.adminIdentityAndPermissionsVerified=true;}else{s.productionOperationsPassed=true;}fs.writeFileSync(deploy.STATE,JSON.stringify(s,null,2));console.log('PASS '+results.length+' essential operation/security checks: '+db);
+ if(db===s.clone){s.rehearsalOperationsPassed=true;s.adminIdentityAndPermissionsVerified=true;}else{s.productionOperationsPassed=true;}if(options.persist!==false)fs.writeFileSync(deploy.STATE,JSON.stringify(s,null,2));console.log('PASS '+results.length+' essential operation/security checks: '+db);
  }finally{if(tx)await tx.rollback().catch(()=>{});await pool.close();}
 }
 module.exports={validate};if(require.main===module)validate(process.argv[2]==='original'?deploy.state().source:deploy.state().clone).catch(e=>{console.error('VALIDATION BLOCKED',e.number||e.code||'',e.message);process.exitCode=1;});

@@ -13,4 +13,13 @@ BEGIN
  FETCH NEXT FROM objetos INTO @Tabla,@Columnas;
 END;
 CLOSE objetos; DEALLOCATE objetos;
+-- Permisos aditivos para el rol existente. La prohibicion de autoaprobacion
+-- permanece en P3_COM_Transicionar, incluso para Administrador.
+IF NOT EXISTS(SELECT 1 FROM dbo.Rol WHERE Nombre=N'Administrador')
+ THROW 55000,'Falta el rol Administrador existente.',1;
+INSERT dbo.Rol_Permiso(RolId,PermisoId)
+ SELECT r.RolId,p.PermisoId FROM dbo.Rol r CROSS JOIN dbo.Permiso p
+ WHERE r.Nombre=N'Administrador'
+ AND p.Codigo IN('COMPRAS_CONSULTAR','COMPRAS_CREAR','COMPRAS_APROBAR','COMPRAS_CANCELAR','COMPRAS_RECIBIR')
+ AND NOT EXISTS(SELECT 1 FROM dbo.Rol_Permiso rp WHERE rp.RolId=r.RolId AND rp.PermisoId=p.PermisoId);
 GO

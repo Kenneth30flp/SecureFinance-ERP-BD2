@@ -61,5 +61,5 @@ async function upgrade(db){const s=state();assert(s.backupVerified&&s.restoreVer
 }
 function planHash(){return createHash('sha256').update(policy+migrations().map(f=>f+'\n'+render(f)).join('\n')).digest('hex');}
 function manifest(){return {base:'b5cca8d',planHash:planHash(),atomic:true,requires:['verified COPY_ONLY CHECKSUM full backup','actual restore and CHECKDB','rehearsal with all existing rows preserved','successful essential operation tests'],files:migrations().map(file=>({file,sourceSHA256:createHash('sha256').update(fs.readFileSync(path.join(ROOT,'database',file),'utf8').replace(/^\uFEFF/,'').replace(/\r\n/g,'\n')).digest('hex'),renderedSHA256:createHash('sha256').update(render(file).replace(/\r\n/g,'\n')).digest('hex')}))};}
-module.exports={exec,query,identity,state,upgrade,prepare,ROOT,ORIGINAL,PRIVATE,STATE,planHash,manifest};
+module.exports={exec,query,identity,state,upgrade,prepare,ROOT,ORIGINAL,PRIVATE,STATE,planHash,manifest,capture,preserve};
 if(require.main===module){const action=process.argv[2];(action==='prepare'?prepare():action==='rehearse'?upgrade(state().clone):action==='apply'?upgrade(state().source):Promise.reject(Error('Use prepare/rehearse/apply'))).catch(e=>{console.error(e.message);process.exitCode=1;});}
