@@ -15,7 +15,8 @@ function filters(q) {
   if(f.desde&&f.hasta&&f.desde>f.hasta) throw Object.assign(Error('La fecha final debe ser igual o posterior a la inicial.'),{status:400});
   f.cliente=f.cliente.trim();return f;
 }
-function createFacturaController(service) {
+// promociones es opcional: evidencia de promociones aplicadas (migración 63), solo lectura.
+function createFacturaController(service, promociones = null) {
   function fail(req,res,error,f={numero:null,cliente:'',desde:'',hasta:'',pagina:1}) {
     console.error('ERP_INVOICE_QUERY_FAILURE',JSON.stringify({code:error.code,number:error.number,name:error.name}));
     const status=error.status|| (error.number===54101?403:503);
@@ -28,7 +29,9 @@ function createFacturaController(service) {
     }catch(error){return fail(req,res,error,f);}},
     async detail(req,res){try{const id=positive(req.params.id);const result=await service.detail(req.session.usuario.usuarioId,id);
       if(!result.factura)return res.status(404).render('facturas',{usuario:req.session.usuario,f:filters({}),rows:[],total:0,error:'La factura solicitada no existe.'});
-      return res.render('factura-comprobante',{usuario:req.session.usuario,...result,autoPrint:req.query.imprimir==='1'});
+      let aplicaciones=[];
+      if(promociones)try{aplicaciones=await promociones.invoiceApplications(req.session.usuario.usuarioId,id);}catch{aplicaciones=[];}
+      return res.render('factura-comprobante',{usuario:req.session.usuario,...result,promocionesAplicadas:aplicaciones,autoPrint:req.query.imprimir==='1'});
     }catch(error){return fail(req,res,error);}},
   };
 }

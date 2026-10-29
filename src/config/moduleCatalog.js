@@ -8,6 +8,7 @@ const modules = [
   ['analitica','inicio','Analítica ejecutiva','/analitica','activity','Indicadores para decidir.',['ANALITICA_CONSULTAR']],
   ['facturacion','ventas','Facturación','/facturacion','receipt','Registrar ventas y consultar comprobantes.',['VENTAS_REGISTRAR','FACTURAS_CONSULTAR']],
   ['cotizaciones','ventas','Cotizaciones','/cotizaciones','receipt','Preparar propuestas y convertirlas a factura.',['COTIZACIONES_CONSULTAR','COTIZACIONES_CREAR']],
+  ['promociones','ventas','Promociones y descuentos','/promociones','activity','Reglas comerciales, vigencias e historial.',['PROMOCIONES_CONSULTAR']],
   ['clientes','ventas','Clientes','/clientes','user','Información y relaciones comerciales.',['CLIENTES_CONSULTAR']],
   ['devoluciones','ventas','Devoluciones','/devoluciones','receipt','Gestionar la posventa.',['DEVOLUCIONES_CONSULTAR']],
   ['garantias','ventas','Garantías','/garantias','shield','Seguimiento de garantías.',['GARANTIAS_CONSULTAR']],
@@ -19,7 +20,7 @@ const modules = [
   ['usuarios','administracion','Usuarios y Roles','/usuarios','users','Administrar cuentas y accesos.',['USUARIOS_ADMINISTRAR']],
   ['password','administracion','Seguridad de cuenta','/cambiar-password','key','Cambiar tu contraseña.',[]],
 ].map(([id,area,name,route,icon,description,permissions],order)=>Object.freeze({id,area,name,route,icon,description,permissions:Object.freeze(permissions),permissionMode:'any',available:true,order}));
-const planned = [ ['compras-p3','compras','Órdenes de compra'],['promociones','ventas','Promociones y descuentos'],['creditos','finanzas','Cuentas por cobrar y créditos'],['multibodega','inventario','Gestión multibodega'],['auditoria-ddl','administracion','Auditoría DDL'] ].map(([id,area,name],order)=>Object.freeze({id,area,name,route:null,available:false,order:100+order,permissions:[]}));
+const planned = [ ['compras-p3','compras','Órdenes de compra'],['creditos','finanzas','Cuentas por cobrar y créditos'],['multibodega','inventario','Gestión multibodega'],['auditoria-ddl','administracion','Auditoría DDL'] ].map(([id,area,name],order)=>Object.freeze({id,area,name,route:null,available:false,order:100+order,permissions:[]}));
 function visibleAreas(user){
  const permissions=user?.permisos||[];
  return areas.map(area=>({...area,modules:modules.filter(m=>m.area===area.id && (!m.permissions.length||m.permissions.some(p=>permissions.includes(p)))).map(m=>({...m,route:m.id==='cotizaciones'&&!permissions.includes('COTIZACIONES_CONSULTAR')?'/cotizaciones/nueva':m.route}))}));
