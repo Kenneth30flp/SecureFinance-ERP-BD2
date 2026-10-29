@@ -32,6 +32,21 @@ identidad textual de la factura sigue capturándose al facturar según 39.
 Las firmas y fuentes descritas abajo corresponden a la base Parte II; para
 extender el motor después de UC09 partir de 43, conservando la compatibilidad.
 
+## Extensión de Promociones autorizada en la rama de José
+
+La rama `feature/p3-jose-promociones` implementa el contrato de
+[promociones/README.md](promociones/README.md) sobre la base de Cotizaciones
+41–43: migraciones 60–63 (prefijo `P3_PRO_`). La migración 63 añade al final
+`@P3AplicarPromociones BIT = 0` a `sp_ProcesarVentaTransaccional` y a
+`sp_ERP_ProcesarVenta`; con `0`/`NULL` el camino, la huella SHA-256, el TVP y
+los recordsets son idénticos a la migración 43. Node solo envía `1` desde
+Facturación de contado cuando la extensión está instalada; una cotización
+convertida (`@P3CotizacionId` no nulo) nunca combina con `1` (rechazo
+explícito, error 57111): conserva el precio pactado congelado por Kenneth sin
+reevaluar promociones. Por línea, José resuelve el mayor entre el descuento
+manual y la mejor promoción elegible; nunca se acumulan. Ver
+[resultados verificados](promociones/RESULTADOS.md).
+
 ## Base técnica y alcance
 
 El responsable de integración autorizó expresamente el commit

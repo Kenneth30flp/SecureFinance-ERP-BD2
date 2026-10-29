@@ -17,7 +17,15 @@ const erroresSQL = new Map([
   [52008, 'Uno de los productos no existe.'],
   [52009, 'Uno de los productos está inactivo.'],
   [52010, 'Stock insuficiente. Actualiza la página y revisa las cantidades.'],
+  [57105, 'Las reglas promocionales se están actualizando. Intenta nuevamente en unos segundos.'],
+  [57112, 'No fue posible validar la promoción. La venta no se registró.'],
 ]);
+
+// Promociones (José, 63): se aplican siempre en SQL cuando la extensión está instalada.
+async function promocionesActivas(ventaService) {
+  if (typeof ventaService.promocionesInstaladas !== 'function') return false;
+  try { return await ventaService.promocionesInstaladas(); } catch { return false; }
+}
 
 function enteroPositivo(value) {
   if (typeof value !== 'number' && (typeof value !== 'string' || !/^[1-9]\d{0,9}$/.test(value))) return null;
@@ -29,15 +37,15 @@ function createVentaController(ventaService) {
   return {
     async mostrar(req, res) {
       try {
-        const [clientes, productos, politica] = await Promise.all([
+        const [clientes, productos, politica, promociones] = await Promise.all([
           ventaService.listarClientes(), ventaService.listarProductos(),
-          ventaService.obtenerPolitica(req.session.usuario.usuarioId),
+          ventaService.obtenerPolitica(req.session.usuario.usuarioId), promocionesActivas(ventaService),
         ]);
         // Token limitado a facturación, sin modificar autenticación ni sesiones globales.
         req.session.ventaCsrf ||= randomBytes(32).toString('hex');
         req.session.ventaOperacion = randomUUID();
         return res.render('facturacion', {
-          usuario: req.session.usuario, clientes, productos, politica, csrf: req.session.ventaCsrf, operacionId:req.session.ventaOperacion,
+          usuario: req.session.usuario, clientes, productos, politica, promociones, csrf: req.session.ventaCsrf, operacionId:req.session.ventaOperacion,
         });
       } catch (error) {
         if (error.number === 52013 || error.number === 52007) return res.status(403).type('text').send('No tienes permiso para registrar ventas.');
@@ -88,13 +96,17 @@ function createVentaController(ventaService) {
         if (lineas.some((linea) => linea.DescuentoPorcentaje > Number(politica.MaxDescuento))) {
           return res.status(400).json({ error: `El descuento máximo autorizado para tu rol es ${Number(politica.MaxDescuento)}%.` });
         }
-        const venta = await ventaService.procesarVenta(clienteId, usuarioId, lineas,
-          lineas.some((linea) => linea.DescuentoPorcentaje > 0) ? MotivoDescuento : null,operacionId);
+        const aplicarPromociones = await promocionesActivas(ventaService);
+        const argumentos = [clienteId, usuarioId, lineas,
+          lineas.some((linea) => linea.DescuentoPorcentaje > 0) ? MotivoDescuento : null, operacionId];
+        // Sin la extensión 63 se conserva la llamada histórica de cinco argumentos.
+        if (aplicarPromociones) argumentos.push({ aplicarPromociones: true });
+        const venta = await ventaService.procesarVenta(...argumentos);
         return res.status(201).json({ venta });
       } catch (error) {
         if(error.number===54803)return res.status(409).json({error:'La referencia corresponde a otra venta o está ocupada. Consulta el comprobante antes de continuar.'});
         const message = erroresSQL.get(error.number);
-        if (message) return res.status(error.number === 52013 || error.number === 52007 ? 403 : error.number === 52010 ? 409 : 400).json({ error: message });
+        if (message) return res.status(error.number === 52013 || error.number === 52007 ? 403 : [52010, 57105].includes(error.number) ? 409 : 400).json({ error: message });
         // Un timeout puede suceder después del COMMIT: no reintentar automáticamente.
         return res.status(503).json({ error: 'No fue posible confirmar el resultado. Consulta con el responsable antes de volver a enviar la venta.' });
       }

@@ -35,6 +35,8 @@ const { createAnaliticaService } = require('./src/modules/jose/analiticaService'
 const { createAnaliticaRoutes } = require('./src/modules/jose/analiticaRoutes');
 const { createCotizacionService } = require('./src/modules/cotizaciones/service');
 const { createCotizacionRoutes } = require('./src/modules/cotizaciones/routes');
+const { createPromocionService } = require('./src/modules/promociones/service');
+const { createPromocionRoutes } = require('./src/modules/promociones/routes');
 
 function createApp({
   secret = process.env.SESSION_SECRET,
@@ -49,6 +51,7 @@ function createApp({
   kennethServices = { productos:createProductoService(), proveedores:createProveedorService(), clientes:createClienteService(), inventario:createInventarioService(), photos:createFotografiaService() },
   analiticaService = createAnaliticaService(),
   cotizacionService = createCotizacionService(),
+  promocionService = createPromocionService(),
   production = process.env.NODE_ENV === 'production',
 } = {}) {
   if (!secret || secret.trim().length < 32) {
@@ -98,7 +101,7 @@ function createApp({
   app.use(createPasswordRoutes(passwordService, { production }));
 
   // Facturación de Edward
-  app.use(createVentaRoutes(ventaService,facturaService));
+  app.use(createVentaRoutes(ventaService,facturaService,promocionService));
   app.use(createEdwardRoutes(edwardService));
 
   // Auditoría de José
@@ -107,6 +110,8 @@ function createApp({
   app.use(createUsuarioRoutes(usuarioService));
   app.use(createKennethRoutes(kennethServices));
   app.use(createCotizacionRoutes(cotizacionService));
+  // Promociones de José (Parte III, migraciones 60-63)
+  app.use(createPromocionRoutes(promocionService));
 
   app.get('/health', (req, res) =>
     res.json({ status: 'ok', phase: 3 })

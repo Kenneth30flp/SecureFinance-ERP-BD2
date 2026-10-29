@@ -1,0 +1,2 @@
+<% const minima=p.CantidadMinima?(' desde '+p.CantidadMinima+' unidades'):'';
+const tope=p.TopeDescuento?(' · tope '+proMoney(p.TopeDescuento)+' por línea'):''; %><%= p.TipoCodigo==='DOS_POR_UNO'?'Paga 1 de cada 2 unidades iguales':(p.Porcentaje+'% sobre la línea'+(p.TipoCodigo==='CATEGORIA'?' de la categoría':'')+minima) %><%= tope %>

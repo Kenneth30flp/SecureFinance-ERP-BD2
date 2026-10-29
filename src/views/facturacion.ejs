@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="stylesheet" href="/css/facturas.css">
+  <link rel="stylesheet" href="/css/promociones.css">
   <script src="/js/messages.js" defer></script>
   <script src="/js/operationalDates.js" defer></script>
   <script src="/js/facturacion.js" defer></script>
@@ -23,7 +24,7 @@
     </div>
     <noscript><p class="alert alert-warning">Activa JavaScript para preparar y procesar la venta.</p></noscript>
     <div id="mensaje" class="alert d-none" role="status" aria-live="polite" tabindex="-1"></div>
-    <form id="venta-form" data-operacion-id="<%= operacionId %>" data-max-descuento="<%= politica.MaxDescuento %>">
+    <form id="venta-form" data-operacion-id="<%= operacionId %>" data-max-descuento="<%= politica.MaxDescuento %>" data-promociones="<%= typeof promociones!=='undefined' && promociones?'true':'false' %>">
       <fieldset id="venta-campos">
         <legend class="visually-hidden">Datos de la venta</legend>
         <div class="sale-layout">
@@ -76,6 +77,7 @@
             </div>
             <p id="sin-lineas" class="empty-state">Agrega productos para comenzar.</p>
             <p class="summary-note">Descuento máximo autorizado: <strong><%= Number(politica.MaxDescuento) %>%</strong>. Stock e importes sujetos a verificación al confirmar.</p>
+            <% if (typeof promociones!=='undefined' && promociones) { %><p class="summary-note" id="promociones-nota">Promociones vigentes: SQL aplica por línea el mayor beneficio entre tu descuento y la mejor promoción, sin acumularlos. Vista previa informativa.</p><% } %>
             </div></section></div></div>
         <section class="sale-summary" aria-labelledby="resumen-title"><div class="panel-body">
             <p class="eyebrow">CAJA / COMPROBANTE</p><h2 id="resumen-title">Resumen de operación</h2><p class="receipt-meta summary-party"><span>Cliente</span><strong class="summary-client-name">Sin seleccionar</strong></p>
@@ -111,6 +113,7 @@
       <div class="panel-body">
         <div class="receipt-heading"><div><p class="eyebrow">SECUREFINANCE ERP / COMPROBANTE INTERNO</p><h2 id="comprobante-titulo">Operación completada</h2></div><span class="status-badge status-success">REGISTRADA</span></div>
         <dl class="receipt-information"><dt>Factura</dt><dd id="recibo-factura"></dd><dt>Cliente</dt><dd id="recibo-cliente"></dd><dt>NIT</dt><dd id="recibo-nit"></dd><dt>Cajero</dt><dd id="recibo-cajero"></dd><dt>Fecha · Guatemala (UTC−6)</dt><dd id="recibo-fecha"></dd><dt>Motivo de descuentos</dt><dd id="recibo-motivo"></dd></dl>
+        <ul id="recibo-promociones" class="confirmation-lines" aria-label="Promociones aplicadas" hidden></ul>
         <div class="table-responsive"><table class="table table-modern receipt-table"><caption>Detalle de la operación</caption><thead><tr><th scope="col">Producto</th><th scope="col">Cant.</th><th scope="col">Precio</th><th scope="col">Descuento</th><th scope="col">Ahorro</th><th scope="col">Neto</th></tr></thead><tbody id="recibo-detalle"></tbody></table></div>
         <dl class="sale-totals receipt-totals"><dt>Subtotal bruto</dt><dd id="recibo-subtotal"></dd><dt>Descuento</dt><dd id="recibo-descuento" class="discount-reduction"></dd><dt>Subtotal neto</dt><dd id="recibo-neto"></dd><dt>IVA (12%)</dt><dd id="recibo-iva"></dd><dt class="total-label">Total</dt><dd id="recibo-total" class="money-total"></dd></dl>
         <p class="summary-note">Comprobante interno / académico. No constituye factura electrónica SAT.</p>
