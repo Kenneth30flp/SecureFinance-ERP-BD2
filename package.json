@@ -11,6 +11,8 @@
     "check:ddl": "node --check src/services/auditoriaDdlService.js && node --check src/controllers/auditoriaDdlController.js && node --check src/routes/auditoriaDdlRoutes.js && node --check tests/auditoria-ddl.test.js",
     "test:ddl": "node --test tests/auditoria-ddl.test.js",
     "test": "node --test tests/*.test.js",
+    "test:creditos": "node --test tests/creditos*.test.js",
+    "check:creditos": "node --check src/modules/creditos/validation.js && node --check src/modules/creditos/service.js && node --check src/modules/creditos/routes.js && node --check src/public/js/creditos.js && node --check scripts/creditosMigrationPlan.js && node --check tests/creditos.test.js && node --check tests/creditos-contract.test.js && node --check tests/creditos-browser.test.js",
     "test:sql:cotizaciones": "node database/tests/CotizacionesIntegration.js",
     "test:sql:uc09": "node database/tests/CotizacionesUC09Integration.js",
     "start:lab:cotizaciones": "node scripts/startCotizacionesLab.js",

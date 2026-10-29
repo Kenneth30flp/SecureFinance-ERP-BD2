@@ -1,0 +1,14 @@
+<%- include('head',{title:'Caja unificada'}) %>
+<section class="cre-panel"><header class="cre-section"><h2>Efectivo registrado</h2><span>Consulta propia de Creditos / GTQ</span></header>
+<p>Contado historico mas recibos de abonos. No suma el total de las ventas financiadas ni modifica los dashboards e informes legacy.</p>
+<form method="get" action="/creditos/caja" class="cre-filter">
+<label>Desde<input class="form-control" type="date" name="desde" value="<%= f.desde %>"></label>
+<label>Hasta<input class="form-control" type="date" name="hasta" value="<%= f.hasta %>"></label>
+<button class="btn btn-primary">Consultar cobros</button><a href="/creditos/caja">Limpiar</a></form>
+<dl class="cre-totals"><div><dt>Contado</dt><dd><%= creMoney(caja.resumen.EfectivoContado) %></dd></div><div><dt>Efectivo por abonos</dt><dd><%= creMoney(caja.resumen.EfectivoAbonos) %></dd></div><div class="cre-available"><dt>Efectivo total</dt><dd><%= creMoney(caja.resumen.EfectivoTotal) %></dd></div></dl>
+<div class="cre-table-scroll"><table class="cre-ledger"><caption>Fechas de cobro presentadas en Guatemala. Los totales abarcan todo el rango, no solo esta pagina.</caption>
+<thead><tr><th>Origen</th><th>Documento</th><th>Factura</th><th>Fecha de cobro</th><th>Monto</th></tr></thead><tbody>
+<% caja.movimientos.forEach(m=>{ %><tr><th scope="row"><%= m.Origen %></th><td><% if(m.Origen==='ABONO'){ %><a href="/creditos/recibos/<%= m.AbonoId %>">REC-<%= m.DocumentoId %></a><% }else{ %>CAJA-<%= m.DocumentoId %><% } %></td><td>FAC-<%= m.FacturaId %></td><td><%- include('../partials/operational-date',{value:m.FechaHora}) %></td><td class="cre-money"><%= creMoney(m.Monto) %></td></tr><% }); %>
+<% if(!caja.movimientos.length){ %><tr><td colspan="5" class="cre-empty">Sin movimientos de caja para este rango.</td></tr><% } %></tbody></table></div>
+<% const page=p=>'/creditos/caja?'+new URLSearchParams({desde:f.desde,hasta:f.hasta,pagina:String(p)}); %>
+<nav class="cre-pagination" aria-label="Paginacion de caja"><span>Pagina <%= f.pagina %></span><% if(f.pagina>1){ %><a href="<%= page(f.pagina-1) %>">Anterior</a><% } %><% if(caja.next){ %><a href="<%= page(f.pagina+1) %>">Siguiente</a><% } %></nav></section></main></body></html>

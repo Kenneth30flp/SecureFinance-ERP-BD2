@@ -1,0 +1,70 @@
+<%- include('head',{title:'Cuentas por cobrar'}) %>
+<% const can=p=>usuario.permisos.includes(p); const selected=f.FacturaId?cuentas.find(c=>c.FacturaId===f.FacturaId):null; %>
+<section class="cre-panel" aria-labelledby="cre-cash-title"><header class="cre-section"><h2 id="cre-cash-title">Efectivo recibido por abonos</h2><a href="/creditos/caja?<%= new URLSearchParams({desde:f.desde,hasta:f.hasta}) %>">Consultar caja unificada</a></header>
+<dl class="cre-totals"><div class="cre-available"><dt>Cobros de credito confirmados</dt><dd><%= creMoney(caja.resumen.EfectivoAbonos) %></dd></div></dl>
+<p>Todos los clientes; solo aplica el rango de fechas del filtro, por fecha de cobro. No incluye deuda de facturas ni se limita a la pagina de recibos.</p></section>
+<section class="cre-panel" id="estado-cuenta"><header class="cre-section"><div><span class="cre-number">01</span><h2>Cartera de clientes</h2></div><span>GTQ / Fechas de Guatemala</span></header>
+<form method="get" action="/creditos" class="cre-filter">
+ <label>Cliente ID<input class="form-control" name="clienteId" inputmode="numeric" pattern="[1-9][0-9]*" value="<%= f.ClienteId||'' %>" placeholder="Consultar o autorizar"></label>
+ <label>Factura ID<input class="form-control" name="facturaId" inputmode="numeric" pattern="[1-9][0-9]*" value="<%= f.FacturaId||'' %>"></label>
+ <label>Estado<select class="form-select" name="estado"><option value="">Todos</option><% ['PENDIENTE','PARCIAL','PAGADA','VENCIDA'].forEach(s=>{ %><option <%= f.estado===s?'selected':'' %>><%= s %></option><% }); %></select></label>
+ <label>Desde<input class="form-control" type="date" name="desde" value="<%= f.desde %>"></label>
+ <label>Hasta<input class="form-control" type="date" name="hasta" value="<%= f.hasta %>"></label>
+ <button class="btn btn-primary">Consultar</button><a href="/creditos">Limpiar</a>
+</form>
+<% if(perfil){ %>
+<div class="cre-profile"><div><p class="eyebrow">CLIENTE <%= perfil.ClienteId %> / NIT <%= perfil.NIT %></p><h3><%= perfil.Nombre %></h3><p><%= perfil.ClienteActivo?'Cliente activo':'Cliente inactivo' %> / <%= perfil.Version?(perfil.Activo?'Credito autorizado':'Credito desactivado'):'Sin autorizacion de credito' %></p></div>
+<dl class="cre-totals"><div><dt>Limite autorizado</dt><dd><%= perfil.Limite===null?'No autorizado':creMoney(perfil.Limite) %></dd></div><div><dt>Deuda actual</dt><dd><%= creMoney(perfil.Deuda) %></dd></div><div class="cre-available"><dt>Disponible derivado</dt><dd><%= perfil.Disponible===null?'No autorizado':creMoney(perfil.Disponible) %></dd></div></dl></div>
+<% }else if(f.ClienteId){ %><p class="cre-empty">No se encontro el cliente solicitado.</p><% } %>
+<% if(perfil && perfil.SaldoVencido!==undefined){ %>
+<dl class="cre-totals"><div><dt>Saldo moroso</dt><dd><%= creMoney(perfil.SaldoVencido) %></dd></div><div><dt>Dias de mora</dt><dd><%= perfil.DiasMora %></dd></div><div><dt>Fecha de corte</dt><dd><%- include('../partials/operational-date',{value:perfil.FechaCorte}) %></dd></div></dl>
+<p>Autorizado por actor <%= perfil.AutorizadoPor??'No autorizado' %> / <%- include('../partials/operational-date',{value:perfil.FechaAutorizacion}) %>. Mora calculada sobre cuotas vencidas e impagas, no sobre facturas ya canceladas.</p>
+<% } %>
+<div class="cre-table-scroll"><table class="cre-ledger"><caption>Facturas a credito. El vencimiento se deriva de cuotas impagas a la hora de consulta.</caption><thead><tr><th>Documento</th><th>Cliente</th><th>Vencimiento final</th><th>Total</th><th>Saldo</th><th>Estado</th><th>Consultar</th></tr></thead><tbody>
+<% cuentas.forEach(c=>{ %><tr><th scope="row">FAC-<%= c.FacturaId %><small><%- include('../partials/operational-date',{value:c.FechaHora}) %></small></th><td><%= c.Cliente %><small>NIT <%= c.NIT %></small></td><td><%- include('../partials/operational-date',{value:c.VenceEn}) %></td><td class="cre-money"><%= creMoney(c.Total) %></td><td class="cre-money"><%= creMoney(c.Saldo) %></td><td><span class="cre-state cre-state-<%= c.Estado %>"><%= c.Estado %></span></td><td><a href="/creditos?clienteId=<%= c.ClienteId %>&amp;facturaId=<%= c.FacturaId %>#cuotas">Cuotas y abonos</a><small><a href="/creditos?clienteId=<%= c.ClienteId %>">Estado de cuenta</a></small></td></tr><% }); %>
+<% if(!cuentas.length){ %><tr><td colspan="7" class="cre-empty">No hay cuentas para estos filtros. Las ventas de contado no se convierten retroactivamente en deuda.</td></tr><% } %>
+</tbody></table></div>
+<% const page=p=>'/creditos?'+new URLSearchParams({clienteId:f.ClienteId||'',facturaId:f.FacturaId||'',estado:f.estado,desde:f.desde,hasta:f.hasta,pagina:String(p)}); %>
+<nav class="cre-pagination" aria-label="Paginacion de cuentas"><span>Pagina <%= f.pagina %></span><% if(f.pagina>1){ %><a href="<%= page(f.pagina-1) %>">Anterior</a><% } %><% if(next){ %><a href="<%= page(f.pagina+1) %>">Siguiente</a><% } %></nav></section>
+
+<% if(f.FacturaId){ %><section class="cre-panel" id="cuotas"><header class="cre-section"><div><span class="cre-number">02</span><h2>Plan / FAC-<%= f.FacturaId %></h2></div><span>Aplicacion FIFO por vencimiento</span></header>
+<div class="cre-table-scroll"><table class="cre-ledger"><thead><tr><th>Cuota</th><th>Vencimiento</th><th>Importe</th><th>Abonado</th><th>Saldo</th><th>Estado</th></tr></thead><tbody><% cuotas.forEach(q=>{ %><tr><th scope="row"><%= q.Numero %></th><td><%- include('../partials/operational-date',{value:q.VenceEn}) %></td><td><%= creMoney(q.Importe) %></td><td><%= creMoney(q.Abonado) %></td><td><%= creMoney(q.Saldo) %></td><td><span class="cre-state cre-state-<%= q.Estado %>"><%= q.Estado %></span></td></tr><% }); %><% if(!cuotas.length){ %><tr><td colspan="6">Sin plan disponible para esta factura y cliente.</td></tr><% } %></tbody></table></div></section><% } %>
+
+<div class="cre-actions">
+<% if(can('CREDITOS_ABONAR')){ %><section class="cre-panel" id="abonar"><header class="cre-section"><div><span class="cre-number">03</span><h2>Registrar abono</h2></div></header><p>No admite sobrepagos. Un recibo por abono, sin alterar la caja historica.</p>
+<form action="/creditos/abonos" method="post" data-cre-form="abono" class="cre-form">
+<input type="hidden" name="csrf" value="<%= csrf %>"><input type="hidden" name="OperacionId" value="<%= ops.abono %>">
+<label>Cliente ID<input class="form-control" name="ClienteId" inputmode="numeric" pattern="[1-9][0-9]*" required value="<%= f.ClienteId||selected?.ClienteId||'' %>"></label>
+<label>Factura ID<input class="form-control" name="FacturaId" inputmode="numeric" pattern="[1-9][0-9]*" required value="<%= f.FacturaId||'' %>"></label>
+<label>Monto GTQ<input class="form-control" name="Monto" inputmode="decimal" maxlength="20" placeholder="0.00" required></label>
+<label class="cre-wide">Referencia documental<input class="form-control" name="Referencia" maxlength="100" required></label>
+<p class="cre-reference cre-wide">UUID <code data-cre-operation><%= ops.abono %></code></p><button class="btn btn-primary cre-wide">Confirmar abono</button></form></section><% } %>
+
+<% if(can('CREDITOS_ADMINISTRAR')&&perfil){ %><section class="cre-panel" id="perfil"><header class="cre-section"><div><span class="cre-number">04</span><h2>Autorizacion de credito</h2></div></header><p>Crear, actualizar o desactivar. La baja es logica y nunca elimina deuda ni historia.</p>
+<form action="/creditos/perfil" method="post" data-cre-form="perfil" class="cre-form">
+<input type="hidden" name="csrf" value="<%= csrf %>"><input type="hidden" name="OperacionId" value="<%= ops.perfil %>"><input type="hidden" name="ClienteId" value="<%= perfil.ClienteId %>"><input type="hidden" name="VersionEsperada" value="<%= perfil.Version||'' %>">
+<label>Estado<select name="Activo" class="form-select"><option value="1" <%= perfil.Activo?'selected':'' %>>Activo</option><option value="0" <%= perfil.Version&&!perfil.Activo?'selected':'' %>>Desactivado</option></select></label>
+<label>Limite GTQ<input class="form-control" name="Limite" inputmode="decimal" maxlength="20" required value="<%= perfil.Limite||'' %>"></label>
+<label>Plazo maximo (dias)<input class="form-control" type="number" min="1" max="3650" name="PlazoDias" required value="<%= perfil.PlazoDias||'' %>"></label>
+<label class="cre-wide">Motivo de autorizacion o cambio<textarea class="form-control" name="Motivo" maxlength="250" required></textarea></label>
+<p class="cre-reference cre-wide">Version <code><%= perfil.Version||'ALTA' %></code> / UUID <code data-cre-operation><%= ops.perfil %></code></p><button class="btn btn-primary cre-wide">Guardar autorizacion</button></form></section>
+<% }else if(can('CREDITOS_ADMINISTRAR')){ %><section class="cre-panel"><h2>Autorizar un cliente</h2><p>Consulta un Cliente ID en el filtro superior para crear o actualizar su perfil con la version vigente.</p></section><% } %>
+</div>
+
+<section class="cre-panel" id="conversion"><header class="cre-section"><div><span class="cre-number">05</span><h2>De cotizacion a credito</h2></div><span>Precios congelados en SQL</span></header>
+<p>Usa una cotizacion activa y no vencida. El mismo motor valida stock, descuentos e IVA. La venta genera deuda y cuotas, no un ingreso de contado.</p>
+<% if(can('CREDITOS_FACTURAR')&&can('COTIZACIONES_CONVERTIR')&&can('VENTAS_REGISTRAR')){ %>
+<form action="/creditos/conversiones" method="post" data-cre-form="conversion" class="cre-form cre-conversion">
+<input type="hidden" name="csrf" value="<%= csrf %>"><input type="hidden" name="OperacionId" value="<%= ops.conversion %>">
+<label>Cotizacion ID<input class="form-control" name="CotizacionId" inputmode="numeric" pattern="[1-9][0-9]*" required></label>
+<label>Plazo total (dias)<input class="form-control" type="number" name="PlazoDias" min="1" max="3650" required></label>
+<label>Numero de cuotas<input class="form-control" type="number" name="NumeroCuotas" min="1" max="120" value="1" required></label>
+<label>Bodega ID opcional<input class="form-control" name="BodegaId" inputmode="numeric" pattern="[1-9][0-9]*" aria-describedby="cre-bodega-help"></label>
+<p id="cre-bodega-help" class="cre-wide">Vacio: inventario global existente. Si indicas bodega, se exige el helper de validacion multibodega; si falta, se rechaza sin facturar.</p>
+<p class="cre-reference cre-wide">UUID <code data-cre-operation><%= ops.conversion %></code></p><button class="btn btn-primary cre-wide">Facturar a credito</button></form>
+<% }else{ %><p>Requiere CREDITOS_FACTURAR, COTIZACIONES_CONVERTIR y VENTAS_REGISTRAR. Cajero no recibe autorizacion para facturar a credito por defecto.</p><% } %></section>
+
+<section class="cre-panel"><header class="cre-section"><div><span class="cre-number">06</span><h2>Recibos recientes</h2></div><span>Ultimos 20 / filtros de cliente y factura</span></header>
+<div class="cre-table-scroll"><table class="cre-ledger"><thead><tr><th>Recibo</th><th>Factura</th><th>Fecha</th><th>Monto</th><th>Saldo al confirmar</th><th>Referencia</th></tr></thead><tbody><% abonos.forEach(a=>{ %><tr><th><a href="/creditos/recibos/<%= a.AbonoId %>">REC-<%= a.ReciboId %></a></th><td>FAC-<%= a.FacturaId %></td><td><%- include('../partials/operational-date',{value:a.FechaHora}) %></td><td><%= creMoney(a.Monto) %></td><td><%= creMoney(a.SaldoPosterior) %></td><td><%= a.Referencia %></td></tr><% }); %><% if(!abonos.length){ %><tr><td colspan="6">No hay abonos registrados para este cliente o factura.</td></tr><% } %></tbody></table></div></section>
+<section class="cre-panel"><h2>Historia de autorizaciones y movimientos</h2><p>Ultimos 20 eventos del cliente o factura. Fechas UTC presentadas en Guatemala.</p><ol class="cre-history"><% historial.forEach(h=>{ %><li><strong><%= h.Evento %></strong> / actor <%= h.ActorUsuarioId %> / <%- include('../partials/operational-date',{value:h.FechaHora}) %><p><%= h.Motivo %></p><small>UUID <%= h.OperacionId %></small></li><% }); %><% if(!historial.length){ %><li>Sin eventos para esta consulta.</li><% } %></ol></section>
+</main></body></html>
