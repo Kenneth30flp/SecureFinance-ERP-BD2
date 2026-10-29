@@ -63,3 +63,26 @@ seis modulos ni el 100% del proyecto academico.
 
 Revision detallada y matriz de permisos/replay/inactividad:
 [REVISION_COMPATIBILIDAD.md](REVISION_COMPATIBILIDAD.md).
+
+## ADICION 2026-10-29: Concurrencia REAL de abonos ejecutada EN EL LAB (3/3 PASS)
+
+Se ejecuto `database/tests/P3_CRE_Concurrencias.ps1` (ADO.NET, DOS sesiones
+SqlClient simultaneas contra `SecureFinanceERP_Lab_Dylan`, actor sintetico
+`P3_DYLAN_QA_ADMIN` con CREDITOS_ABONAR/FACTURAR/ADMINISTRAR verificados).
+La cuenta por cobrar nace EXCLUSIVAMENTE del motor compartido:
+`P3_COT_Crear` -> `P3_CRE_ConvertirCotizacionCredito` (extension 76 instalada
+en lab); NUNCA se inserta Factura directamente. Fixture persistente sin
+rollback final: Cliente 32, Producto 36 (stock solo via Kardex), COT 40
+(total 2000.00), Factura 25, 2 cuotas x 1000.00.
+
+- C1 replay del mismo OperacionId con los mismos datos en ambas sesiones: 1 abono, 1 recibo, saldo 1700.00 (descuentado exactamente una vez). PASS.
+- C2 mismo OperacionId con otra carga (monto 300.01): rechazo 57003 'Referencia de abono reutilizada con otros datos.', saldo invariante. PASS.
+- C3 dos OperacionId distintos compiten por el mismo saldo (1000+1000 sobre 1700, arranque asincronico 50 ms): exactamente uno confirma, el otro 57006 'El abono excede el saldo pendiente.'; saldo final 700.00 == conciliacion de cuotas (SUM Importe-Abonado), 2 abonos totales. Los intentos rechazados no dejaron filas (rollback atomico). PASS.
+
+Evidencia con numeros exactos: `docs/parte3/creditos/EVIDENCIA_SQL_CRE_CONCURRENCIA.txt`
+(JSON crudo en `%TEMP%\opencode\P3_CRE_Concurrencias.json`). No se modifico
+`sp_RegistrarAbonoCliente`, el schema P3_CRE_* ni el engine 43; el defecto
+detectado durante la corrida fue del PROPIO script de prueba (pasaje de monto
+posicional `[decimal]` en argument mode de PowerShell 5.1), corregido en el
+script, no en el SQL del modulo. La extension 76 SIGUE PROPOSED pendiente de
+revision escrita de Kenneth.
