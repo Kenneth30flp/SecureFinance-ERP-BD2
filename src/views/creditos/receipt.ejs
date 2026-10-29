@@ -1,0 +1,8 @@
+<%- include('head',{title:'Recibo de abono'}) %>
+<article class="cre-panel cre-receipt"><header class="cre-section"><div><span class="cre-number">CAJA / CREDITO</span><h2>REC-<%= recibo.ReciboId %></h2></div><button class="btn btn-outline-primary" type="button" data-cre-print>Imprimir</button></header>
+<p class="cre-receipt-amount"><%= creMoney(recibo.Monto) %></p><p>Ingreso por abono. Documento interno, no comprobante fiscal.</p>
+<dl class="cre-receipt-fields"><dt>Factura / Cliente</dt><dd>FAC-<%= recibo.FacturaId %> / Cliente <%= recibo.ClienteId %></dd><dt>Fecha</dt><dd><%- include('../partials/operational-date',{value:recibo.FechaHora}) %></dd><dt>Referencia documental</dt><dd><%= recibo.Referencia %></dd><dt>Actor</dt><dd><%= recibo.ActorUsuarioId %></dd><dt>Saldo posterior a este abono</dt><dd><%= creMoney(recibo.SaldoPosterior) %></dd><dt>Abono ID</dt><dd><%= recibo.AbonoId %></dd><dt>Operacion</dt><dd><code><%= recibo.OperacionId %></code></dd></dl>
+<% if(recibo.SaldoAnterior!==undefined){ %><p>Saldo anterior al abono: <strong><%= creMoney(recibo.SaldoAnterior) %></strong></p><% } %>
+<p>El saldo mostrado es el confirmado en este recibo inmutable, no necesariamente el saldo actual.</p>
+<table class="cre-ledger"><caption>Distribucion FIFO de este abono</caption><thead><tr><th>Cuota</th><th>Monto aplicado</th></tr></thead><tbody><% aplicaciones.forEach(a=>{ %><tr><th scope="row"><%= a.Numero %></th><td><%= creMoney(a.Monto) %></td></tr><% }); %></tbody></table>
+<a class="btn btn-primary" href="/creditos?clienteId=<%= recibo.ClienteId %>&amp;facturaId=<%= recibo.FacturaId %>">Consultar saldo vigente</a></article></main></body></html>

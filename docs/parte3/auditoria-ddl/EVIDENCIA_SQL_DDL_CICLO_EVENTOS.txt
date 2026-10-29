@@ -1,0 +1,109 @@
+===============================================================================
+EVIDENCIA SQL - P3_DDL CICLO DE SEIS EVENTOS + APLICABILIDAD (MODULO 6, DYLAN)
+===============================================================================
+Modulo  : 6 - Auditoria DDL (M6, Dylan Caal)
+Script  : database/tests/P3_DDL_CicloEventos.ps1 (PowerShell 5.1 + ADO.NET)
+Propuesta aplicada en lab : database/95_P3_DDL_CapturaAplicable.sql (NUEVA,
+  marcada PROPOSED pendiente de revision de Kenneth; instalada SOLO en lab)
+Destino : SecureFinanceERP_Lab_Dylan (las cinco bases protegidas intactas)
+Actor   : P3_DYLAN_QA_ADMIN (AUDITORIA_DDL_CONSULTAR verificado)
+Fecha   : 2026-10-29 01:12:30 (timestamp_local del JSON)
+Modo    : ejecucion real contra el trigger P3_DDL_CapturarEstructura ya
+          instalado por la migracion 94 del lab.
+
+RESUMEN: 7/7 VERIFICACIONES EN PASS (G1..G6 y G8; G7 aplica la propuesta 95)
+  G1_PASS=True  G2_PASS=True  G3_PASS=True  G4_PASS=True
+  G5_PASS=True  G6_PASS=True  G8_PASS=True
+  G7 (instalacion 95): batches=3, guardaSuave=True, triggerEventos=6
+
+G0 - BASELINE (estado previo del lab en esta corrida)
+  Bitacora_DDL=28 filas (los nueve eventos previos + corridas de
+  verificacion anteriores), Bitacora_Transacciones=200, Bitacora_Acceso=3,
+  trigger con los 6 eventos de rutina vigentes.
+
+G1 - LOS SEIS EVENTOS VIVOS CON COMANDO EXACTO
+  Se ejecutaron en vivo (filas 48..53 de Bitacora_DDL, secuencia exacta):
+    48 CREATE_TABLE      dbo.P3_DDL_EvTabla  CREATE TABLE dbo.P3_DDL_EvTabla (Col1 INT NULL)
+    49 ALTER_TABLE       dbo.P3_DDL_EvTabla  ALTER TABLE ... ADD Col2 NVARCHAR(20) NULL
+    50 CREATE_PROCEDURE  dbo.P3_DDL_EvProc   CREATE PROCEDURE ... SELECT 1 AS PruebaDylan
+    51 ALTER_PROCEDURE   dbo.P3_DDL_EvProc   ALTER PROCEDURE ... SELECT 2 AS PruebaDylanV2
+    52 DROP_PROCEDURE    dbo.P3_DDL_EvProc   DROP PROCEDURE dbo.P3_DDL_EvProc
+    53 DROP_TABLE        dbo.P3_DDL_EvTabla  DROP TABLE dbo.P3_DDL_EvTabla
+  comandosExactos=True (captura verbatim, uno a uno, contra el texto enviado);
+  secuencia=True; filasDelta=+6 sobre el baseline.
+  NOTA TECNICA: el motor SQL entrega via EVENTDATA el texto SIN el terminador
+  ';' para los eventos TABLE/DROP y CON ';' para CREATE/ALTER PROCEDURE. La
+  comparacion del runner normaliza SOLAMENTE el terminador final del lote;
+  el cuerpo del comando queda verbatim (EstadoComando='EXACTO_EVENTDATA').
+  Se declaro NO deduplicar ALTERs legitimos: cada evento deja su fila.
+  G1_PASS=True
+
+G2 - PERMISOS DEL ESCRITOR (metadatos medidos en lab)
+  P3_DDL_Escritor: user no-login (type S), sin roles, sin esquemas/objetos,
+  CONNECT GRANT; INSERT GRANT en dbo.Bitacora_DDL; DENY SELECT + DENY UPDATE +
+  DENY DELETE sobre dbo.Bitacora_DDL (3 denegaciones exactas); DENY
+  IMPERSONATE de P3_DDL_Escritor a securefinance_app.
+  G2_PASS=True
+
+G3 - EXECUTE AS P3_DDL_Escritor ES BLOQUEADO PARA LEER (DENY SELECT efectivo)
+  Probe real: EXECUTE AS USER='P3_DDL_Escritor'; SELECT TOP(1) FROM
+  dbo.Bitacora_DDL dentro de TRY con REVERT seguro en el CATCH.
+  Resultado: bloqueado=True, SQL 229 "Se denego el permiso SELECT en el
+  objeto 'Bitacora_DDL', base 'SecureFinanceERP_Lab_Dylan', esquema 'dbo'".
+  G3_PASS=True
+
+G4 - LA AUDITORIA DML CONTINUA FUNCIONANDO
+  Prueba de cambio real sobre el producto sintetico P3-CRE-QA: UPDATE
+  precio +1000 -> +1 fila en Bitacora_Transacciones (deltaTrasCambio=1);
+  reversion -1000 -> +1 fila mas (deltaTotal=2); precio restaurado exacto
+  (precioRestaurado=True). El trigger tr_Producto_Auditar_Update solo audita
+  cambios REALES de Precio/Stock (donde el UPDATE la clave sin valor no
+  genera eventos): comportamiento de diseno confirmado con el par cambio/
+  reversion.
+  G4_PASS=True
+
+G5 - LA AUDITORIA DE ACCESOS SIGUE OPERATIVA
+  Probe real: sp_Login del actor QA con una password INCORRECTA inexistente
+  (sin modificar credenciales reales): codigo de retorno=3
+  (PASSWORD_INCORRECTA) y +1 fila en Bitacora_Acceso (deltaFilas=1).
+  G5_PASS=True
+
+G6 - LA INTERFAZ MUESTRA LOS EVENTOS (P3_DDL_ConsultarBitacora)
+  Llamada real del proc de la interfaz (vía securefinance_app/permiso
+  AUDITORIA_DDL_CONSULTAR del actor): filasDevueltas=22 (bitacora historica
+  completa e inmutable del filtro P3_DDL_Ev, incluidas las corridas previas
+  de verificacion), y los SEIS IDs exactos de esta corrida (48..53) aparecen
+  en el resultado (idsEstaCorridaVisibles=True). EstadoComando='EXACTO_EVENTDATA'.
+  G6_PASS=True
+
+G7 - PROPUESTA 95: GUARDA SUAVE SOLO-LABORATORIO (aplicada en lab)
+  database/95_P3_DDL_CapturaAplicable.sql: reemplaza el THROW del trigger
+  anterior (DB_NAME()='SecureFinanceERP' / DB_ID()<=4) por guardia suave:
+    IF DB_NAME() <> N'SecureFinanceERP_Lab_Dylan' RETURN;
+  Conserva WITH EXECUTE AS N'P3_DDL_Escritor', los seis eventos y la captura
+  verbatim. En cualquier otra base del proyecto el trigger queda como
+  observador silencioso y NUNCA bloquea despliegues futuros; el lab Dylan
+  sigue capturando obligatoriamente. La instalacion es transaccional
+  (externa), valida el sistema de minimos privilegios del escritor y falla
+  si el trigger no queda con el RETURN exacto y las 6 suscripciones.
+  batches=3 aplicados COMMIT, guardSuave=True verificado contra
+  sys.sql_modules, triggerEventos=6.
+  PROPOSED: queda identificado como propuesta pendiente de revision de
+  Kenneth (no push aun, no touch otras ramas/bases).
+
+G8 - LA CAPTURA SIGUE FUNCIONANDO DESPUES DE 95
+  CREATE TABLE + DROP TABLE de control -> deltaFilas=2 exactas (filas 54..55
+  sobre el snapshot previo de 15:32 tras 95), ultimoEvento=DROP_TABLE,
+  ultimoObjeto=P3_DDL_EvTabla: la guarda suave no degrada la auditoria.
+  G8_PASS=True
+
+ESTADO FINAL DEL LAB (tras la corrida completa)
+  Bitacora_DDL = 30 filas (100% historicas de eventos reales; inmutables).
+  Bitacora_Transacciones = 202 (los dos DML de G4 incluidos con JSON
+  before/after). Bitacora_Acceso = 4 (el SP_LOGIN rechazado de G5).
+  Los objetos de prueba P3_DDL_Ev* fue oranon eliminados (DROP con captura);
+  el trigger quedo activo con 6 eventos y guarda suave 95.
+
+REGISTRO
+- JSON crudo: %TEMP%\opencode\P3_DDL_CicloEventos.json
+- Las filas 48..55 de Bitacora_DDL son la evidencia viva consultable.

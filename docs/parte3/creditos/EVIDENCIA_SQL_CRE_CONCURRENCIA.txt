@@ -1,0 +1,67 @@
+===============================================================================
+EVIDENCIA SQL - P3_CRE CONCURRENCIA REAL DE ABONOS (ENTREGA DYLAN - MODULO 3)
+===============================================================================
+Modulo  : 3 - Creditos y cuentas por cobrar (M3, Dylan Caal)
+Script  : database/tests/P3_CRE_Concurrencias.ps1 (PowerShell 5.1 + ADO.NET,
+          dos sesiones SqlClient simultaneas, ApplicationName Dylan-CreConc-A/B)
+Destino : SecureFinanceERP_Lab_Dylan (SOLO laboratorio Dylan; sin tocar las
+          cinco bases protegidas; sin modificar credenciales ni .env)
+Actor   : P3_DYLAN_QA_ADMIN (permisos verificados: CREDITOS_ABONAR,
+          CREDITOS_FACTURAR y CREDITOS_ADMINISTRAR) via sp_ParteII_ValidarPermiso.
+Fecha   : 2026-10-29 01:05:20 (timestamp_local del JSON)
+Modo    : ejecucion real. Fixture sintetico PERSISTENTE (sin rollback al final);
+          la cuenta por cobrar nace EXCLUSIVAMENTE por el motor compartido
+          (P3_COT_Crear -> P3_CRE_ConvertirCotizacionCredito sobre el engine 43
+          con extension 76 ya instalada en el lab). NUNCA se inserta Factura.
+
+RESUMEN: 3/3 CARRERAS EN PASS
+  C1_PASS=True   C2_PASS=True   C3_PASS=True
+
+FIXTURE (datos reales de corrida, ver JSON)
+  cliente    = 32        producto     = 36 (stock entra SOLO por Kardex)
+  cotizacion = 40, total = 2000.00 (1785.71 + IVA 214.29)
+  conversion al credito: FacturaId=25, PlazoDias=30, NumeroCuotas=2
+  cuenta inicial: Saldo=2000.00, cuotas=2 x 1000.00, conciliacion=2000.00
+
+C1 - REPLAY DEL MISMO OperacionId (idempotencia de abono)
+  Sesion A: sp_RegistrarAbonoCliente UUID nuevo, Monto 300.00, Referencia
+            'QA C1 abono original' -> ok=True.
+  Sesion B: MISMO OperacionId, MISMOS datos (canonico hash-256 identico)
+            despues del commit -> ok=True.
+  Verificado: filasAbono=1 (insert UNICO), recibos=1 (recibo inmutable
+  reentregado), saldoPosterior=1700.00 (descuento exactamente una vez).
+  C1_PASS=True
+
+C2 - MISMO OperacionId CON OTROS DATOS
+  Sesion B: mismo UUID con Monto 300.01 -> rechazo.
+  numero=57003 'Referencia de abono reutilizada con otros datos.'
+  saldoPosterior=1700.00 (sin cambios). Canonico JSON distinto bajo el
+  mismo applock P3_CRE.Abono.<UUID> es defendido por la deteccion
+  del SolicitudHash.
+  C2_PASS=True
+
+C3 - CARRERA DE DOS OPERACIONES POR EL MISMO SALDO
+  Sesion A: UUID nuevo, Monto 1000.00 -> ok=True (commit).
+  Sesion B: UUID nuevo, Monto 1000.00 (arrancada 50 ms despues de A)
+            -> rechazo con numero=57006 'El abono excede el saldo
+            pendiente.', verificado que es el UNICO fallido (unoSolo=True).
+  Estado final: saldoFinal=700.00; conciliacionCuotas=700.00 (suma
+  Importe-Abonado igual al saldo: integridad financiera con UPDLOCK,
+  HOLDLOCK y applock en cada OperacionId).
+  abonosTotalFactura=2 (300.00 + 1000.00). Los intentos rechazados (C2 y
+  la carrera C3-B) NO dejaron filas: resta/rollback atomicos verificados.
+  C3_PASS=True
+
+NOTA TECNICA ADICIONAL
+  ([decimal]1000.00) por el argument mode de PowerShell 5.1; el dump de
+  diagnosticos del propio script demuestra que dicho detalle estaba en el
+  conector ADO, no en el flujo SQL del modulo.
+- El fixture es persistente por diseño (sin rollback): rastrea NIT
+  CRE<marca10> y codigo de producto P3-CRE-QA-<marca10>. Ningun abono
+  rechazado ni la devolucion del core van probe state (0 filas).
+- La corrida NO modifico: sp_RegistrarAbonoCliente, P3_CRE_Cuenta schema,
+  P3_CRE_Cuota, P3_CRE_AplicacionCuota, P3_CRE_ReciboCaja ni el engine 43.
+
+REGISTRO
+- JSON crudo: %TEMP%\opencode\P3_CRE_Concurrencias.json
+  (ademas %TEMP%\opencode\P3_CRE_Concurrencias_diag.json solo si falla).

@@ -36,3 +36,14 @@ test('Centro de módulos exige sesión; perfil sin permisos no recibe enlaces re
  assert.ok(html.includes('Tu cuenta no tiene funciones habilitadas'));
  for(const route of ['/facturacion','/cotizaciones','/usuarios','/auditoria'])assert.ok(!html.includes('href="'+route+'"'));
 });
+test('catalogo: visibilidad DDL independiente del permiso de auditoria DML',()=>{
+ const visible=permisos=>visibleAreas({permisos}).flatMap(area=>area.modules);
+ for(const permisos of [[],['AUDITORIA_CONSULTAR'],['USUARIOS_ADMINISTRAR']]){
+  assert.ok(!visible(permisos).some(module=>module.id==='auditoria-ddl'));
+ }
+ const ddl=visible(['AUDITORIA_DDL_CONSULTAR']);
+ assert.equal(ddl.find(module=>module.id==='auditoria-ddl').route,'/auditoria/ddl');
+ assert.ok(!ddl.some(module=>module.id==='auditoria'));
+ const both=visible(['AUDITORIA_CONSULTAR','AUDITORIA_DDL_CONSULTAR']);
+ assert.deepEqual(both.filter(module=>['auditoria','auditoria-ddl'].includes(module.id)).map(module=>module.route).sort(),['/auditoria','/auditoria/ddl']);
+});

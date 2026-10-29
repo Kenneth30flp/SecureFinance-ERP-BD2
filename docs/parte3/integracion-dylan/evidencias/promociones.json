@@ -1,0 +1,134 @@
+{
+  "lab": "SecureFinanceERP_P3_PRO_20261029074958_097701fa",
+  "fecha": "2026-10-29T07:55:48.691Z",
+  "cuentaAplicacion": "sfapp_P3_PRO_20261029074958_097701fa",
+  "pruebas": 29,
+  "resultados": [
+    {
+      "prueba": "contrato de venta sin promociones intacto: huella historica, firma posicional y dos recordsets",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "crear promocion porcentual (inactiva) y activarla",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "crear promocion 2x1",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "crear promocion por volumen",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "crear promocion por categoria con extension incremental de categorias",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "reglas fuera de condiciones autorizadas rechazadas (tipo, minimo, porcentaje, elegibilidad, vigencia, codigo)",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "venta con promocion vigente y linea sin promocion; IVA 12% sobre neto y total",
+      "resultado": "PASS",
+      "factura": 18,
+      "total": "313.60"
+    },
+    {
+      "prueba": "venta sin promocion elegible: sin descuento ni aplicacion",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "2x1: FLOOR(cantidad/2) bonificadas; importe registrable sin superar el teorico",
+      "resultado": "PASS",
+      "tres": "999.90",
+      "dos": "1000.00"
+    },
+    {
+      "prueba": "volumen: no aplica bajo el minimo y aplica desde 3 unidades",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "categoria: producto asignado recibe la promocion",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "venta con promocion futura (PROGRAMADA) no aplica",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "promocion vencida: deja de aplicar y no se edita",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "dos reglas elegibles: se elige el mayor descuento monetario (volumen 12% > 5%)",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "empate determinista: gana la regla mas antigua",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "sin descuento doble: por linea gana el mayor entre manual y promocion, nunca la suma",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "superposicion del mismo tipo y producto rechazada",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "factura historica y comprobante conservan la promocion aplicada",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "cambiar y desactivar la regla tras la venta: factura pasada intacta (SHA/valores), historial anterior/nuevo y triggers de proteccion",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "reintento con promocion ya desactivada devuelve el mismo comprobante; otra carga o modo con la misma referencia se rechaza",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "concurrencia: 8 ventas por 5 unidades => 5 facturas con promocion y stock 0; misma referencia simultanea => una factura",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "desactivacion concurrente: la venta espera la regla y factura con el estado confirmado, sin mezcla",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "usuario sin autorizacion: cajero no consulta ni cambia reglas; DML y funcion directa denegados; vende con la regla autorizada y su tope manual 10%",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "cotizacion convertida conserva el pacto (Q201.60) sin aplicar la promocion de 25%; combinacion cotizacion+promocion rechazada",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "ROLLBACK: error en Kardex revierte factura, detalle, aplicacion, caja y stock; la misma referencia se recupera",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "vista previa SQL coincide con importes definitivos",
+      "resultado": "PASS",
+      "total": "2634.35"
+    },
+    {
+      "prueba": "dbo.fn_ObtenerDescuentoPromocional: parametros tipados, fecha de operacion, categoria y comparacion de beneficios",
+      "resultado": "PASS",
+      "Tres": 999.9,
+      "Uno": 0,
+      "Cat": 16,
+      "CatAjena": 0,
+      "Futura": 10
+    },
+    {
+      "prueba": "reinstalacion 60-63 repetible: datos, facturas e idempotencia conservados",
+      "resultado": "PASS"
+    },
+    {
+      "prueba": "CHECKDB, CHECKCONSTRAINTS y aplicaciones consistentes con DetalleFactura",
+      "resultado": "PASS"
+    }
+  ]
+}

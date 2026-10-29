@@ -1,0 +1,13 @@
+{
+  "lab": "SecureFinanceERP_P3_PRO_20261029080707_2ad3bfc6",
+  "checks": [
+    {
+      "ServerName": "9U8ICS2VLMRUE",
+      "DatabaseName": "SecureFinanceERP_P3_PRO_20261029080707_2ad3bfc6",
+      "SqlVersion": "16.0.1000.6",
+      "Contracts": 3,
+      "DdlEvents": 6
+    }
+  ],
+  "reapply": "SKIP matching manifest; no data reset"
+}
