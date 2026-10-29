@@ -1,5 +1,19 @@
 # Contratos de integración — Parte III
 
+## Compras: ordenes, recepciones y valoracion (50-55)
+
+Edward incorpora el modulo `P3_COM_` dentro de su rango 50-59. Contrato vigente,
+permisos, pantallas, laboratorio SQL Express y limitaciones en
+[Compras](compras/README.md). Reutiliza `sp_RegistrarRecepcionCompra` de 34
+una sola vez por producto; no vuelve a invocar Kardex ni cambia los SP
+compartidos. El costo real de cuatro decimales se guarda en el enlace propio;
+el campo heredado de dos decimales queda NULL si no es representable exacto.
+La valoracion auxiliar es inmutable y se actualiza expresamente desde su
+pantalla, incluyendo ventas/devoluciones/ajustes, sin inventar costos antiguos.
+Inventario global hasta que Dylan publique el contrato real de multibodega.
+Implementacion no equivale a despliegue: SQL real pendiente de credencial de
+laboratorio con aislamiento efectivo. No se ejecutaron escrituras SQL.
+
 ## Consulta comercial de Cotizaciones (44)
 
 El rediseño añade P3_COT_PrepararFormulario y P3_COT_BuscarCatalogo mediante 44,
