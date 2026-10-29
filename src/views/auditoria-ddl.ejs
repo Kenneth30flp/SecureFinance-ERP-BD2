@@ -1,0 +1,50 @@
+<%- include('partials/auditoria-ddl-head', { title: 'Auditoria DDL' }) %>
+<% const link = pagina => '/auditoria/ddl?' + new URLSearchParams({
+  desde: f.desde, hasta: f.hasta, usuario: f.usuario, objeto: f.objeto, evento: f.evento,
+  pagina: String(pagina), ...(f.corteId !== null ? { corte: f.corteId } : {})
+}); %>
+<section class="ddl-panel" aria-labelledby="ddl-filter-title">
+  <div class="ddl-panel-heading"><h2 id="ddl-filter-title">Buscar cambios estructurales</h2><span>Solo lectura</span></div>
+  <form action="/auditoria/ddl" method="get" class="ddl-filters">
+    <div><label for="ddl-from">Desde</label><input id="ddl-from" class="form-control" name="desde" type="date" min="0001-01-01" max="9998-12-31" value="<%= f.desde %>"></div>
+    <div><label for="ddl-until">Hasta</label><input id="ddl-until" class="form-control" name="hasta" type="date" min="0001-01-01" max="9998-12-31" value="<%= f.hasta %>"></div>
+    <div><label for="ddl-user">Usuario SQL o login original</label><input id="ddl-user" class="form-control" name="usuario" maxlength="128" value="<%= f.usuario %>" placeholder="Buscar por coincidencia parcial"></div>
+    <div><label for="ddl-object">Nombre del objeto</label><input id="ddl-object" class="form-control" name="objeto" maxlength="128" value="<%= f.objeto %>" placeholder="Tabla o procedimiento"></div>
+    <div><label for="ddl-event">Tipo de evento</label><select id="ddl-event" name="evento" class="form-select"><option value="">Todos los eventos</option>
+      <% events.forEach(value => { %><option value="<%= value %>" <%= f.evento === value ? 'selected' : '' %>><%= value %></option><% }); %>
+    </select></div>
+    <div class="ddl-actions"><button class="btn btn-primary" type="submit">Buscar</button><a class="btn btn-outline-primary" href="/auditoria/ddl">Limpiar</a></div>
+  </form>
+  <p class="ddl-caption">Fechas de Guatemala (UTC-6). Se incluye el dia final completo. Una nueva busqueda actualiza el corte de consulta.</p>
+</section>
+<% if (error) { %>
+  <p class="alert alert-danger" role="alert"><%= error %></p>
+<% } else { %>
+<section class="ddl-panel" aria-labelledby="ddl-register-title">
+  <div class="ddl-panel-heading"><h2 id="ddl-register-title">Registro estructural</h2><span><%= total %> resultados / Pagina <%= f.pagina %></span></div>
+  <% if (rows.length) { %>
+  <div class="table-responsive ddl-table-scroll" tabindex="0" role="region" aria-label="Eventos DDL registrados">
+    <table class="table table-modern align-middle ddl-table">
+      <caption>Metadatos persistidos. Consultar un evento no modifica la base de datos.</caption>
+      <thead><tr><th scope="col">Evento / Fecha Guatemala</th><th scope="col">Objeto</th><th scope="col">Identidad SQL</th><th scope="col">Equipo de origen</th><th scope="col">Detalle</th></tr></thead>
+      <tbody><% rows.forEach(row => { %><tr>
+        <td><span class="ddl-event"><%= row.TipoEvento %></span><br><%- include('partials/operational-date', { value: row.FechaHora }) %></td>
+        <td><strong><%= row.Esquema || 'Sin esquema' %>.<%= row.NombreObjeto || 'No disponible' %></strong><br><small><%= row.TipoObjeto || 'Sin tipo registrado' %> / <%= row.BaseDatos %></small></td>
+        <td><strong><%= row.UsuarioSQL %></strong><br><small>Login: <%= row.LoginOriginal || 'No disponible' %></small></td>
+        <td><%= row.EquipoOrigen || 'No disponible' %><br><small><%= row.AplicacionOrigen || 'Sin aplicacion registrada' %></small></td>
+        <td><a class="btn btn-outline-primary btn-sm" href="/auditoria/ddl/<%= row.BitacoraDdlId %>" aria-label="Ver evento <%= row.BitacoraDdlId %>">Ver evento</a></td>
+      </tr><% }); %></tbody>
+    </table>
+  </div>
+  <% } else { %>
+  <div class="empty-state"><h3>No hay eventos para esta consulta</h3><p>Revisa los filtros o la pagina. La captura requiere instalar las migraciones en un laboratorio autorizado; no se inventan eventos historicos.</p></div>
+  <% } %>
+  <nav class="ddl-pagination" aria-label="Paginacion de Auditoria DDL">
+    <div><% if (f.pagina > 1) { %><a class="btn btn-outline-primary" href="<%= link(f.pagina - 1) %>">Anterior</a><% } %></div>
+    <span>Pagina <%= f.pagina %> / 20 registros por pagina</span>
+    <div><% if (haySiguiente) { %><a class="btn btn-outline-primary" href="<%= link(f.pagina + 1) %>">Siguiente</a><% } %></div>
+  </nav>
+  <p class="ddl-caption">El corte limita identidades nuevas; no constituye un snapshot transaccional. Host y aplicacion son datos de contexto, no una identidad autenticada.</p>
+</section>
+<% } %>
+</main></body></html>

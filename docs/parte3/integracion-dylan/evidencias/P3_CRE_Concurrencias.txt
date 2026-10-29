@@ -1,0 +1,44 @@
+---- RESULTADO ----
+C1_PASS=True
+C2_PASS=True
+C3_PASS=True
+{
+    "fixture":  {
+                    "cliente":  30,
+                    "producto":  46,
+                    "cotizacion":  27,
+                    "total":  "2000.00"
+                },
+    "conversion":  {
+                       "factura":  47,
+                       "saldoInicial":  "2000.00",
+                       "cuotas":  2,
+                       "conciliacion":  "2000.00"
+                   },
+    "C1_replay_mismo_uuid":  {
+                                 "sesionA":  true,
+                                 "sesionB":  true,
+                                 "filasAbono":  1,
+                                 "recibos":  1,
+                                 "saldoPosterior":  "1700.00"
+                             },
+    "C1_PASS":  true,
+    "C2_mismo_uuid_otra_carga":  {
+                                     "ok":  false,
+                                     "numero":  57003,
+                                     "mensaje":  "Referencia de abono reutilizada con otros datos.",
+                                     "saldoPosterior":  "1700.00"
+                                 },
+    "C2_PASS":  true,
+    "C3_carrera_saldo":  {
+                             "A_ok":  true,
+                             "A_error":  null,
+                             "B_ok":  false,
+                             "B_error":  57006,
+                             "saldoFinal":  "700.00",
+                             "conciliacionCuotas":  "700.00",
+                             "abonosTotalFactura":  2
+                         },
+    "C3_PASS":  true,
+    "timestamp_local":  "2026-10-29T01:55:44.7856364-06:00"
+}

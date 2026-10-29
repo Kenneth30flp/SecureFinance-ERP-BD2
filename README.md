@@ -141,3 +141,8 @@ Las comprobaciones estáticas y los mocks no sustituyen estas verificaciones en 
 ## Entrega Parte II de Kenneth
 
 Consulta [la guía de integración del equipo](docs/IntegracionEquipoKenneth.md) para el orden 15–23, permisos, procedimientos, fotografías y pruebas. El Full prepara Parte I para instalaciones nuevas; no sustituye las migraciones incrementales ni debe ejecutarse sobre una base existente.
+
+
+## Entrega Parte III: integraci?n de Dylan
+
+Instalaci?n reproducible, manifiesto SQL, pruebas reales y gu?a de demostraci?n: [integracion-dylan](docs/parte3/integracion-dylan/README.md). Rama `integracion/p3-dylan-qa`; despliegue limitado a laboratorio sint?tico autorizado.

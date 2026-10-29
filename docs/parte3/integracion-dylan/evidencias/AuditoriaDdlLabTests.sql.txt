@@ -1,0 +1,1 @@
+sqlcmd exit 0. All assertions in database/tests/AuditoriaDdlLabTests.sql completed, including the six DDL event types and exact EVENTDATA command text. Test transaction rolled back. No production objects or secrets.

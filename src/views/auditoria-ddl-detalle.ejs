@@ -1,0 +1,28 @@
+<%- include('partials/auditoria-ddl-head', { title: 'Detalle de Auditoria DDL' }) %>
+<p><a class="btn btn-outline-primary" href="/auditoria/ddl">Volver al registro</a></p>
+<section class="ddl-panel" aria-labelledby="ddl-event-title">
+  <div class="ddl-panel-heading"><h2 id="ddl-event-title">Evento #<%= event.BitacoraDdlId %></h2><span class="ddl-event"><%= event.TipoEvento %></span></div>
+  <dl class="ddl-metadata">
+    <div><dt>Fecha / Guatemala (UTC-6)</dt><dd><%- include('partials/operational-date', { value: event.FechaHora }) %></dd></div>
+    <div><dt>Base de datos</dt><dd><%= event.BaseDatos %></dd></div>
+    <div><dt>Objeto</dt><dd><%= event.NombreObjeto || 'No disponible' %></dd></div>
+    <div><dt>Esquema</dt><dd><%= event.Esquema || 'No disponible' %></dd></div>
+    <div><dt>Tipo de objeto</dt><dd><%= event.TipoObjeto || 'No disponible' %></dd></div>
+    <div><dt>Usuario SQL</dt><dd><%= event.UsuarioSQL %></dd></div>
+    <div><dt>Login original</dt><dd><%= event.LoginOriginal || 'No disponible' %></dd></div>
+    <div><dt>Equipo de origen</dt><dd><%= event.EquipoOrigen || 'No disponible' %></dd></div>
+    <div><dt>Aplicacion de origen</dt><dd><%= event.AplicacionOrigen || 'No disponible' %></dd></div>
+    <div><dt>Sesion SQL</dt><dd><%= event.SesionId ?? 'No disponible' %></dd></div>
+  </dl>
+</section>
+<section class="ddl-panel" aria-labelledby="ddl-command-title">
+  <div class="ddl-panel-heading"><h2 id="ddl-command-title">Comando T-SQL</h2><span class="status-badge status-warning"><%= event.EstadoComando === 'EXACTO_EVENTDATA' ? 'Texto exacto de EVENTDATA' : 'Registro anterior sin comando' %></span></div>
+  <% if (event.EstadoComando === 'EXACTO_EVENTDATA' && typeof event.ComandoTSql === 'string') { %>
+  <p class="ddl-caption">Texto Unicode completo entregado por SQL Server en CommandText, sin redaccion ni truncado. Se muestra como texto, nunca se ejecuta.</p>
+  <pre class="ddl-command" tabindex="0" aria-label="Comando T-SQL registrado"><code><%= event.ComandoTSql %></code></pre>
+  <% } else { %>
+  <div class="ddl-command-policy"><p>Este evento anterior no conserva un comando SQL. No se reconstruye ni se inventa texto historico.</p><code>PENDIENTE_RUBRICA</code></div>
+  <% } %>
+</section>
+<p class="ddl-caption">Esta vista es de solo lectura. No permite ejecutar comandos, eliminar auditoria ni deshabilitar triggers.</p>
+</main></body></html>

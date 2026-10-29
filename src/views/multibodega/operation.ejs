@@ -1,0 +1,17 @@
+<%- include('head',{title:'Consulta de referencia',section:''}) %>
+<article class="bod-panel bod-editor"><h2><%= operation?'Operacion confirmada en el libro local':'Sin confirmacion persistida visible' %></h2><p class="bod-reference"><%= id %></p>
+<% if(operation){ const receipt=JSON.parse(operation.Respuesta); %>
+<p>Registro UTC: <%= operation.FechaHora instanceof Date?operation.FechaHora.toISOString():operation.FechaHora %></p>
+<% if(Object.hasOwn(receipt,'CostoPromedioAplicado')){ %>
+<h3>Valoracion de la recepcion</h3><dl class="bod-meta">
+<div><dt>Costo unitario del documento</dt><dd><%= receipt.CostoUnitario??'Desconocido' %></dd></div>
+<div><dt>Costo promedio aplicado</dt><dd><%= receipt.CostoPromedioAplicado?receipt.CostoPromedio:'No calculado' %></dd></div>
+<div><dt>PrecioCosto resultante</dt><dd><%= receipt.PrecioCostoResultante??'Desconocido' %></dd></div>
+<div><dt>Politica de esta operacion</dt><dd><%= receipt.PoliticaCosto %></dd></div></dl>
+<% if(!receipt.CostoPromedioAplicado){ %><p>Sin costo de recepcion: se conservo PrecioCosto, sin valorar las unidades nuevas ni afirmar un promedio actualizado.</p><% } %><% } %>
+<pre class="bod-result"><%= operation.Respuesta %></pre><p>Este recibo conserva el resultado original de la solicitud; el documento puede haber avanzado despues.</p>
+<% if(Number.isInteger(receipt.TransferenciaId)&&receipt.TransferenciaId>0){ %><p><a href="/multibodega/transferencias/<%= receipt.TransferenciaId %>">Consultar estado actual y evidencia de la transferencia</a></p><% } %>
+<% if(Number.isInteger(receipt.FacturaId)&&receipt.FacturaId>0&&usuario.permisos.includes('FACTURAS_CONSULTAR')){ %><p><a href="/facturacion/facturas/<%= receipt.FacturaId %>">Consultar factura emitida</a></p><% } %>
+<% }else{ %><p>No prueba que la solicitud haya fallado: puede seguir en curso o pertenecer a otro actor. No crees otra referencia para compensarla. Consulta nuevamente antes de decidir un reintento manual con el UUID y carga originales.</p><% } %>
+<a href="/multibodega">Volver a existencias</a><a class="btn btn-outline-primary" href="/multibodega/operaciones/<%= id %>">Actualizar consulta</a></article>
+</main></body></html>
