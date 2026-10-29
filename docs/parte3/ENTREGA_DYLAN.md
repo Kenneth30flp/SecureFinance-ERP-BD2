@@ -1,10 +1,46 @@
 # Entrega local de los tres modulos de Dylan
 
 Responsable: Dylan Albrygth Caal Caal. Fecha: 2026-10-28 (actualizada por la sesion
-de verificacion nocturna). Estado: codigo y SQL verificados contra el laboratorio
-REAL SecureFinanceERP_Lab_Dylan en localhost, suites verdes, listos para commits
-locales en las tres ramas. Sin push, sin merge, sin rebase, sin tocar main ni las
-cinco bases protegidas.
+de verificacion nocturna y por la sesion de pruebas finales 2026-10-29). Estado:
+codigo y SQL verificados contra el laboratorio REAL SecureFinanceERP_Lab_Dylan en
+localhost, suites verdes, listos para commits locales en las tres ramas. Sin push,
+sin merge, sin rebase, sin tocar main ni las cinco bases protegidas.
+
+## ADICION 2026-10-29: tres suites nuevas contra SQL real del lab
+
+Esta sesion ejecuto las pruebas que la auditoria de cumplimiento habia dejado
+pendientes. Tres evidencias nuevas, todas reales (JSON crudo en
+`%TEMP%\opencode\`):
+
+| Suite | Script | Resultado | Evidencia (docs/) |
+| --- | --- | --- | --- |
+| Multibodega E2E (6 fases) | `P3_BOD_Integraciones.ps1` (rama multibodega) | 6/6 PASS | `parte3/multibodega/EVIDENCIA_SQL_BOD_INTEGRACIONES.txt` |
+| Creditos concurrencia (3 casos) | `P3_CRE_Concurrencias.ps1` (rama creditos) | 3/3 PASS | `parte3/creditos/EVIDENCIA_SQL_CRE_CONCURRENCIA.txt` |
+| DDL ciclo de 6 eventos + 95 | `P3_DDL_CicloEventos.ps1` (rama DDL) | G1-G6,G8 PASS; G7 aplica 95 | `parte3/auditoria-ddl/EVIDENCIA_SQL_DDL_CICLO_EVENTOS.txt` |
+
+Puntos clave: la transferencia->venta en Z10->devolucion apta->devolucion
+defectuosa deja la conciliacion integral en 0 diferencia; los abonos concurrentes
+de creditos mantienen idempotencia (C1), rechazo por same-UUID-distinta-carga
+(57003, C2) y carrera por saldo con exactamente un ganador (57006, C3, saldo
+final == conciliacion de cuotas); el ciclo DDL captura los seis eventos verbatim
+(+6 filas 48..53) y la auditoria DML/de-accesos siguen vivas. Defectuosa
+corregida SOLO en scripts de prueba propios (GUID por `$([System.Guid]::Parse())`,
+`OUTPUT`->`SCOPE_IDENTITY`, `[decimal]` entre parentesis, conteo de bitacora por
+OperacionId); ningun proc de Kenneth/Edward fue tocado, se usaron tal cual.
+
+Propuesta nueva (rama DDL, PROPOSED): `database/95_P3_DDL_CapturaAplicable.sql`
+-- guarda suave del trigger de captura (`IF DB_NAME() <>
+N'SecureFinanceERP_Lab_Dylan' RETURN;`): fuera del lab el trigger queda como
+observador silencioso y NUNCA bloquea despliegues ajenos; conserva EXECUTE AS
+P3_DDL_Escritor y los seis eventos. Aplicada SOLO en lab y verificada
+(sys.sql_modules + 2 eventos de control post-instalacion). PENDIENTE revision
+escrita de Kenneth, igual que 76/84/85.
+
+Estado del lab tras las corridas: Bitacora_DDL=30 filas (todas de eventos
+reales), Bitacora_Transacciones=202, Bitacora_Acceso=4. Los fixtures
+sinteticos persistentes quedan documentados en las tres evidencias (cliente 32,
+producto 36, COT 40, Factura 25 para creditos; producto 28 con stock Z10
+acumulado para multibodega).
 
 ## Aislamiento y referencias
 
@@ -172,9 +208,9 @@ se registra en el informe final de la sesion, sin ejecutar merge.
 
 | Clasificacion | Alcance |
 | --- | --- |
-| Ejecutado contra SQL real del lab | QA leido 52/52, DDL captura 12 eventos, transferencias fijadas por RunTests historico, concurrencia 4/4 + conciliacion, complemento 89 y procs 82/83 reinstalados |
+| Ejecutado contra SQL real del lab | QA leido 52/52, DDL captura 12 eventos + ciclo 6 eventos (G1-G8), transferencias fijadas por RunTests historico, concurrencia 4/4 + conciliacion, integraciones E2E 6/6 (multibodega), concurrencia abonos 3/3 (creditos), propuesta 95 aplicada en lab, complemento 89 y procs 82/83 reinstalados |
 | Pruebas verdes locales | DDL 19 + 135; Creditos 63 + 178; BOD 26 + 141; cross mock 4; checks exit 0 |
-| Pendiente aprobacion | 76 (Kenneth, revision escrita), 84 y 85 (Kenneth), demos academicas del ingeniero |
+| Pendiente aprobacion | 76 (Kenneth, revision escrita), 84 y 85 (Kenneth), 95 (Kenneth, PROPOSED), demos academicas del ingeniero |
 | Bloqueado | Integracion definitiva (requiere las otras ramas/PRs), ensayo de rollback completo, instalacion reproducible sin el prototipo local |
 | No hecho (intencional) | push/merge/PR, cambios a otros modulos, bases protegidas, historial reescrito |
 

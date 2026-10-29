@@ -1,6 +1,26 @@
 # Modulo 6: Auditoria DDL
 
-**Estado actual:** requisito de texto exacto confirmado por Dylan y riesgo
+**Estado actual (actualizado 2026-10-29):** la captura EVENTS/EXACTO esta
+INSTALADA Y VERIFICADA en el laboratorio real `SecureFinanceERP_Lab_Dylan`
+(trigger `P3_DDL_CapturarEstructura` con sus seis eventos). El ciclo completo
+de los seis eventos se ejecuto y se verifico con
+[EVIDENCIA_SQL_DDL_CICLO_EVENTOS.txt](EVIDENCIA_SQL_DDL_CICLO_EVENTOS.txt);
+abajo el resumen.
+Se agrego la propuesta `database/95_P3_DDL_CapturaAplicable.sql` (PROPOSED,
+pendiente de revision de Kenneth): guarda suave `IF DB_NAME() <>
+N'SecureFinanceERP_Lab_Dylan' RETURN;` que convierte el trigger en observador
+silencioso fuera del lab (nunca bloquea despliegues en otras bases), sin tocar
+permisos ni el EXECUTE AS writer. Resumen de verificaciones ejecutadas G1-G8:
+los seis eventos con comando verbatim (+6 filas exactas), permisos medidos
+(CONNECT/INSERT GRANT, 3x DENY, sin roles, DENY IMPERSONATE), EXECUTE AS
+writer bloqueado por DENY SELECT (SQL 229), auditoria DML viva (par
+cambio/reversion = +2 filas, precio restaurado), auditoria de accesos viva
+(sp_Login rechazado genera fila), interfaz `P3_DDL_ConsultarBitacora` exponiendo
+los IDs de la corrida, 95 aplicada via ADO.NET (3 batches, guard verificada en
+sys.sql_modules) y captura operativa post-95 (+2 eventos de control). El JSON
+crudo vive en `%TEMP%\opencode\P3_DDL_CicloEventos.json`.
+
+**Estado anterior:** requisito de texto exacto confirmado por Dylan y riesgo
 aceptado exclusivamente para laboratorio sin secretos reales. Se agregaron
 93-94, captura EVENTDATA y detalle de comandos escapados. Ningun SQL se ejecuto.
 La guia vigente es [CAPTURA_Y_LABORATORIO.md](CAPTURA_Y_LABORATORIO.md).
