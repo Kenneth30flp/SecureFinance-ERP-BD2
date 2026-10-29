@@ -1,0 +1,3 @@
+<% const page=kind==='entregas'?recPage:histPage,more=kind==='entregas'?recNext:histNext;
+const href=n=>'/compras/'+orden.OrdenCompraId+'?'+new URLSearchParams({entregas:String(kind==='entregas'?n:recPage),historial:String(kind==='historial'?n:histPage)})+(kind==='historial'?'#com-history':'#com-deliveries'); %>
+<% if(page>1||more){ %><nav class="com-pagination" aria-label="Paginación de <%= kind %>"><span>Página <%= page %></span><div><% if(page>1){ %><a class="btn btn-outline-secondary" href="<%= href(page-1) %>">← Anterior</a><% } %><% if(more){ %><a class="btn btn-outline-secondary" href="<%= href(page+1) %>">Siguiente →</a><% } %></div></nav><% } %>
