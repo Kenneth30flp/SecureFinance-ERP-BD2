@@ -1,6 +1,6 @@
 -- PROPUESTA de integracion compartida pendiente de revision de Kenneth. NO desplegado.
 SET NOCOUNT ON; SET XACT_ABORT ON; SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
-IF DB_NAME() COLLATE Latin1_General_100_BIN2<>N'SecureFinanceERP_Lab_Dylan' OR DATALENGTH(DB_NAME())<>DATALENGTH(N'SecureFinanceERP_Lab_Dylan') OR @@TRANCOUNT=0 OR XACT_STATE()<>1 THROW 58000,'Laboratorio y transaccion externa requeridos.',1;
+IF DB_NAME() COLLATE Latin1_General_100_BIN2<>dbo.P3_INT_Destino() OR DATALENGTH(DB_NAME())<>DATALENGTH(dbo.P3_INT_Destino()) OR @@TRANCOUNT=0 OR XACT_STATE()<>1 THROW 58000,'Laboratorio y transaccion externa requeridos.',1;
 EXEC(N'CREATE OR ALTER TRIGGER dbo.P3_BOD_EspejoKardex ON dbo.Kardex_Inventario AFTER INSERT
 AS
 BEGIN
@@ -9,7 +9,7 @@ BEGIN
  IF EXISTS(SELECT 1 FROM inserted WHERE TipoMovimiento NOT IN(''COMPRA'',''VENTA'',''AJUSTE_INGRESO'',''AJUSTE_EGRESO'',''DEVOLUCION'',''APERTURA'')) THROW 58002,''Movimiento sin integracion local definida.'',1;
  -- APERTURA global describe stock ya incluido en el snapshot local. No duplicarlo.
  IF NOT EXISTS(SELECT 1 FROM inserted WHERE TipoMovimiento<>''APERTURA'') RETURN;
- IF DB_NAME() COLLATE Latin1_General_100_BIN2<>N''SecureFinanceERP_Lab_Dylan'' OR DATALENGTH(DB_NAME())<>DATALENGTH(N''SecureFinanceERP_Lab_Dylan'') THROW 58000,''Base no autorizada para Mod5.'',1;
+ IF DB_NAME() COLLATE Latin1_General_100_BIN2<>dbo.P3_INT_Destino() OR DATALENGTH(DB_NAME())<>DATALENGTH(dbo.P3_INT_Destino()) THROW 58000,''Base no autorizada para Mod5.'',1;
  DECLARE @Raw SQL_VARIANT=SESSION_CONTEXT(N''P3_BOD.BodegaId''),@B INT,@P INT=0,@Next INT,@Activo BIT;
  IF @Raw IS NOT NULL AND (SQL_VARIANT_PROPERTY(@Raw,''BaseType'')<>''int'' OR TRY_CONVERT(INT,@Raw)<=0) THROW 58002,''Contexto de bodega invalido.'',1;
  -- Primero TODOS los productos por PK ascendente; luego ubicaciones. Multirow seguro.

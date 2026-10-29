@@ -1,5 +1,5 @@
 SET XACT_ABORT ON; SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
-IF DB_NAME() <> N'SecureFinanceERP_Lab_Dylan' OR @@TRANCOUNT=0 THROW 57000,'Laboratorio y transaccion externa requeridos.',1;
+IF DB_NAME() <> dbo.P3_INT_Destino() OR @@TRANCOUNT=0 THROW 57000,'Laboratorio y transaccion externa requeridos.',1;
 GO
 CREATE OR ALTER VIEW dbo.P3_CRE_EstadoCuota AS
  SELECT FacturaId,Numero,VenceEn,Importe,Abonado,Importe-Abonado Saldo,
@@ -33,7 +33,7 @@ BEGIN
   AND (@Estado IS NULL OR c.Estado=@Estado) AND (@Desde IS NULL OR c.FechaHora>=@Desde) AND (@Hasta IS NULL OR c.FechaHora<@Hasta)
  ORDER BY c.FechaHora DESC,c.FacturaId DESC OFFSET @Desplazamiento ROWS FETCH NEXT 21 ROWS ONLY;
  SELECT cl.ClienteId,cl.Nombre,cl.NIT,cl.Activo ClienteActivo,cr.Activo,cr.PlazoDias,
-  CONVERT(VARCHAR(21),cr.Limite) Limite,CONVERT(VARCHAR(16),cr.Version,2) Version,
+  CONVERT(VARCHAR(21),cr.Limite) Limite,CONVERT(VARCHAR(16),CONVERT(BINARY(8),cr.Version),2) Version,
   CONVERT(VARCHAR(40),COALESCE(d.Deuda,0)) Deuda,
   CONVERT(VARCHAR(40),cr.Limite-COALESCE(d.Deuda,0)) Disponible
  FROM dbo.Cliente cl LEFT JOIN dbo.Credito_Cliente cr ON cr.ClienteId=cl.ClienteId

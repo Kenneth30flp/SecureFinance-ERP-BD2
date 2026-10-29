@@ -1,6 +1,6 @@
 -- Corte NUEVO de ubicaciones, no historia reconstruida. No habilita Kardex global.
 SET NOCOUNT ON; SET XACT_ABORT ON; SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
-IF DB_NAME() COLLATE Latin1_General_100_BIN2<>N'SecureFinanceERP_Lab_Dylan' OR DATALENGTH(DB_NAME())<>DATALENGTH(N'SecureFinanceERP_Lab_Dylan') OR @@TRANCOUNT=0 OR XACT_STATE()<>1 THROW 58000,'Laboratorio y transaccion externa requeridos.',1;
+IF DB_NAME() COLLATE Latin1_General_100_BIN2<>dbo.P3_INT_Destino() OR DATALENGTH(DB_NAME())<>DATALENGTH(dbo.P3_INT_Destino()) OR @@TRANCOUNT=0 OR XACT_STATE()<>1 THROW 58000,'Laboratorio y transaccion externa requeridos.',1;
 IF EXISTS(SELECT 1 FROM dbo.P3_BOD_Configuracion) OR EXISTS(SELECT 1 FROM dbo.P3_BOD_Snapshot)
  OR EXISTS(SELECT 1 FROM dbo.P3_BOD_Bodega) OR EXISTS(SELECT 1 FROM dbo.P3_BOD_Stock) THROW 58000,'Snapshot inicial unico; no sobreescribir.',1;
 DECLARE @N BIGINT,@Central INT,@Snapshot UNIQUEIDENTIFIER=NEWID(),@Fecha DATETIME2(3);

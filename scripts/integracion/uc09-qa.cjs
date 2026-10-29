@@ -1,0 +1,11 @@
+﻿'use strict';
+// Reuses UC09 acceptance scenarios on the current integrated engine, without downgrading to 43.
+const fs=require('fs'),path=require('path'),Module=require('module');const lab=require('../../database/tests/promocionesLab');lab.useLab();
+const root=process.cwd();
+let ps=fs.readFileSync('database/tests/CotizacionesLabAdmin.ps1','utf8').replace('$root=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent',"$root=(Get-Location).Path").replaceAll('.data/cotizaciones-lab.json','.data/promociones-lab.json').replaceAll('SecureFinanceERP_P3_COT_','SecureFinanceERP_P3_PRO_');fs.writeFileSync('.data/integration-admin.ps1','[Console]::InputEncoding=New-Object System.Text.UTF8Encoding($false)\n[Console]::OutputEncoding=New-Object System.Text.UTF8Encoding($false)\n'+ps);
+let bridge=fs.readFileSync('database/tests/cotizacionesLabAdmin.js','utf8').replace('database/tests/CotizacionesLabAdmin.ps1','.data/integration-admin.ps1');const bm=new Module(path.join(root,'database/tests/integrationAdmin.js'),module);bm.filename=path.join(root,'database/tests/integrationAdmin.js');bm.paths=module.paths;bm._compile(bridge,bm.filename);
+let code=fs.readFileSync('database/tests/CotizacionesUC09Integration.js','utf8').replace("require('./cotizacionesLabAdmin')","globalThis.__integrationAdmin").replaceAll('.data/cotizaciones-lab.json','.data/promociones-lab.json').replaceAll('SecureFinanceERP_P3_COT_','SecureFinanceERP_P3_PRO_').replace('43_P3_COT_ConversionFactura.sql','76_P3_CRE_Ventas_PROPUESTA.sql');
+code=code.replace("assert.equal(legacy.pre43,true,'La venta de regresion debe haberse emitido antes de instalar 43');","assert.equal(legacy.pre43,false,'Esta regresion parte del motor integrado; no prueba una venta previa a 43');");
+code=code.replaceAll('instalacion atomica de migracion 43','reaplicacion atomica del contrato integrado 76').replaceAll('reaplicacion 43 conserva','reaplicacion integrada conserva').replaceAll('reintento de venta pre-43','reintento de venta previa a reaplicacion integrada');
+globalThis.__integrationAdmin=bm.exports;
+const m=new Module(path.join(root,'database/tests/IntegrationUC09.js'),module);m.filename=path.join(root,'database/tests/IntegrationUC09.js');m.paths=module.paths;m._compile(code,m.filename);

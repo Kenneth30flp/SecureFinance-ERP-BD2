@@ -1,5 +1,5 @@
 SET NOCOUNT ON; SET XACT_ABORT ON; SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
-IF DB_NAME() COLLATE Latin1_General_100_BIN2<>N'SecureFinanceERP_Lab_Dylan' OR DATALENGTH(DB_NAME())<>DATALENGTH(N'SecureFinanceERP_Lab_Dylan') OR @@TRANCOUNT=0 OR XACT_STATE()<>1 THROW 58000,'Laboratorio y transaccion externa requeridos.',1;
+IF DB_NAME() COLLATE Latin1_General_100_BIN2<>dbo.P3_INT_Destino() OR DATALENGTH(DB_NAME())<>DATALENGTH(dbo.P3_INT_Destino()) OR @@TRANCOUNT=0 OR XACT_STATE()<>1 THROW 58000,'Laboratorio y transaccion externa requeridos.',1;
 EXEC(N'CREATE OR ALTER VIEW dbo.P3_BOD_Conciliacion AS
  SELECT p.ProductoId,p.Codigo,p.Descripcion,p.Stock,
  COALESCE(s.Local,CONVERT(BIGINT,0)) StockLocal,COALESCE(t.Transito,CONVERT(BIGINT,0)) Transito,
@@ -17,7 +17,7 @@ BEGIN
  IF @Seccion IS NULL OR @Seccion NOT IN(''bodegas'',''inventario'',''transferencias'',''kardex'',''detalle'') OR @Desplazamiento IS NULL OR @Desplazamiento<0 OR @Desplazamiento>2000000 OR @BodegaId<=0 OR @ProductoId<=0 OR @Desde>=@Hasta OR (@Seccion=''detalle'' AND (@TransferenciaId IS NULL OR @TransferenciaId<=0)) THROW 58002,''Filtros invalidos.'',1;
  IF @Seccion=''bodegas''
  BEGIN
-  SELECT b.BodegaId,b.Nombre,b.Activo,b.IsCentral,CONVERT(VARCHAR(16),b.Version,2) Version,COALESCE(s.Stock,0) Stock
+  SELECT b.BodegaId,b.Nombre,b.Activo,b.IsCentral,CONVERT(VARCHAR(16),CONVERT(BINARY(8),b.Version),2) Version,COALESCE(s.Stock,0) Stock
   FROM dbo.P3_BOD_Bodega b OUTER APPLY(SELECT SUM(CONVERT(BIGINT,Cantidad)) Stock FROM dbo.P3_BOD_Stock WHERE BodegaId=b.BodegaId) s
   WHERE (@BodegaId IS NULL OR b.BodegaId=@BodegaId) ORDER BY b.BodegaId OFFSET @Desplazamiento ROWS FETCH NEXT 21 ROWS ONLY;
   RETURN;
@@ -33,7 +33,7 @@ BEGIN
  END;
  IF @Seccion IN(''transferencias'',''detalle'')
  BEGIN
-  SELECT t.TransferenciaId,t.ProductoId,p.Codigo,p.Descripcion,t.OrigenId,o.Nombre Origen,t.DestinoId,d.Nombre Destino,t.Cantidad,t.Estado,t.Motivo,t.ActorUsuarioId,t.FechaHora,CONVERT(VARCHAR(16),t.Version,2) Version
+  SELECT t.TransferenciaId,t.ProductoId,p.Codigo,p.Descripcion,t.OrigenId,o.Nombre Origen,t.DestinoId,d.Nombre Destino,t.Cantidad,t.Estado,t.Motivo,t.ActorUsuarioId,t.FechaHora,CONVERT(VARCHAR(16),CONVERT(BINARY(8),t.Version),2) Version
   FROM dbo.P3_BOD_Transferencia t JOIN dbo.P3_BOD_Bodega o ON o.BodegaId=t.OrigenId JOIN dbo.P3_BOD_Bodega d ON d.BodegaId=t.DestinoId JOIN dbo.Producto p ON p.ProductoId=t.ProductoId
   WHERE (@ProductoId IS NULL OR t.ProductoId=@ProductoId) AND (@BodegaId IS NULL OR t.OrigenId=@BodegaId OR t.DestinoId=@BodegaId)
    AND (@TransferenciaId IS NULL OR t.TransferenciaId=@TransferenciaId) AND (@Desde IS NULL OR t.FechaHora>=@Desde) AND (@Hasta IS NULL OR t.FechaHora<@Hasta)

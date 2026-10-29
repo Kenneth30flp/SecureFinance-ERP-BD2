@@ -1,6 +1,6 @@
 -- PROPOSED dependency: extension 76, pending Kenneth review. No deployment performed.
 SET XACT_ABORT ON; SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
-IF DB_NAME() <> N'SecureFinanceERP_Lab_Dylan' OR @@TRANCOUNT=0 THROW 57000,'Laboratorio y transaccion externa requeridos.',1;
+IF DB_NAME() <> dbo.P3_INT_Destino() OR @@TRANCOUNT=0 THROW 57000,'Laboratorio y transaccion externa requeridos.',1;
 IF NOT EXISTS(SELECT 1 FROM sys.parameters WHERE object_id=OBJECT_ID('dbo.sp_ConvertirCotizacionAFactura') AND name='@P3Credito')
  THROW 57000,'Requiere extension propuesta 76 aprobada previamente.',1;
 GO

@@ -1,6 +1,6 @@
 -- Incremental correction after real SQL/UI review: rowversion, overdue amounts and receipt balances.
 SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON; SET XACT_ABORT ON;
-IF DB_NAME() COLLATE Latin1_General_100_BIN2 <> N'SecureFinanceERP_Lab_Dylan' OR @@TRANCOUNT<>1 OR XACT_STATE()<>1
+IF DB_NAME() COLLATE Latin1_General_100_BIN2 <> dbo.P3_INT_Destino() OR @@TRANCOUNT<>1 OR XACT_STATE()<>1
  THROW 57000,'Solo laboratorio confirmado con transaccion externa.',1;
 GO
 CREATE OR ALTER PROCEDURE dbo.P3_CRE_Consultar

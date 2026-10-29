@@ -163,7 +163,7 @@ test('BOD servicio: consultas y desplazamiento tipados, parametros no interpolad
 test('BOD SQL estatico: rango propio, guards exactos, transaccion externa y sin reemplazos compartidos', () => {
   const dir = path.join(__dirname, '../database'); const names = readdirSync(dir).filter(n => /^8\d_P3_BOD_.*\.sql$/.test(n)); assert.equal(names.length, 11);
   for (const name of names) {
-    const source = readFileSync(path.join(dir, name), 'utf8'); assert.match(source, /DB_NAME\(\) COLLATE Latin1_General_100_BIN2\s*<>\s*N?'SecureFinanceERP_Lab_Dylan'/); assert.match(source, /@@TRANCOUNT=0/); assert.match(source, /XACT_STATE\(\)<>1/);
+    const source = readFileSync(path.join(dir, name), 'utf8').replace(/\r\n/g,'\n'); assert.match(source, /DB_NAME\(\) COLLATE Latin1_General_100_BIN2\s*<>\s*(?:dbo\.P3_INT_Destino\(\)|N?'SecureFinanceERP_Lab_Dylan')/); assert.match(source, /@@TRANCOUNT=0/); assert.match(source, /XACT_STATE\(\)<>1/);
     assert.match(source, /DATALENGTH\(DB_NAME\(\)\)/);
     for (const declaration of source.matchAll(/CREATE(?: OR ALTER)? (?:PROCEDURE|TABLE|TRIGGER|VIEW) dbo\.(\w+)/g)) assert(declaration[1].startsWith('P3_BOD_') || declaration[1] === 'sp_TransferirStockBodegas');
     assert.doesNotMatch(source, /CREATE OR ALTER PROCEDURE dbo\.(?:sp_RegistrarMovimientoKardex|sp_ERP_ProcesarVenta|sp_ProcesarVentaTransaccional|sp_ConvertirCotizacionAFactura)\b/i);
@@ -180,7 +180,7 @@ test('BOD SQL estatico: rango propio, guards exactos, transaccion externa y sin 
 });
 
 function sqlProcedure(file, name) {
-  const source = readFileSync(path.join(__dirname, '../database', file), 'utf8');
+  const source = readFileSync(path.join(__dirname, '../database', file), 'utf8').replace(/\r\n/g,'\n');
   const definitions = [...source.matchAll(/EXEC\(N'((?:''|[^'])*)'\);/g)].map(m => m[1].replace(/''/g, "'"));
   const body = definitions.find(d => d.startsWith('CREATE OR ALTER PROCEDURE dbo.' + name + '\n'));
   assert(body, name + ' debe existir como procedimiento real');

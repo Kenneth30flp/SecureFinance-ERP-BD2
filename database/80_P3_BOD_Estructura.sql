@@ -1,8 +1,8 @@
 -- Mod5. Preparado, NO desplegado. Requiere transaccion externa en UNA conexion.
 SET NOCOUNT ON; SET XACT_ABORT ON; SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
 SET ANSI_PADDING ON; SET ANSI_WARNINGS ON; SET ARITHABORT ON; SET CONCAT_NULL_YIELDS_NULL ON; SET NUMERIC_ROUNDABORT OFF;
-IF DB_NAME() COLLATE Latin1_General_100_BIN2 <> N'SecureFinanceERP_Lab_Dylan'
- OR DATALENGTH(DB_NAME())<>DATALENGTH(N'SecureFinanceERP_Lab_Dylan')
+IF DB_NAME() COLLATE Latin1_General_100_BIN2 <> dbo.P3_INT_Destino()
+ OR DATALENGTH(DB_NAME())<>DATALENGTH(dbo.P3_INT_Destino())
  OR @@TRANCOUNT=0 OR XACT_STATE()<>1 THROW 58000,'Instalacion requiere laboratorio Dylan y transaccion externa.',1;
 IF OBJECT_ID('dbo.sp_RegistrarRecepcionCompra','P') IS NULL
  OR OBJECT_ID('dbo.sp_ConvertirCotizacionAFactura','P') IS NULL

@@ -1,0 +1,77 @@
+---- RESULTADO ----
+F1_PASS=True
+F2_PASS=True
+F3_PASS=True
+F4_PASS=True
+F5_PASS=True
+F6_PASS=True
+{
+    "contexto":  {
+                     "producto":  39,
+                     "stock":  29
+                 },
+    "F1_transferencia":  {
+                             "t":  8,
+                             "estado":  "RECIBIDA",
+                             "z10Local":  8,
+                             "preparar":  true,
+                             "despachar":  true,
+                             "recibir":  true
+                         },
+    "F1_PASS":  true,
+    "f2_cotjson":  "28",
+    "f2_cotid":  28,
+    "F2_venta_ubicacion":  {
+                               "cotizacion":  28,
+                               "factura":  48,
+                               "kardexId":  102,
+                               "ledgerVenta":  1,
+                               "z10Antes":  8,
+                               "z10Convertir":  6,
+                               "stockAntes":  29,
+                               "stockGlobal":  27
+                           },
+    "F2_PASS":  true,
+    "F3_devolucion_apta":  {
+                               "operacion":  "0c2035cc-b517-4e23-b2e3-f0bdccbce553",
+                               "ok":  true,
+                               "error":  null,
+                               "kardexId":  103,
+                               "ledgerDev":  1,
+                               "z10":  7,
+                               "stockGlobal":  28,
+                               "notaCredito":  1,
+                               "bitacoraDML":  3,
+                               "linkLedgerKardex":  1
+                           },
+    "F3_PASS":  true,
+    "F4_devolucion_defectuosa":  {
+                                     "operacion":  "cf9bba9f-6638-4b81-8e4d-2ae7f32135b3",
+                                     "ok":  true,
+                                     "error":  null,
+                                     "kardexFilas":  0,
+                                     "ledgerFilas":  0,
+                                     "z10":  7,
+                                     "stockGlobal":  28,
+                                     "notaCredito":  1,
+                                     "bitacoraDML":  1
+                                 },
+    "F4_PASS":  true,
+    "F5_kardex":  {
+                      "mismatchLedgerKardex":  0,
+                      "kardexDuplicados":  0
+                  },
+    "F5_PASS":  true,
+    "F6_regresion":  {
+                         "filasConDiferencia":  0,
+                         "filasTotal":  22,
+                         "eventosTransferencia":  1,
+                         "eventosCotizacion":  1,
+                         "eventosDevolucionApta":  3,
+                         "eventosDevolucionDefectuosa":  1,
+                         "eventosDMLCruzados":  6,
+                         "saldoGlobalTexto":  "0"
+                     },
+    "F6_PASS":  true,
+    "timestamp_local":  "2026-10-29T01:55:46.7145981-06:00"
+}

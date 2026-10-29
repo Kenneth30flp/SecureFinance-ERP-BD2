@@ -1,5 +1,5 @@
 SET NOCOUNT ON; SET XACT_ABORT ON; SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
-IF DB_NAME() COLLATE Latin1_General_100_BIN2<>N'SecureFinanceERP_Lab_Dylan' OR DATALENGTH(DB_NAME())<>DATALENGTH(N'SecureFinanceERP_Lab_Dylan') OR @@TRANCOUNT=0 OR XACT_STATE()<>1 THROW 58000,'Laboratorio y transaccion externa requeridos.',1;
+IF DB_NAME() COLLATE Latin1_General_100_BIN2<>dbo.P3_INT_Destino() OR DATALENGTH(DB_NAME())<>DATALENGTH(dbo.P3_INT_Destino()) OR @@TRANCOUNT=0 OR XACT_STATE()<>1 THROW 58000,'Laboratorio y transaccion externa requeridos.',1;
 EXEC(N'CREATE OR ALTER PROCEDURE dbo.P3_BOD_GuardarBodega
  @ActorUsuarioId INT,@OperacionId UNIQUEIDENTIFIER,@Nombre NVARCHAR(100),@Activo BIT,@IsCentral BIT,
  @Motivo NVARCHAR(250),@BodegaId INT=NULL,@VersionEsperada BINARY(8)=NULL

@@ -1,0 +1,83 @@
+{
+  "lab": "SecureFinanceERP_P3_PRO_20261029074958_097701fa",
+  "checks": [
+    {
+      "credit": false,
+      "promo": false,
+      "warehouse": false,
+      "total": "112.00",
+      "caja": 1,
+      "replay": "same invoice",
+      "stockDelta": -1
+    },
+    {
+      "credit": false,
+      "promo": false,
+      "warehouse": true,
+      "total": "112.00",
+      "caja": 1,
+      "replay": "same invoice",
+      "stockDelta": -1
+    },
+    {
+      "credit": false,
+      "promo": true,
+      "warehouse": false,
+      "total": "100.80",
+      "caja": 1,
+      "replay": "same invoice",
+      "stockDelta": -1
+    },
+    {
+      "credit": false,
+      "promo": true,
+      "warehouse": true,
+      "total": "100.80",
+      "caja": 1,
+      "replay": "same invoice",
+      "stockDelta": -1
+    },
+    {
+      "credit": true,
+      "promo": false,
+      "warehouse": false,
+      "total": "112.00",
+      "caja": 0,
+      "replay": "same invoice",
+      "stockDelta": -1
+    },
+    {
+      "credit": true,
+      "promo": false,
+      "warehouse": true,
+      "total": "112.00",
+      "caja": 0,
+      "replay": "same invoice",
+      "stockDelta": -1
+    },
+    {
+      "credit": true,
+      "promo": true,
+      "warehouse": false,
+      "total": "100.80",
+      "caja": 0,
+      "replay": "same invoice",
+      "stockDelta": -1
+    },
+    {
+      "credit": true,
+      "promo": true,
+      "warehouse": true,
+      "total": "100.80",
+      "caja": 0,
+      "replay": "same invoice",
+      "stockDelta": -1
+    },
+    {
+      "cashWithCreditPlan": "rejected 57002"
+    },
+    {
+      "ddlTextDirectSelect": "denied 229"
+    }
+  ]
+}

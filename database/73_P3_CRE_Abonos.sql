@@ -1,5 +1,5 @@
 SET XACT_ABORT ON; SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
-IF DB_NAME() <> N'SecureFinanceERP_Lab_Dylan' OR @@TRANCOUNT=0 THROW 57000,'Laboratorio y transaccion externa requeridos.',1;
+IF DB_NAME() <> dbo.P3_INT_Destino() OR @@TRANCOUNT=0 THROW 57000,'Laboratorio y transaccion externa requeridos.',1;
 GO
 CREATE OR ALTER PROCEDURE dbo.sp_RegistrarAbonoCliente
  @ActorUsuarioId INT,@ClienteId INT,@FacturaId INT,@Monto DECIMAL(19,2),@Referencia NVARCHAR(MAX),@OperacionId UNIQUEIDENTIFIER

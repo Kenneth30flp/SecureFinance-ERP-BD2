@@ -1,0 +1,6 @@
+warning: in the working copy of '.env.example', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'database/76_P3_CRE_Ventas_PROPUESTA.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'database/95_P3_DDL_CapturaAplicable.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/creditos-contract.test.js', LF will be replaced by CRLF the next time Git touches it

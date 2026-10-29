@@ -1,5 +1,5 @@
 SET XACT_ABORT ON; SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
-IF DB_NAME() <> N'SecureFinanceERP_Lab_Dylan' OR @@TRANCOUNT=0 THROW 57000,'Laboratorio y transaccion externa requeridos.',1;
+IF DB_NAME() <> dbo.P3_INT_Destino() OR @@TRANCOUNT=0 THROW 57000,'Laboratorio y transaccion externa requeridos.',1;
 GO
 CREATE OR ALTER PROCEDURE dbo.P3_CRE_AdministrarCredito
  @ActorUsuarioId INT,@ClienteId INT,@Activo BIT,@Limite DECIMAL(19,2),@PlazoDias INT,
@@ -38,10 +38,10 @@ BEGIN
     THROW 57003,'Version obsoleta; consulte el perfil.',1;
    SELECT @Deuda=COALESCE(SUM(Saldo),0) FROM dbo.P3_CRE_Cuenta WHERE ClienteId=@ClienteId;
    IF @Limite<@Deuda THROW 57005,'El limite no puede ser inferior a la deuda.',1;
-   SELECT @Antes=(SELECT Activo,Limite,PlazoDias,CONVERT(VARCHAR(16),Version,2) Version FROM dbo.Credito_Cliente WHERE ClienteId=@ClienteId FOR JSON PATH,WITHOUT_ARRAY_WRAPPER);
+   SELECT @Antes=(SELECT Activo,Limite,PlazoDias,CONVERT(VARCHAR(16),CONVERT(BINARY(8),Version),2) Version FROM dbo.Credito_Cliente WHERE ClienteId=@ClienteId FOR JSON PATH,WITHOUT_ARRAY_WRAPPER);
    IF @Version IS NULL INSERT dbo.Credito_Cliente(ClienteId,Activo,Limite,PlazoDias) VALUES(@ClienteId,@Activo,@Limite,@PlazoDias);
    ELSE UPDATE dbo.Credito_Cliente SET Activo=@Activo,Limite=@Limite,PlazoDias=@PlazoDias WHERE ClienteId=@ClienteId;
-   SELECT @Resultado=(SELECT ClienteId,Activo,CONVERT(VARCHAR(21),Limite) Limite,PlazoDias,CONVERT(VARCHAR(16),Version,2) Version,
+   SELECT @Resultado=(SELECT ClienteId,Activo,CONVERT(VARCHAR(21),Limite) Limite,PlazoDias,CONVERT(VARCHAR(16),CONVERT(BINARY(8),Version),2) Version,
     @OperacionId OperacionId FROM dbo.Credito_Cliente WHERE ClienteId=@ClienteId FOR JSON PATH,WITHOUT_ARRAY_WRAPPER);
    INSERT dbo.P3_CRE_Operacion(OperacionId,SolicitudHash,Resultado) VALUES(@OperacionId,@Hash,@Resultado);
    DECLARE @Razon NVARCHAR(250)=@Motivo;

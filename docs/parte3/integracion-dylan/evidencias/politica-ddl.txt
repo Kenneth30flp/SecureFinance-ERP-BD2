@@ -1,0 +1,5 @@
+Result
+------
+PASS revoked authorization rejects DDL (54993), rolls back object and restores authorization
+
+(1 rows affected)

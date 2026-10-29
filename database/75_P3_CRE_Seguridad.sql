@@ -1,5 +1,5 @@
 SET XACT_ABORT ON; SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
-IF DB_NAME() <> N'SecureFinanceERP_Lab_Dylan' OR @@TRANCOUNT=0 THROW 57000,'Laboratorio y transaccion externa requeridos.',1;
+IF DB_NAME() <> dbo.P3_INT_Destino() OR @@TRANCOUNT=0 THROW 57000,'Laboratorio y transaccion externa requeridos.',1;
 IF DATABASE_PRINCIPAL_ID(N'securefinance_app') IS NULL THROW 57000,'Usuario de aplicacion no instalado.',1;
 IF NOT EXISTS(SELECT 1 FROM dbo.Rol WHERE Nombre=N'Administrador' AND Activo=1) THROW 57000,'Falta rol Administrador activo.',1;
 INSERT dbo.Permiso(Codigo,Descripcion)

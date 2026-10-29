@@ -1,0 +1,8 @@
+PASS preparado/despachado/recibido, replay y stock global (ejecucion manual).
+Respuesta
+---------
+{"TransferenciaId":5,"Estado":"DESPACHADA","Version":"0000000000000970","OperacionId":"58A23555-84A9-45AF-981A-54D41B454B06"}
+Respuesta
+---------
+{"TransferenciaId":5,"Estado":"RECIBIDA","Version":"0000000000000972","OperacionId":"B83497DB-9FDC-48F9-B545-4E80591A15D4"}
+PASS ocho rechazos y rollback (ejecucion manual; no acredita concurrencia).

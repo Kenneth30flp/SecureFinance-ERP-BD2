@@ -5,13 +5,13 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { migrationPlan, applyReviewedPlan } = require('../scripts/creditosMigrationPlan');
-const file = name => fs.readFileSync(path.join(__dirname, '../database', name), 'utf8');
+const file = name => fs.readFileSync(path.join(__dirname, '../database', name), 'utf8').replace(/\r\n/g,'\n');
 const compact = source => source.replace(/\s+/g, '');
 test('CRE source contract: all 70-78 files are lab guarded and external transaction required', () => {
-  const plan = migrationPlan(); assert.equal(new Set(plan.map(b => b.file)).size, 10);
+  const plan = migrationPlan(); assert.equal(new Set(plan.map(b => b.file)).size, 9);
   for (const name of new Set(plan.map(b => b.file))) {
     const source = file(name);
-    assert.match(source, /DB_NAME\(\)[^;]*<> N'SecureFinanceERP_Lab_Dylan'/);
+    assert.match(source, /DB_NAME\(\)[^;]*<> (?:dbo\.P3_INT_Destino\(\)|N'SecureFinanceERP_Lab_Dylan')/);
     assert.doesNotMatch(source, /^\s*USE\s/mi);
   }
   for (const name of ['70_P3_CRE_Estructura.sql','71_P3_CRE_Perfiles.sql','72_P3_CRE_Financiacion.sql','73_P3_CRE_Abonos.sql','74_P3_CRE_Consultas.sql','75_P3_CRE_Seguridad.sql','76_P3_CRE_Ventas_PROPUESTA.sql','77_P3_CRE_ConversionPublica.sql','78_P3_CRE_Verificacion.sql'])
@@ -41,7 +41,7 @@ test('CRE source contract: original cash hashes are unchanged, credit hash adds 
   assert.equal(hashes.length, 2);
   for (const expression of hashes) assert(compact(proposed).includes(compact(expression)));
   assert.match(proposed, /IF @P3Credito=1/); assert.match(proposed, /P3CRE:v1/); assert.match(proposed, /@P3PlazoDias,N'\|',@P3NumeroCuotas/);
-  assert.match(proposed, /SESSION_CONTEXT\(N'P3_BOD.BodegaId'\)/); assert.match(proposed, /PROPOSED: pending Kenneth review/);
+  assert.match(proposed, /SESSION_CONTEXT\(N'P3_BOD.BodegaId'\)/); assert.match(proposed, /INTEGRATED:/);
 });
 test('CRE source contract: one engine, frozen SQL quote prices, no TVP or global stock mutation', () => {
   const proposed = file('76_P3_CRE_Ventas_PROPUESTA.sql');
@@ -49,7 +49,7 @@ test('CRE source contract: one engine, frozen SQL quote prices, no TVP or global
   assert.match(proposed, /SELECT @Precio=PrecioUnitario FROM dbo\.P3_COT_Detalle/);
   assert.match(proposed, /EXEC dbo\.sp_RegistrarMovimientoKardex/);
   assert.match(proposed, /IF @P3Credito=0 INSERT dbo\.MovimientoCaja/);
-  assert(proposed.indexOf('@P3NumeroCuotas,@Total;') < proposed.indexOf('INSERT dbo.Factura('));
+  assert(compact(proposed).indexOf('@P3NumeroCuotas,@Total;') < compact(proposed).indexOf('INSERTdbo.Factura('));
   assert.doesNotMatch(proposed, /(?:ALTER|CREATE) TYPE|UPDATE dbo\.Producto/i);
   const originalExpressions = ['SET @Bruto = @Precio * CONVERT(DECIMAL(10,0), @Cantidad);',
     'SET @MontoDescuento = ROUND(@Bruto * @Porcentaje / CONVERT(DECIMAL(5,2), 100), 2);',
@@ -78,7 +78,7 @@ function tokens(source) {
     .filter(t => !t.startsWith('--') && !t.startsWith('/*') && t !== ';' && t.toUpperCase() !== 'AS')
     .map(t => /^(?:N)?'/.test(t) ? t : t.toUpperCase());
 }
-for (const name of ['sp_ProcesarVentaTransaccional', 'sp_ERP_ProcesarVenta', 'sp_ConvertirCotizacionAFactura']) {
+for (const name of ['sp_ConvertirCotizacionAFactura']) {
   test('CRE 76 default source projection equals all 43 tokens: ' + name, () => {
     const old = procedure(file('43_P3_COT_ConversionFactura.sql'), name);
     let cash = procedure(file('76_P3_CRE_Ventas_PROPUESTA.sql'), name);
@@ -127,13 +127,13 @@ test('CRE migration runner: principal DB rejected before first DDL and external 
   await assert.rejects(() => applyReviewedPlan({ request: () => ({
     query: async () => ({ recordset: [{ DatabaseName: 'SecureFinanceERP', TranCount: 1, XactState: 1 }] }),
     batch: async () => { batches++; },
-  }), rollback: async () => { rolledBack++; } }, { kennethReviewApproved: true }), /Exact Dylan/);
+  }), rollback: async () => { rolledBack++; } }, { kennethReviewApproved: true }), /Explicitly authorized/);
   assert.equal(batches, 0); assert.equal(rolledBack, 1);
 });
 test('CRE migration runner: every GO checked, first error aborts remaining batches', async () => {
   let guards = 0, batches = 0, rolledBack = 0;
   await assert.rejects(() => applyReviewedPlan({ request: () => ({
-    query: async () => { guards++; return { recordset: [{ DatabaseName: 'SecureFinanceERP_Lab_Dylan', TranCount: 1, XactState: 1 }] }; },
+    query: async () => { guards++; return { recordset: [{ DatabaseName: 'SecureFinanceERP_P3_PRO_20261029000000_abcdef12', AuthorizedName: 'SecureFinanceERP_P3_PRO_20261029000000_abcdef12', TranCount: 1, XactState: 1 }] }; },
     batch: async () => { if (++batches === 3) throw new Error('synthetic DDL failure'); },
   }), rollback: async () => { rolledBack++; } }, { kennethReviewApproved: true }), /synthetic DDL failure/);
   assert.equal(guards, 3); assert.equal(batches, 3); assert.equal(rolledBack, 1);
@@ -141,7 +141,7 @@ test('CRE migration runner: every GO checked, first error aborts remaining batch
 test('CRE migration runner: complete mocked plan leaves commit decision to caller', async () => {
   let batches = 0, guards = 0;
   await applyReviewedPlan({ request: () => ({
-    query: async () => { guards++; return { recordset: [{ DatabaseName: 'SecureFinanceERP_Lab_Dylan', TranCount: 1, XactState: 1 }] }; },
+    query: async () => { guards++; return { recordset: [{ DatabaseName: 'SecureFinanceERP_P3_PRO_20261029000000_abcdef12', AuthorizedName: 'SecureFinanceERP_P3_PRO_20261029000000_abcdef12', TranCount: 1, XactState: 1 }] }; },
     batch: async () => { batches++; },
   }), rollback: async () => assert.fail('Unexpected rollback'), commit: async () => assert.fail('Must not auto commit') }, { kennethReviewApproved: true });
   assert.equal(batches, migrationPlan().length); assert.equal(guards, batches);
@@ -149,8 +149,19 @@ test('CRE migration runner: complete mocked plan leaves commit decision to calle
 test('CRE migration runner: lost or uncommittable transaction aborts at GO boundary', async () => {
   for (const [TranCount, XactState] of [[0, 0], [1, -1], [2, 1]]) {
     let batches = 0;
-    await assert.rejects(() => applyReviewedPlan({ request: () => ({ query: async () => ({ recordset: [{ DatabaseName: 'SecureFinanceERP_Lab_Dylan', TranCount, XactState }] }),
+    await assert.rejects(() => applyReviewedPlan({ request: () => ({ query: async () => ({ recordset: [{ DatabaseName: 'SecureFinanceERP_P3_PRO_20261029000000_abcdef12', AuthorizedName: 'SecureFinanceERP_P3_PRO_20261029000000_abcdef12', TranCount, XactState }] }),
       batch: async () => { batches++; } }), rollback: async () => {} }, { kennethReviewApproved: true }));
     assert.equal(batches, 0);
   }
+});
+
+test('Integrated 76 preserves promotion parameter positions and cash/credit/warehouse fingerprints',()=>{
+ const s=file('76_P3_CRE_Ventas_PROPUESTA.sql');
+ for(const n of ['sp_ProcesarVentaTransaccional','sp_ERP_ProcesarVenta']) {
+ const p=procedure(s,n);assert(p.indexOf('@P3AplicarPromociones BIT')<p.indexOf('@P3Credito BIT'));
+ assert.match(p,/IF @P3CotizacionId IS NOT NULL AND @P3AplicarPromociones\s*=\s*1/);
+ assert.match(p,/P3_PRO_AplicacionesDeFactura/);
+ }
+ assert.match(s,/P3PRO:v1/);assert.match(s,/P3CRE:v1/);assert.match(s,/P3BOD:v1/);
+ assert.match(s,/ELSE EXEC dbo.P3_CRE_CrearCuenta/);
 });

@@ -1,7 +1,7 @@
 -- LAB ONLY. All 70-77 GO batches MUST share ONE external transaction, stop on first error.
 -- No USE, no automatic COMMIT. See docs/parte3/creditos/README.md. NOT EXECUTED.
 SET XACT_ABORT ON; SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
-IF DB_NAME() <> N'SecureFinanceERP_Lab_Dylan' OR @@TRANCOUNT=0
+IF DB_NAME() <> dbo.P3_INT_Destino() OR @@TRANCOUNT=0
  THROW 57000,'Requiere SecureFinanceERP_Lab_Dylan y transaccion externa; abortar todos los batches.',1;
 IF OBJECT_ID('dbo.P3_COT_ValidarOrigen','P') IS NULL OR OBJECT_ID('dbo.FacturaProductoEmision','U') IS NULL
  OR OBJECT_ID('dbo.sp_ParteII_ValidarPermiso','P') IS NULL
@@ -63,7 +63,7 @@ CREATE TABLE dbo.P3_CRE_Historial(
 GO
 CREATE OR ALTER PROCEDURE dbo.P3_CRE_ValidarEntorno AS
 BEGIN
- IF DB_NAME() <> N'SecureFinanceERP_Lab_Dylan' THROW 57000,'Credito habilitado solo en laboratorio Dylan.',1;
+ IF DB_NAME() <> dbo.P3_INT_Destino() THROW 57000,'Credito habilitado solo en laboratorio Dylan.',1;
 END;
 GO
 CREATE OR ALTER PROCEDURE dbo.P3_CRE_Auditar
