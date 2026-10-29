@@ -324,3 +324,47 @@ documento añadido: `npm.cmd run check` PASS; `npm.cmd test` PASS (95 pruebas,
 0 fallidas, 0 omitidas). No se ejecutaron pruebas SQL reales ni migraciones
 en esta preparación. Los resultados de la suite Node no acreditan ejecución
 de procedimientos contra SQL Server.
+
+## Creditos Mod3: Propuesta en Worktree de Dylan
+
+Estado **PROPOSED, pendiente de revision escrita de Kenneth antes de integrar
+o ejecutar**. Implementacion preparada por solicitud explicita del usuario;
+no se atribuye aprobacion de los responsables ni despliegue SQL. No se edita
+43/39/21, el TVP o Kardex. Ver
+[propuesta de firmas, hashes, bloqueo y BOD](creditos/PROPUESTA_INTEGRACION.md)
+y [entrega de Mod3 y limites reales](creditos/README.md).
+
+70-79 contienen exclusivamente Creditos. 76 propone extender las tres
+definiciones vigentes de 43 con parametros opcionales finales
+`@P3Credito BIT=0,@P3PlazoDias INT=NULL,@P3NumeroCuotas INT=1`, preservando
+recordsets y las dos huellas de contado; credito agrega condiciones y bodega
+a su propia huella. Mantiene un solo motor de precio/IVA/descuentos y el
+Kardex central. Credito crea cuenta/cuotas en lugar de caja de contado.
+No se cambian temporalmente precios del catalogo ni se duplican descuentos.
+
+La fachada fija propuesta es
+`dbo.P3_CRE_ConvertirCotizacionCredito @ActorUsuarioId INT,@CotizacionId INT,
+@OperacionId UNIQUEIDENTIFIER,@PlazoDias INT,@NumeroCuotas INT=1,@BodegaId INT=NULL`.
+La clave compartida BOD es `SESSION_CONTEXT(N'P3_BOD.BodegaId')`; BOD refleja
+cada INSERT Kardex en ubicacion mediante su trigger, sin otro cambio de stock
+global. Creditos no modifica BOD. Si se pide bodega exige el helper opcional
+`P3_BOD_ValidarBodegaVenta @ActorUsuarioId INT,@BodegaId INT` acordado para 81:
+sin GRANT app, sin resultsets, BODEGAS_CONSULTAR y bodega activa. Si falta se
+rechaza, sin fallback silencioso. 77 rechaza contexto previo ocupado (57009)
+antes de abrir transaccion y limpia solo el contexto que instalo. BOD85 debe
+llamar sin contexto/transaccion externos ni prebloqueos de Producto.
+Sin bodega y sin modulo BOD, se conserva el stock global existente.
+
+Tablas academicas exactas `Credito_Cliente`, `Abono_Factura`; abono publico
+`sp_RegistrarAbonoCliente`. Demas objetos propios `P3_CRE_`. Recibos en libro
+`P3_CRE_ReciboCaja` (UNIQUE por abono): no se fuerza mas de una fila por factura
+en MovimientoCaja ni se alteran movimientos historicos. **P3_CRE_ConsultarCaja
+y GET /creditos/caja implementan un informe propio unificado** con permiso
+CREDITOS_CONSULTAR, fechas UTC y SUM DECIMAL(38,2) como strings. El indicador
+propio de Creditos muestra efectivo abonado, no deuda ni venta financiada.
+Los dashboards e informes legacy siguen intactos: su integracion posterior
+no se declara realizada.
+
+SQL solo habilitado para `SecureFinanceERP_Lab_Dylan`; instalacion externa
+transaccional a traves de todos los GO y abortar al primer fallo. TLS reportado
+no confiable: no se establecieron conexiones ni se eludio su validacion.

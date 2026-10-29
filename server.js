@@ -35,6 +35,8 @@ const { createAnaliticaService } = require('./src/modules/jose/analiticaService'
 const { createAnaliticaRoutes } = require('./src/modules/jose/analiticaRoutes');
 const { createCotizacionService } = require('./src/modules/cotizaciones/service');
 const { createCotizacionRoutes } = require('./src/modules/cotizaciones/routes');
+const { createCreditoService } = require('./src/modules/creditos/service');
+const { createCreditoRoutes } = require('./src/modules/creditos/routes');
 
 function createApp({
   secret = process.env.SESSION_SECRET,
@@ -49,6 +51,7 @@ function createApp({
   kennethServices = { productos:createProductoService(), proveedores:createProveedorService(), clientes:createClienteService(), inventario:createInventarioService(), photos:createFotografiaService() },
   analiticaService = createAnaliticaService(),
   cotizacionService = createCotizacionService(),
+  creditoService = createCreditoService(),
   production = process.env.NODE_ENV === 'production',
 } = {}) {
   if (!secret || secret.trim().length < 32) {
@@ -68,7 +71,7 @@ function createApp({
   app.use(express.static(path.join(__dirname, 'src/public')));
   app.use(
     '/vendor/bootstrap',
-    express.static(path.join(__dirname, 'node_modules/bootstrap/dist'))
+    express.static(path.join(path.dirname(require.resolve('bootstrap/package.json')), 'dist'))
   );
 
   // MemoryStore exclusivamente para desarrollo académico local.
@@ -107,6 +110,7 @@ function createApp({
   app.use(createUsuarioRoutes(usuarioService));
   app.use(createKennethRoutes(kennethServices));
   app.use(createCotizacionRoutes(cotizacionService));
+  app.use(createCreditoRoutes(creditoService));
 
   app.get('/health', (req, res) =>
     res.json({ status: 'ok', phase: 3 })
