@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="<%= csrf %>">
+<title><%= title %> | SecureFinance ERP</title><link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css"><link rel="stylesheet" href="/css/styles.css"><link rel="stylesheet" href="/css/multibodega.css"><script src="/js/multibodega.js" defer></script></head>
+<body class="app-shell bod-app" data-bod-actor="<%= usuario.usuarioId %>"><a class="skip-link" href="#workspace">Ir al contenido</a><%- include('../partials/navigation',{actual:'multibodega',rolesCuenta:''}) %>
+<main id="workspace" class="container page-content bod-workspace" tabindex="-1">
+<header class="bod-heading"><div><p class="eyebrow">INVENTARIO / RED DE BODEGAS</p><h1><%= title %></h1><p>Existencia disponible, unidades en camino y evidencia de cada movimiento.</p></div><span class="bod-label"><%- include('../partials/icon',{nombre:'box'}) %> Control por ubicacion</span></header>
+<nav class="bod-tabs bod-no-print" aria-label="Multibodega"><% for(const [key,label] of [['inventario','Existencias'],['bodegas','Bodegas'],['transferencias','Transferencias'],['kardex','Kardex local'],['integraciones','Compras y cotizaciones']]){ %><a href="/multibodega?seccion=<%= key %>" <%- section===key?'aria-current="page"':'' %>><%= label %></a><% } %></nav>
+<div id="bod-message" class="bod-message bod-no-print" role="status" tabindex="-1" hidden></div>
+<noscript><p class="bod-message">Las consultas funcionan sin JavaScript. Las escrituras requieren JavaScript para conservar la referencia y evitar reenvios involuntarios.</p></noscript>

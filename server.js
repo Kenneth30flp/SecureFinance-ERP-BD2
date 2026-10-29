@@ -41,6 +41,8 @@ const { createPromocionService } = require('./src/modules/promociones/service');
 const { createPromocionRoutes } = require('./src/modules/promociones/routes');
 const { createCreditoService } = require('./src/modules/creditos/service');
 const { createCreditoRoutes } = require('./src/modules/creditos/routes');
+const { createMultibodegaService } = require('./src/modules/multibodega/service');
+const { createMultibodegaRoutes } = require('./src/modules/multibodega/routes');
 
 function createApp({
   secret = process.env.SESSION_SECRET,
@@ -58,6 +60,7 @@ function createApp({
   cotizacionService = createCotizacionService(),
   promocionService = createPromocionService(),
   creditoService = createCreditoService(),
+  multibodegaService = createMultibodegaService(),
   production = process.env.NODE_ENV === 'production',
 } = {}) {
   if (!secret || secret.trim().length < 32) {
@@ -120,6 +123,7 @@ function createApp({
   // Promociones de José (Parte III, migraciones 60-63)
   app.use(createPromocionRoutes(promocionService));
   app.use(createCreditoRoutes(creditoService));
+  app.use(createMultibodegaRoutes(multibodegaService));
 
   app.get('/health', (req, res) =>
     res.json({ status: 'ok', phase: 3 })

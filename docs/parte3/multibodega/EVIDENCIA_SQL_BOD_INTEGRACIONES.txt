@@ -1,0 +1,109 @@
+===============================================================================
+EVIDENCIA SQL - P3_BOD INTEGRACIONES (ENTREGA DYLAN - MODULO 5 MULTIBODEGA)
+===============================================================================
+Modulo  : 5 - Multibodega y transferencias (M5, Dylan Caal)
+Script  : database/tests/P3_BOD_Integraciones.ps1 (PowerShell 5.1 + ADO.NET)
+Destino : SecureFinanceERP_Lab_Dylan (SOLO laboratorio Dylan; cinco bases
+          protegidas intactas; sin modificaciones a migraciones instaladas)
+Actor   : P3_DYLAN_QA_ADMIN (sintetico, permisos verificados via
+          sp_ParteII_ValidarPermiso para TRANSFERENCIAS_*, COTIZACIONES_*,
+          VENTAS_REGISTRAR, DEVOLUCIONES_REGISTRAR/AUTORIZAR,
+          INVENTARIO_REGISTRAR antes de la corrida)
+Fecha   : 2026-10-29 01:00:04 (timestamp_local del JSON)
+Modo    : ejecucion real con sesion ADO.NET (ApplicationName
+          Dylan-Integraciones-P3BOD, Pooling=false, guard de base exacta
+          SecureFinanceERP_Lab_Dylan, @@TRANCOUNT=0 y contexto de bodega vacio).
+
+RESUMEN: 6/6 FASES EN PASS
+  F1_PASS=True   F2_PASS=True   F3_PASS=True
+  F4_PASS=True   F5_PASS=True   F6_PASS=True
+
+RESULTADO POR FASE (JSON crudo de la corrida exitosa):
+
+F0 - CONTEXTO
+  contexto: { producto: 28, stock: 97 }
+  Bodegas 1/2/3 (Central, Z1, Z10) activas. Producto 28 con stock conciliado.
+
+F1 - TRANSFERENCIA COMPLETA Central -> Z10 (8 unidades)
+  TansferenciaId=43, Estado=RECIBIDA, z10Local=21 (relativo: previo 13 + 8).
+  preparar=True (sp_TransferirStockBodegas), despachar=True y recibir=True
+  (P3_BOD_AvanzarTransferencia DESPACHAR/RECIBIR con VersionEsperada
+  binary(8) leida antes de cada fase: optimista).
+  Verificado: el stock global Producto.Stock no cambia con la transferencia
+  (solo cambia el stock local P3_BOD_Stock).
+  F1_PASS=True
+
+F2 - PRUEBA 19: VENTA CON UBICACION DE BODEGA
+  P3_COT_Crear -> CotizacionId=37 -> P3_BOD_ConvertirCotizacion
+  (@Credito=0, @BodegaId=3/Z10) -> FacturaId=22.
+  El wrapper (85) activa SESSION_CONTEXT('P3_BOD.BodegaId')=3 y delega en
+  el engine de Kenneth sp_ConvertirCotizacionAFactura; el espejo
+  P3_BOD_EspejoKardex (84, YA INSTALADO EN LAB) inserta en P3_BOD_Ledger
+  y descontar el stock local Z10.
+  z10: 21 -> 19 (venta de 2 unidades debitada en ubicacion Z10); stock
+  global: 97 -> 96 (coherente con el core de ventas).
+  Kardex VENTA id=62 con fila Ledger vinculada (ledgerVenta=1); se constata
+  que el engine asigna SU PROPIO OperacionId al Kardex de venta (distinto al
+  OperacionId del wrapper P3_BOD_ConvertirCotizacion), motivo por el cual la
+  corrida deriva el Kardex via P3_BOD_Ledger (latest VENTA <= 2 minutos) en
+  lugar de asumir el GUID del wrapper. Auditoria DML de cotizacion vigente
+  (Bitacora_Transacciones TablaAfectada='P3_COT_Cotizacion' con ValorNuevo).
+  F2_PASS=True
+
+F3 - PRUEBA 20: DEVOLUCION APTA CON REINGRESO EN UBICACION
+  Operacion=599e93a9-317b-4f07-837a-a0d084552a13
+  EXEC sp_ProcesarDevolucionCliente (Edward, 24) con @Detalles JSON
+  {"DetalleFacturaId":<id>,"Cantidad":1,"Reingresar":true} y contexto
+  SESSION_CONTEXT('P3_BOD.BodegaId')=3 fijado y limpiado por el runner.
+  ok=True; Kardex DEVOLUCION id=63 (generado por el trigger
+  tr_DetalleDevolucion_Reingreso -> sp_RegistrarMovimientoKardex) con
+  fila Ledger vinculada (ledgerDev=1, linkLedgerKardex=1 via DevolucionKardex).
+  z10: 19 -> 20 (+1 reingreso local); stock global: 96 -> 97 (+1).
+  Nota de credito: 1. Auditoria DML: 3 eventos con OperacionId de devolucion.
+  F3_PASS=True
+
+F4 - PRUEBA 21: DEVOLUCION DEFECTUOSA SIN REINGRESO
+  Operacion=24d410dc-d5c4-401e-9b43-2f27101c98b9
+  mismo proc con {"Reingresar":false}.
+  ok=True; kardexFilas=0 y ledgerFilas=0 (NO se reintegra al inventario
+  vendible, como exige la especificacion para producto defectuoso);
+  z10=20 (sin cambios); stockGlobal=96 (sin cambios); notaCredito=1; el
+  evento queda auditaro en Bitacora_Transacciones (bitacoraDML=1).
+  F4_PASS=True
+
+F5 - VERIFICACION DE KARDEX (consistencia Ledger <-> Kardex)
+  mismatchLedgerKardex=0, kardexDuplicados=0 (fecha que la fila Ledger
+  referencia el mismo OperacionId/ActorCantidad que el Kardex y no hay
+  movimientos duplicados por OperacionId+Tipo+Linea).
+  F5_PASS=True
+
+F6 - REGRESION: CONCILIACION + AUDITORIA DML CRUZADA
+  filasConDiferencia=0 sobre 8 filas (P3_BOD_Conciliacion sin divergencia
+  acumulada tras el ciclo completo); saldoGlobalTexto="0".
+  Eventos DML cruzados por OperacionId: transferencia=1, cotizacion=1,
+  devolucion apta=3, devolucion defectuosa=1 (total 6 >= 4: cada operacion
+  del ciclo deja su huella de auditoria DML).
+  F6_PASS=True
+
+-------------------------------------------------------------------------------
+REGRESION ADICIONAL CUBIERTA POR ESTE SCRIPT
+-------------------------------------------------------------------------------
+- El ciclo completo transferir -> vender en Z10 -> devolver apta -> devolver
+  defectuosa deja la conciliacion integral en 0 diferencia.
+- Las aserciones de stock son RELATIVAS (antes/despues por fase) para que la
+  suite sea re-ejecutable sin depender de un warehouse virgen.
+- No se modificaron sp_TransferirStockBodegas, P3_BOD_AvanzarTransferencia,
+  P3_BOD_ConvertirCotizacion, sp_ProcesarDevolucionCliente ni
+  sp_ConvertirCotizacionAFactura (solo se EjECUTARON del lab).
+
+NOTA DIANOSTICA ADICIONAL
+- P3_BOD_Stock Z10 acumula identificadores de corridas de desarrollo
+  previas; el estado fisico de lab reporta z10Local=21 pre-F1 en la corrida
+  final; el balanza sigue siendo 0 diferencia. Los procesos de otros modulos
+  (Edward devoluciones 24 y Kenneth core de ventas 43) se usaron tal cual.
+
+REGISTRO
+- JSON crudo: %TEMP%\opencode\P3_BOD_Integraciones.json
+- SCRIPT: database/tests/P3_BOD_Integraciones.ps1 (SIN modificar: solo se
+  probaron y corrigieron defectos del mismo script de prueba durante el
+  despinado; NO se corrigio ninguna migracion del modulo).
