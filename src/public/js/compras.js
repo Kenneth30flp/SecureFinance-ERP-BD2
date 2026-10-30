@@ -36,10 +36,84 @@
   if(create){
     const lines=[],supplier=$('#com-supplier'),product=$('#com-product');
     const selections={supplier:[],product:[]},tickets={supplier:0,product:0};
+    const requests={},timers={};
+    let selectedSupplier='';
+    function invalidate(kind){clearTimeout(timers[kind]);tickets[kind]++;requests[kind]?.controller.abort();delete requests[kind];}
+    function resetProducts(){
+      invalidate('product');selections.product=[];
+      product.replaceChildren(new Option('Selecciona primero un proveedor',''));
+      product.removeAttribute('aria-busy');
+      $('#com-product-pages').replaceChildren();
+      $('#com-product-query').value='';
+      $('#com-product-status').textContent='Selecciona primero un proveedor.';
+      const link=$('#com-product-manage');if(link)link.hidden=true;
+    }
     function draw(){const tbody=$('#com-lines');tbody.replaceChildren();for(const line of lines){const tr=document.createElement('tr');for(const [label,text] of [['Producto',line.name],['Cantidad',String(line.Cantidad)],['Costo unitario',money(scaled(line.CostoUnitario))],['Subtotal',money(total([line]))]]){const td=document.createElement('td');td.dataset.label=label;td.textContent=text;tr.append(td);}const td=document.createElement('td'),button=document.createElement('button');button.type='button';button.className='btn btn-outline-danger btn-sm';button.textContent='Retirar';button.setAttribute('aria-label','Retirar '+line.name);button.onclick=()=>{lines.splice(lines.indexOf(line),1);draw();};td.append(button);tr.append(td);tbody.append(tr);}supplier.disabled=lines.length>0;$('#com-supplier-search').disabled=lines.length>0;$('#com-supplier-query').disabled=lines.length>0;$('#com-supplier-pages').querySelectorAll('button').forEach(b=>b.disabled=lines.length>0);$('#com-no-lines').hidden=lines.length>0;$('#com-count').textContent=lines.length;$('#com-total').textContent=money(total(lines));$('#com-summary-provider').textContent=supplier.selectedOptions[0]?.textContent||'Selecciona un proveedor';}
-    async function search(kind,page=1){try{if(kind==='supplier'&&lines.length)return;if(kind==='product'&&!supplier.value)throw Error('Selecciona primero un proveedor.');const ticket=++tickets[kind],params=new URLSearchParams({q:$('#com-'+kind+'-query').value,pagina:String(page)});if(kind==='product')params.set('proveedor',supplier.value);const data=await request('/compras/buscar/'+(kind==='supplier'?'proveedores':'productos')+'?'+params);if(ticket!==tickets[kind])return;const select=kind==='supplier'?supplier:product;selections[kind]=data.rows;select.replaceChildren(new Option(data.rows.length?'Selecciona una opción':'Sin resultados activos',''));for(const row of data.rows)select.add(new Option(row.Nombre+' · '+row.Referencia,String(row.Id)));const pager=$('#com-'+kind+'-pages');pager.replaceChildren();const status=document.createElement('span');status.textContent='Página '+page+' · '+data.rows.length+' resultados';pager.append(status);for(const [label,target,enabled] of [['Anterior',page-1,page>1],['Siguiente',page+1,data.next]]){if(!enabled)continue;const b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=()=>search(kind,target);pager.append(b);}if(kind==='supplier'){tickets.product++;product.replaceChildren(new Option('Selecciona primero un proveedor',''));}draw();}catch(e){notify(e.message);}}
-    for(const kind of ['supplier','product']){$('#com-'+kind+'-search').onclick=()=>search(kind);$('#com-'+kind+'-query').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();search(kind);}});}
-    supplier.addEventListener('change',()=>{tickets.product++;product.replaceChildren(new Option('Busca un producto asociado',''));$('#com-product-pages').replaceChildren();draw();});
+    async function search(kind,page=1){
+      clearTimeout(timers[kind]);
+      if(kind==='supplier'&&lines.length)return;
+      if(kind==='product'&&!supplier.value)return;
+      const query=$('#com-'+kind+'-query').value.trim(),provider=supplier.value;
+      const params=new URLSearchParams({q:query,pagina:String(page)});
+      if(kind==='product')params.set('proveedor',provider);
+      const key=params.toString();
+      if(requests[kind]?.key===key)return;
+      invalidate(kind);
+      const ticket=tickets[kind],controller=new AbortController();
+      requests[kind]={key,controller};
+      const select=kind==='supplier'?supplier:product,status=$('#com-'+kind+'-status');
+      select.setAttribute('aria-busy','true');status.textContent='Cargando '+(kind==='supplier'?'proveedores':'productos')+'…';
+      const current=()=>ticket===tickets[kind]&&(kind!=='product'||provider===supplier.value);
+      try{
+        const response=await fetch('/compras/buscar/'+(kind==='supplier'?'proveedores':'productos')+'?'+params,{credentials:'same-origin',signal:controller.signal});
+        let data;try{data=await response.json();}catch{throw Error('Respuesta no válida (HTTP '+response.status+'). Verifica tu sesión e intenta nuevamente.');}
+        if(!response.ok)throw Error('HTTP '+response.status+': '+(typeof data?.error==='string'?data.error:'No se pudo cargar el catálogo.'));
+        if(!current()||(kind==='supplier'&&lines.length))return;
+        if(!data||!Array.isArray(data.rows)||typeof data.next!=='boolean'||data.pagina!==page||
+          !data.rows.every(row=>row&&Number.isInteger(row.Id)&&row.Id>0&&typeof row.Nombre==='string'&&typeof row.Referencia==='string')||
+          new Set(data.rows.map(row=>row.Id)).size!==data.rows.length)throw Error('Respuesta de catálogo inesperada. Intenta nuevamente.');
+        const previous=select.value,chosen=selections[kind].find(row=>String(row.Id)===previous);
+        selections[kind]=data.rows.slice();
+        // Keep the current selection when browsing another page or refining the query.
+        if(chosen&&!selections[kind].some(row=>row.Id===chosen.Id))selections[kind].unshift(chosen);
+        select.replaceChildren(new Option('Selecciona una opción',''));
+        for(const row of selections[kind])select.add(new Option(row.Nombre+' · '+row.Referencia,String(row.Id)));
+        select.value=previous;
+        const pager=$('#com-'+kind+'-pages');pager.replaceChildren();
+        status.textContent=data.rows.length?'Página '+page+' · '+data.rows.length+' resultados':
+          query?'Sin coincidencias para esta búsqueda.':
+          kind==='supplier'?'No hay proveedores activos disponibles.':'No hay productos activos asociados a este proveedor.';
+        const link=kind==='product'?$('#com-product-manage'):null;if(link)link.hidden=data.rows.length>0||Boolean(query);
+        for(const [label,target,enabled] of [['Anterior',page-1,page>1],['Siguiente',page+1,data.next]]){
+          if(!enabled)continue;const b=document.createElement('button');b.type='button';b.textContent=label;
+          b.setAttribute('aria-label',label+' página de '+(kind==='supplier'?'proveedores':'productos'));
+          b.onclick=()=>search(kind,target);pager.append(b);
+        }
+        draw();
+      }catch(e){
+        if(!current()||e.name==='AbortError')return;
+        status.textContent='No se pudo cargar el catálogo. '+e.message+' Pulsa Buscar para reintentar.';
+      }finally{
+        if(current()){delete requests[kind];select.removeAttribute('aria-busy');}
+      }
+    }
+    for(const kind of ['supplier','product']){
+      const query=$('#com-'+kind+'-query');
+      $('#com-'+kind+'-search').onclick=()=>search(kind);
+      query.addEventListener('input',()=>{
+        if(kind==='supplier'&&lines.length)return;
+        invalidate(kind); // Invalidate immediately, including the debounce interval.
+        timers[kind]=setTimeout(()=>search(kind),250);
+      });
+      query.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();search(kind);}});
+    }
+    supplier.addEventListener('change',()=>{
+      if(lines.length){supplier.value=selectedSupplier;return;}
+      if(supplier.value===selectedSupplier)return;
+      selectedSupplier=supplier.value;resetProducts();draw();
+      if(selectedSupplier)search('product');
+    });
+    draw();search('supplier');
     $('#com-add').onclick=()=>{try{const found=selections.product.find(p=>String(p.Id)===product.value);if(!supplier.value||!found)throw Error('Selecciona proveedor y producto activos.');if(lines.length>=100)throw Error('Una orden admite hasta 100 productos.');if(lines.some(l=>l.ProductoId===found.Id))throw Error('El producto ya está agregado. Retira su línea si necesitas corregirla.');lines.push({ProductoId:found.Id,Cantidad:quantity($('#com-quantity').value),CostoUnitario:cost($('#com-cost').value),name:found.Nombre});draw();}catch(e){notify(e.message);}};
     create.addEventListener('submit',e=>{e.preventDefault();try{if(pending)return void send(pending.url,pending.body,create,'');if(!lines.length)throw Error('Agrega al menos un producto.');send('/compras',{ProveedorId:quantity(supplier.value),OperacionId:create.dataset.operation,Observaciones:$('#com-notes').value,Detalle:lines.map(({name,...line})=>line)},create,'Crear una orden por '+money(total(lines))+'. Revisa los costos y cantidades; las líneas quedarán inmutables.');}catch(error){notify(error.message);}});
   }
