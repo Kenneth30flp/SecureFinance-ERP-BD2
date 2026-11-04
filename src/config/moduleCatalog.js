@@ -21,6 +21,7 @@ const modules = [
   ['creditos','finanzas','Cuentas por cobrar y créditos','/creditos','activity','Autorizar crédito, consultar cuotas y registrar abonos.',['CREDITOS_CONSULTAR']],
   ['auditoria','administracion','Auditoría','/auditoria','shield','Consultar trazabilidad operativa.',['AUDITORIA_CONSULTAR']],
   ['auditoria-ddl','administracion','Auditoría DDL','/auditoria/ddl','shield','Consultar eventos y comandos estructurales.',['AUDITORIA_DDL_CONSULTAR']],
+  ['backups','administracion','Respaldos y recuperación','/dba/backups','shield','Respaldos FULL, DIFF, LOG y recuperación Point-In-Time.',['DBA_BACKUPS_CONSULTAR']],
   ['usuarios','administracion','Usuarios y Roles','/usuarios','users','Administrar cuentas y accesos.',['USUARIOS_ADMINISTRAR']],
   ['password','administracion','Seguridad de cuenta','/cambiar-password','key','Cambiar tu contraseña.',[]],
 ].map(([id,area,name,route,icon,description,permissions],order)=>Object.freeze({id,area,name,route,icon,description,permissions:Object.freeze(permissions),permissionMode:'any',available:true,order}));

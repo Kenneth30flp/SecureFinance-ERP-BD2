@@ -46,6 +46,9 @@ const { createCreditoRoutes } = require('./src/modules/creditos/routes');
 const { createMultibodegaService } = require('./src/modules/multibodega/service');
 const { createMultibodegaRoutes } = require('./src/modules/multibodega/routes');
 
+const { createBackupsService } = require('./src/modules/dba/backups/service');
+const { createBackupsRoutes } = require('./src/modules/dba/backups/routes');
+
 function createApp({
   secret = process.env.SESSION_SECRET,
   authService = createAuthService(),
@@ -64,6 +67,7 @@ function createApp({
   promocionService = createPromocionService(),
   creditoService = createCreditoService(),
   multibodegaService = createMultibodegaService(),
+  backupsService = createBackupsService(),
   production = process.env.NODE_ENV === 'production',
 } = {}) {
   if (!secret || secret.trim().length < 32) {
@@ -129,6 +133,7 @@ function createApp({
   app.use(createPromocionRoutes(promocionService));
   app.use(createCreditoRoutes(creditoService));
   app.use(createMultibodegaRoutes(multibodegaService));
+  app.use(createBackupsRoutes(backupsService));
 
   app.get('/health', (req, res) =>
     res.json({ status: 'ok', phase: 3 })
