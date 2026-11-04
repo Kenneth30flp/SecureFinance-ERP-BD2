@@ -1,0 +1,17 @@
+{
+  "atUTC": "2026-11-04T04:00:58.857Z",
+  "database": "SecureFinanceERP_P4_LDF_20261104033413_019717ca",
+  "widths": [
+    1440,
+    1024,
+    768,
+    390
+  ],
+  "realSQL": true,
+  "manualBackup": "e8e362e6-72e3-4b88-bc30-596b98e8641a",
+  "doubleClick": "one POST",
+  "lostResponse": "one backup in msdb; reconciled on reload",
+  "storageFailure": "no POST",
+  "javascriptErrors": [],
+  "result": "PASS"
+}

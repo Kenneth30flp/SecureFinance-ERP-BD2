@@ -73,4 +73,4 @@ async function run(db){
  s[db===s.clone?'rehearsalChecksAt':'productionChecksAt']=new Date().toISOString();d.save(s);
  console.log('PASS creation, independent approval, self-approval denial, cancellation, partial/full receipt, replay, excess/stale denial, Kardex, valuation, Multibodega; all fixtures/grants/documents rolled back: '+db);
 }
-module.exports={run};if(require.main===module)run(process.argv[2]==='original'?d.state().source:d.state().clone).catch(e=>{console.error('BLOCKED',e.message);process.exitCode=1;});
+module.exports={run,success};if(require.main===module)run(process.argv[2]==='original'?d.state().source:d.state().clone).catch(e=>{console.error('BLOCKED',e.message);process.exitCode=1;});

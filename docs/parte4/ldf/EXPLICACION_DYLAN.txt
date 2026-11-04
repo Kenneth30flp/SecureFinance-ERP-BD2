@@ -1,0 +1,154 @@
+MI MODULO NUEVO: EL CUIDADOR DEL CUADERNO DE SQL SERVER
+Parte IV / UC14 / LDF
+====================================================
+
+1. IMAGINA UNA TIENDA
+
+La base de datos guarda clientes, ventas y productos.
+SQL Server tiene otro cuaderno donde va apuntando cambios para poder
+recuperarse si se apaga la computadora o hay un problema.
+Ese cuaderno es el registro de transacciones. Su archivo suele terminar .ldf.
+
+Mi modulo mira ese cuaderno y responde:
+- De que base es y donde esta su archivo?
+- Cuanto ocupa el archivo?
+- Cuanto esta usando SQL Server?
+- Cuanto espacio queda para volver a escribir?
+- Por que no puede volver a usar algunas paginas?
+- Cuando se hizo el ultimo respaldo del cuaderno?
+
+No es el modulo que vende productos, ni la auditoria DDL anterior.
+La auditoria DDL contaba quien cambio tablas o procedimientos.
+Este modulo cuida el registro interno que SQL Server usa para recuperarse.
+
+2. LAS TRES CANTIDADES QUE NO DEBO CONFUNDIR
+
+TAMANO FISICO: el tamano del cuaderno entero.
+ESPACIO OCUPADO: las paginas que SQL todavia necesita conservar.
+ESPACIO LIBRE: las paginas que puede volver a utilizar.
+
+Ejemplo: cuaderno de 192 MB, usado 12 MB, libre cerca de 180 MB.
+Respaldarlo no convierte el cuaderno en uno de 12 MB.
+Puede seguir midiendo 192 MB y tener mas espacio libre por dentro.
+Hay una pequena diferencia entre espacio fisico y logico por las cabeceras.
+
+3. QUE SON LOS VLF
+
+Imagina que el cuaderno esta dividido en pequenos grupos de paginas.
+Cada grupo es un Virtual Log File: VLF.
+- Activo: SQL aun necesita ese grupo.
+- Inactivo: ese grupo ya no forma parte del LOG activo.
+
+No existe un numero magico de VLF correcto para todas las bases.
+Hay que ver sus tamanos, como crecen y cuanto trabajo tiene la base.
+El panel muestra cifras reales, no ejemplos inventados.
+
+4. QUE SIGNIFICA FULL
+
+Es una politica de recuperacion. FULL permite conservar una cadena de
+respaldos LOG, pero necesita un respaldo inicial FULL o diferencial vigente.
+Decir FULL no significa que ya existan respaldos.
+Mi boton comprueba ambas cosas antes de trabajar.
+
+SIMPLE es otra politica: no permite BACKUP LOG.
+El programa lo explica y no cambia la politica para forzar la operacion.
+
+5. QUE ES UNA CADENA DE RESPALDOS
+
+Es como una foto inicial del cuaderno y los capitulos escritos despues.
+Para recuperarlo completo se necesita la foto y los capitulos correspondientes.
+El panel revisa si SQL permite continuar la cadena.
+Eso no prueba que nadie haya borrado un archivo antiguo: para demostrarlo
+de verdad hay que restaurar la cadena en otra base, y eso se prueba aparte.
+
+6. EL SEMAFORO
+
+Menos de 70%: saludable por uso.
+Desde 70% hasta menos de 85%: advertencia.
+85% o mas: critico.
+
+El DBA puede cambiar estos numeros. Son una decision de interfaz, no una
+ley universal ni un requisito que estemos atribuyendo al PDF.
+El semaforo avisa; NO borra archivos ni ejecuta cosas solo.
+
+7. POR QUE A VECES NO SE REUTILIZA EL ESPACIO
+
+LOG_BACKUP: puede faltar un respaldo del registro.
+ACTIVE_TRANSACTION: hay una operacion abierta que necesita sus registros.
+ACTIVE_BACKUP_OR_RESTORE: ya hay un respaldo/restauracion trabajando.
+REPLICATION: una copia o proceso de replicacion aun necesita registros.
+NOTHING: el motor no informa una espera de truncado en esa lectura.
+
+Un respaldo no arregla todas las causas. Si una operacion sigue abierta,
+puede seguir reteniendo registros aunque se haya hecho el respaldo.
+La pantalla cuenta lo que reporta SQL en ese momento.
+
+8. QUE HACE EL BOTON RESPALDAR LOG AHORA
+
+1) Revisa que estoy autorizado.
+2) Comprueba la base, su estado, el modelo y la cadena.
+3) Comprueba el directorio aprobado para guardar el archivo.
+4) Pide turno: no deja pasar otro respaldo que use el mismo bloqueo.
+5) SQL crea un archivo .trn con comprobacion CHECKSUM.
+6) El sistema verifica el resultado en el historial real de SQL.
+7) Registra quien lo pidio, cuando, archivo, resultado y referencia unica.
+8) Vuelve a consultar las cifras reales del panel.
+
+La referencia UUID es como el numero del turno.
+Si se pierde internet o la respuesta, se conserva ese mismo numero.
+Reintentar el mismo numero consulta el resultado, no hace otra copia igual.
+Si el resultado es INCIERTO, no se inventa que funciono: lo revisa el DBA.
+
+9. SEGURIDAD EXPLICADA FACIL
+
+La cuenta normal de la tienda no tiene la llave maestra de SQL Server.
+Hay una cuenta distinta para la accion de respaldo, y tampoco es sysadmin.
+Solo puede llamar a un procedimiento autorizado.
+La pantalla no deja escribir cualquier base, ruta o comando SQL.
+Los permisos se revisan en la web y de nuevo en la base.
+
+10. COMO MOSTRARLO AL INGENIERO
+
+Abre el laboratorio con npm.cmd run start:ldf:lab.
+Entra a http://localhost:3004/dba/ldf.
+La cuenta del laboratorio esta en .data/ldf-acceso.txt.
+
+A. Senala el nombre de la base: es la base aislada de pruebas.
+B. Explica fisico, ocupado, disponible y porcentaje.
+C. Senala FULL y la causa de reutilizacion.
+D. Muestra VLF activos/inactivos y abre su detalle.
+E. Pulsa Respaldar LOG ahora una sola vez.
+F. Muestra CONFIRMADO, el archivo .trn y la hora.
+G. Compara las metricas nuevas. Si el archivo conserva su tamano, es normal.
+H. Muestra la evidencia de la prueba con transaccion activa y liberacion.
+
+No inventes una bajada obligatoria del porcentaje en cada clic.
+Si no habia actividad retenida, la diferencia puede ser pequena o nula.
+La captura de pruebas demuestra una situacion controlada con actividad real.
+
+11. QUIEN HACE LOS RESPALDOS AUTOMATICOS
+
+Edward sera el unico responsable del programador automatico de LOG.
+Mi modulo hace el respaldo manual y funciona aunque el de Edward no exista.
+Los dos deben usar el mismo bloqueo cuando se integren.
+Los archivos manuales tambien forman parte de la cadena: hay que conservarlos.
+
+12. LO QUE NUNCA HACE MI MODULO
+
+- Borrar el .ldf.
+- Reducirlo automaticamente con SHRINKFILE.
+- Cambiar a SIMPLE para vaciarlo.
+- Modificar a mano archivos fisicos.
+- Dar sysadmin a la cuenta web.
+- Fingir metricas o decir CONFIRMADO sin evidencia del motor.
+
+CIERRE PARA LA EXPOSICION
+
+"Mi modulo permite vigilar el registro transaccional real de SQL Server,
+entender por que crece o no puede reutilizarse y hacer un respaldo manual
+controlado. Respaldar permite reutilizar espacio logico, no necesariamente
+reducir el archivo fisico. Todo queda registrado con permisos separados."
+
+La implementacion usa el mismo Node/Express/EJS del equipo. La diferencia
+con la especificacion academica de C# esta documentada para confirmacion
+con el ingeniero; no se da por aprobada.
