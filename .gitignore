@@ -35,3 +35,10 @@ docs/ParteIIFinal*
 docs/ParteIIKennethWeb*
 docs/ParteIIRefinamiento*
 docs/ParteII_VerificacionKenneth_*.json
+
+# UC13 backup media and secrets
+*.trn
+*.dif
+*.backup
+*.cer
+*.pvk

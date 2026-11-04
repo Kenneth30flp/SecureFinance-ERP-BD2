@@ -21,6 +21,7 @@ const modules = [
   ['creditos','finanzas','Cuentas por cobrar y créditos','/creditos','activity','Autorizar crédito, consultar cuotas y registrar abonos.',['CREDITOS_CONSULTAR']],
   ['auditoria','administracion','Auditoría','/auditoria','shield','Consultar trazabilidad operativa.',['AUDITORIA_CONSULTAR']],
   ['auditoria-ddl','administracion','Auditoría DDL','/auditoria/ddl','shield','Consultar eventos y comandos estructurales.',['AUDITORIA_DDL_CONSULTAR']],
+  ['backups','administracion','Respaldos y recuperación','/dba/backups','shield','Respaldos FULL, DIFF, LOG y recuperación Point-In-Time.',['DBA_BACKUPS_CONSULTAR']],
   ['dba-ldf','administracion','Registro transaccional LDF','/dba/ldf','activity','Espacio, VLF y respaldo manual del LOG.',['DBA_LDF_CONSULTAR']],
   ['usuarios','administracion','Usuarios y Roles','/usuarios','users','Administrar cuentas y accesos.',['USUARIOS_ADMINISTRAR']],
   ['password','administracion','Seguridad de cuenta','/cambiar-password','key','Cambiar tu contraseña.',[]],

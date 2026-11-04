@@ -49,6 +49,9 @@ const { createLdfService } = require('./src/modules/dba/ldf/service');
 const { createLdfRoutes } = require('./src/modules/dba/ldf/routes');
 const { close: closeLdfPool } = require('./src/modules/dba/ldf/pools');
 
+const { createBackupsService } = require('./src/modules/dba/backups/service');
+const { createBackupsRoutes } = require('./src/modules/dba/backups/routes');
+
 function createApp({
   secret = process.env.SESSION_SECRET,
   authService = createAuthService(),
@@ -67,6 +70,7 @@ function createApp({
   promocionService = createPromocionService(),
   creditoService = createCreditoService(),
   multibodegaService = createMultibodegaService(),
+  backupsService = createBackupsService(),
   ldfService = createLdfService(),
   sessionName = process.env.SESSION_COOKIE_NAME || 'securefinance.sid',
   production = process.env.NODE_ENV === 'production',
@@ -135,6 +139,7 @@ function createApp({
   app.use(createPromocionRoutes(promocionService));
   app.use(createCreditoRoutes(creditoService));
   app.use(createMultibodegaRoutes(multibodegaService));
+  app.use(createBackupsRoutes(backupsService));
   app.use(createLdfRoutes(ldfService));
 
   app.get('/health', (req, res) =>
