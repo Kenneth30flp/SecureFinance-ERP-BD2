@@ -1,5 +1,9 @@
 # Estado de integración Parte IV — 4 de noviembre de 2026
 
+**Actualización técnica:** las correcciones de seguridad de tareas Windows y capacidad se documentan en [REVISION_TECNICA_TAREAS.md](REVISION_TECNICA_TAREAS.md). Pasaron **302 pruebas locales**, cero fallos/omisiones, incluida la batería UC13/UC14 ampliada de 43 pruebas. No se aplicaron estas correcciones a SQL Server, cuentas, derechos ni tareas Windows durante esa revisión. La validación operativa de las versiones endurecidas y el acceso web con el admin habitual siguen pendientes.
+
+El informe siguiente conserva el estado y las evidencias del despliegue inicial; sus referencias al bloqueo original de Task Scheduler no sustituyen la revisión técnica posterior ni certifican el estado operativo actual.
+
 **UC13 está instalado y probado con SQL Server real en la original; UC14 continúa funcionando. El cierre completo sigue pendiente del login habitual de admin en navegador. La automatización Windows no está operativa y la política SQL permanece deshabilitada.** No se presenta este estado como una Parte IV totalmente finalizada.
 
 ## Resultados comprobados

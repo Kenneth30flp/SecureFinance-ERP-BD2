@@ -1,10 +1,70 @@
-# Instalación LDF: ensayo aprobado; original pendiente de autorización
+# Instalación LDF en la original: SQL verificado; acceso web pendiente
 
 Fecha local: 3 de noviembre de 2026 (Guatemala). Evidencias SQL generadas el 4 de noviembre UTC.
 
 ## Resultado
 
-**LDF todavía no quedó instalado ni habilitado en la instalación original.** Investigación y segundo ensayo completados el 4 de noviembre de 2026. La base original continúa pendiente de autorización explícita. El error inicial se debió a que la copia restaurada conservaba el vínculo de autorización de la original. No fue necesario modificar el trigger ni la función de autorización.
+**LDF quedó instalado y configurado en `SecureFinanceERP` el 4 de noviembre de 2026, con autorización explícita del propietario.** Se completaron 16 comprobaciones del despliegue y una auditoría posterior de conservación. La aplicación original está activa en `http://localhost:3000`; falta concluir la comprobación web con una sesión real del admin habitual. No se declara aprobada esa comprobación mientras el propietario no haya iniciado sesión.
+
+## Despliegue autorizado sobre la original — 4 de noviembre
+
+Se ejecutó exclusivamente el plan de ocho pasos aprobado por el propietario, usando el instalador oficial sin modificarlo. La instalación SQL confirmó su transacción a `2026-11-04T06:16:55.166Z`. El procedimiento de instalación, configuración y reinicio terminó a `2026-11-04T06:17:15.617Z`. Las horas de esta sección son UTC salvo indicación expresa.
+
+Identidad comprobada antes y después:
+
+- Servidor: `9U8ICS2VLMRUE`, SQL Server `16.0.1000.6`.
+- Base original: `SecureFinanceERP`, ONLINE, FULL.
+- GUID original sin cambios: `3A93CC43-B4C7-4935-85D8-6D226BB0F56D`.
+- `P3_INT_Destino()` devuelve `SecureFinanceERP`; su definición y propiedad de autorización permanecen intactas.
+
+### Respaldo nuevo previo a cualquier cambio de instalación
+
+```text
+C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\Backup\SecureFinanceERP_PreLDF_Production_20261104061636.bak
+```
+
+Se creó FULL COPY_ONLY con CHECKSUM, se ejecutó VERIFYONLY con CHECKSUM y se restauró realmente con MOVE, CHECKSUM y RECOVERY en una base independiente nueva:
+
+`SecureFinanceERP_PreLDF_Verify_20261104061636`
+
+CHECKDB de la restauración no devolvió errores. Se conservaron el archivo y la copia. No se ejecutó REPLACE ni ninguna restauración sobre la original. El proceso web original se detuvo **después** de completar este respaldo y comprobar su restauración.
+
+### Objetos y configuración instalados
+
+- Tablas nuevas: `P4_LDF_Configuracion` y `P4_LDF_Ejecucion`, con sus restricciones e índices propios.
+- Procedimientos nuevos: `P4_LDF_Validar`, `P4_LDF_Consultar` y `P4_LDF_RespaldarLog`.
+- Certificados `P4_LDF_ReadCertificate` y `P4_LDF_BackupCertificate`, sus usuarios internos y las tres firmas esperadas. Se comprobó la eliminación de sus claves privadas.
+- Certificado/login de lectura correspondiente en master y certificado/usuario en msdb, según el instalador oficial, para lectura DMV y de `backupset`/`backupmediafamily`.
+- Login SQL nuevo `securefinance_ldf_service`, con política de contraseña, CONNECT SQL, sin roles de servidor y sin acceso a otras bases de usuario. Mapeado como `P4_LDF_BackupService` únicamente en la original, con EXECUTE del punto firmado de respaldo.
+- `securefinance_app` conserva sus privilegios previos y recibe únicamente EXECUTE del punto LDF de consulta. No tiene EXECUTE del respaldo, BACKUP LOG directo, db_owner ni sysadmin.
+- Permisos nuevos `DBA_LDF_CONSULTAR` y `DBA_LDF_RESPALDAR_LOG` asignados al rol `Administrador` existente. Se conservan admin UsuarioId 3, sus pertenencias y credenciales habituales.
+- Configuración LDF ligada al servidor/base/GUID originales, umbrales 70/85 y directorio local de respaldo del motor comprobado mediante el FULL previo.
+- Se añadieron localmente solo `LDF_DATABASE`, `LDF_EXPECTED_SERVER`, `LDF_ADMIN_USER` y `LDF_ADMIN_PASSWORD`. Todos los valores previos DB_*, SESSION_* y demás permanecen iguales. No se publican secretos.
+- Se reinició únicamente el proceso web original del puerto 3000. El runtime nuevo confirmó directorio del proyecto, base `SecureFinanceERP` y login `securefinance_app`. No se cambió código de aplicación.
+
+### Pruebas efectivas sobre la original
+
+1. CHECKDB y CHECKCONSTRAINTS antes y después, sin diagnósticos de integridad; conciliación de stock sin diferencias.
+2. Comparación SHA-256 con multiplicidades de las filas preexistentes de las **65 tablas originales**: ninguna modificada ni perdida. Incluye datos de negocio, usuarios, credenciales, roles, asignaciones y auditoría histórica. Solo se agregaron filas propias de LDF y de auditoría.
+3. Las **190 definiciones SQL preexistentes** siguen exactamente iguales. El trigger `P3_DDL_CapturarEstructura` sigue habilitado; no fue modificado ni desactivado. Tampoco se modificaron la función de autorización, procedimientos previos o pertenencias a roles SQL/de servidor.
+4. Tres firmas presentes y claves privadas retiradas. Identidad LDF y dos asociaciones de permisos al Administrador verificadas.
+5. Conexiones SQL reales de aplicación y servicio: sin sysadmin, db_owner o BACKUP LOG directo; configuración y DMV directas rechazadas. Servicio con EXECUTE del respaldo y aplicación sin ese permiso. No se invocó el procedimiento de respaldo.
+6. Lectura LDF real mediante su procedimiento firmado y el UsuarioId 3 del admin existente; tamaño físico y VLF coinciden con catálogo/DMV, historial consultado sin datos ficticios.
+7. Consultas reales de los seis módulos anteriores usando `securefinance_app` y los permisos existentes de admin: cotizaciones, promociones, créditos, multibodega, compras y auditoría DDL. Se conservaron las reglas de negocio y no se crearon operaciones de negocio para probar producción. Los flujos de escritura con rollback ya habían pasado en la copia de ensayo.
+8. `.env` comparado con su copia local previa: solo cuatro claves LDF nuevas; todos los valores anteriores conservados.
+9. `/login` HTTP 200 después del reinicio y `/dba/ldf` anónimo redirige a `/login`, manteniendo la autenticación.
+10. Auditoría posterior a `2026-11-04T06:22:01.559Z`: conservación de las 65 tablas y 190 módulos nuevamente aprobada; GUID y trigger sin cambios; conexión administrativa local y permisos de admin verificados.
+11. Auditoría DDL original comprobada a `2026-11-04T06:24:39.333Z`: dos eventos CREATE_TABLE y tres CREATE_PROCEDURE del módulo, todos `EXACTO_EVENTDATA` con responsables registrados. Los comandos de consulta y respaldo conservan 8.338 y 12.410 bytes respectivamente, superiores al límite de 4.000 caracteres que se debía evitar.
+
+Última muestra SQL de esa auditoría: LOG físico **136 MB**, uso lógico **55,127 %**, **6 VLF**, FULL/ONLINE, cadena inicializada y espera `LOG_BACKUP`. El archivo creció automáticamente conforme a su configuración previa de 64 MB; no se ejecutó ALTER DATABASE, shrink ni cambio de crecimiento. Se comprobaron aproximadamente 490.007 MB libres en el volumen. El uso cambia con la actividad normal.
+
+Historial del módulo: cero solicitudes y cero respaldos LOG listados en la muestra. No se ejecutó **ningún BACKUP LOG de prueba**. La espera `LOG_BACKUP` se informa como dato operativo; no se intentó resolverla mediante una acción fuera del alcance autorizado.
+
+La comprobación web autenticada continúa pendiente de que el propietario inicie sesión con su contraseña habitual en la ventana del ERP. No se leyó esa contraseña ni se sustituyó el login por una sesión artificial. Hasta completar ese paso, la confirmación de funcionamiento abarca la instalación, configuración, SQL y las consultas de los seis módulos, no su validación web autenticada final.
+
+Evidencia local ignorada por Git: `.data/ldf-original-deployment.json`, `.data/ldf-original-postdeploy-audit.json`, hashes y definiciones previas, configuración previa y registros del runtime. Los archivos privados de credenciales no se publican. Durante este despliegue no se hicieron cambios de código ni publicaciones en GitHub; solo se actualiza este reporte como documentación necesaria.
+
+Las secciones siguientes conservan la investigación, ensayo y plan anteriores al despliegue. Los estados pendientes de autorización de esas secciones son históricos y han sido superados por la autorización y ejecución descritas arriba.
 
 ## Actualización del 4 de noviembre: investigación y ensayo completo
 
@@ -136,4 +196,4 @@ Actualización del 4 de noviembre: suite ampliada a **271 pruebas aprobadas**, i
 6. Probar BACKUP LOG únicamente con cadena válida y destino expresamente autorizado.
 7. Verificar funcionalmente los seis módulos anteriores en SQL y web. No se declara esa regresión aprobada.
 
-El ensayo ya fue aprobado. La instalación original permanece pendiente de autorización explícita, publicación/revisión del PR y comprobación web con la cuenta habitual.
+Estado histórico previo al despliegue: el ensayo ya había sido aprobado. El PR #27 se fusionó en `36ff2a2a4cd2a88a0d840a98083f317d78167952`; el propietario autorizó después los ocho pasos. La sección de despliegue al principio de este reporte contiene el estado vigente y el pendiente web real.
