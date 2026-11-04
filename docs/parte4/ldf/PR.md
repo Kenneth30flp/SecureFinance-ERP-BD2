@@ -1,3 +1,5 @@
+> **NO FUSIONAR TODAVÍA.** PR en borrador para revisión cruzada de Kenneth y confirmación académica. No se modifica `main` ni se unifican módulos hasta que Kenneth valide la integración completa.
+
 ## Parte IV · Dylan · UC14 Administración LDF
 
 ### Implementación
