@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="<%= csrf %>"><title>Registro transaccional LDF | SecureFinance ERP</title>
+<link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css"><link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/dba-ldf.css"><script src="/js/visual.js" defer></script><script src="/js/dba-ldf.js" defer></script></head>
+<body class="app-shell ldf-app" data-ldf-actor="<%= usuario.usuarioId %>" data-ldf-database="<%= data?.summary.DatabaseName || '' %>">
+<a class="skip-link" href="#workspace">Ir al contenido</a>
+<%- include('../../partials/navigation',{actual:'dba-ldf',rolesCuenta:''}) %>
+<main class="container page-content ldf-workspace" id="workspace" tabindex="-1">
+ <header class="ldf-heading"><div><p class="eyebrow">ADMINISTRACIÓN / SQL SERVER / UC14</p><h1>Registro transaccional<span>.</span></h1><p>Capacidad, recuperación y respaldo del LOG en un solo lugar.</p></div>
+ <a class="ldf-button ldf-secondary" href="/dba/ldf" id="ldf-refresh">↻ Actualizar métricas</a></header>
+ <div id="ldf-message" role="status" aria-live="polite" tabindex="-1" class="ldf-message" hidden></div>
+ <% if(error){ %><section class="ldf-panel ldf-error" role="alert"><p class="ldf-kicker">LECTURA NO DISPONIBLE</p><h2>No se obtuvieron métricas del motor</h2><p><%= error %></p><p>Se muestran únicamente lecturas confirmadas; un fallo no equivale a un LOG vacío.</p></section><% } %>
+ <% if(data){ const s=data.summary, d=data.diagnostic, v=data.vlf; %>
+ <div class="ldf-identity"><span class="ldf-dot" aria-hidden="true"></span><strong><%= s.DatabaseName %></strong><span>SQL Server <%= s.ServerVersion %></span><span class="ldf-sampled">Lectura: <time><%= utc(s.SampledAtUTC) %></time></span></div>
+ <div class="ldf-layout">
+  <section class="ldf-panel ldf-capacity" aria-labelledby="space-title">
+   <header class="ldf-panel-head"><h2 id="space-title">01 / Capacidad del registro</h2><span class="ldf-status <%= d.severity %>"><%= d.label %></span></header>
+   <div class="ldf-usage"><div class="ldf-percent"><%= mb(s.UsedPercent) %><span>%</span></div><div><strong>de espacio lógico utilizado</strong><p><%= mb(s.UsedMB) %> MB de <%= mb(s.LogicalMB) %> MB</p></div></div>
+   <div class="ldf-meter <%= d.severity %>" role="meter" aria-label="Uso lógico del LOG" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= Number(s.UsedPercent) %>">
+    <span class="ldf-meter-used" style="width:<%= Number(s.UsedPercent) %>%"></span><i style="left:<%= Number(s.WarningPercent) %>%" aria-hidden="true"></i><i style="left:<%= Number(s.CriticalPercent) %>%" aria-hidden="true"></i>
+   </div><div class="ldf-meter-labels"><span>0 %</span><span>Aviso <%= mb(s.WarningPercent) %> % · Crítico <%= mb(s.CriticalPercent) %> %</span><span>100 %</span></div>
+   <dl class="ldf-stats"><div><dt>Tamaño físico</dt><dd><%= mb(s.PhysicalMB) %> <small>MB</small></dd><small><%= mb(Number(s.PhysicalMB)/1024) %> GB en archivos</small></div><div><dt>Espacio ocupado</dt><dd><%= mb(s.UsedMB) %> <small>MB</small></dd><small>Según la DMV de uso</small></div><div><dt>Disponible lógico</dt><dd class="ldf-teal"><%= mb(s.FreeMB) %> <small>MB</small></dd><small>Espacio libre para reutilización</small></div></dl>
+   <p class="ldf-footnote">El uso reúne todos los archivos LOG. El espacio lógico excluye cabeceras; puede diferir del tamaño físico. Espacio libre no significa archivo reducido.</p>
+  </section>
+  <aside class="ldf-panel ldf-recovery" aria-labelledby="recovery-title"><header class="ldf-panel-head"><h2 id="recovery-title">02 / Recuperación</h2></header>
+   <div class="ldf-recovery-model"><strong><%= s.RecoveryModel %></strong><span><%= s.DatabaseState %><%= s.IsReadOnly ? ' · SOLO LECTURA' : '' %></span></div>
+   <p class="ldf-kicker">ESPERA DE REUTILIZACIÓN</p><code class="ldf-wait"><%= s.ReuseWait %></code><h3><%= d.reuseTitle %></h3><p><%= d.recommendation %></p>
+   <div class="ldf-chain"><span class="<%= s.ChainReady ? 'ldf-teal' : 'ldf-amber' %>"><%= s.ChainReady ? '●' : '○' %></span><div><strong><%= s.ChainReady ? 'Cadena LOG inicializada' : 'Respaldo LOG no habilitado' %></strong><small>Estado consultado al motor. La restaurabilidad completa exige probar los archivos de la cadena.</small></div></div>
+  </aside>
+ </div>
+ <section class="ldf-panel" aria-labelledby="files-title"><header class="ldf-panel-head"><h2 id="files-title">Archivos físicos del LOG</h2><span><%= data.files.length %> archivo(s)</span></header>
+ <div class="ldf-table-scroll" tabindex="0" aria-label="Archivos LOG"><table class="ldf-table"><thead><tr><th>Archivo / ruta en SQL Server</th><th>Tamaño</th><th>Crecimiento</th><th>Límite / estado</th></tr></thead><tbody>
+ <% data.files.forEach(f=>{ %><tr><th scope="row"><%= f.LogicalName %><small class="ldf-path"><%= f.PhysicalPath %></small></th><td><%= mb(f.SizeMB) %> MB</td><td><%= f.Growth===0?'Deshabilitado':f.PercentGrowth?mb(f.Growth)+' %':mb(Number(f.Growth)/128)+' MB' %></td><td><%= f.MaxSizePages===-1?'Hasta límite del motor/disco':f.MaxSizePages===0?'Sin crecimiento':mb(Number(f.MaxSizePages)/128)+' MB' %><small><%= f.FileState %></small></td></tr><% }); %>
+ </tbody></table></div></section>
+ <section class="ldf-panel ldf-vlf" aria-labelledby="vlf-title"><header class="ldf-panel-head"><div><p class="ldf-kicker">ESTRUCTURA INTERNA</p><h2 id="vlf-title">03 / Virtual Log Files</h2></div><span>sys.dm_db_log_info</span></header>
+  <dl class="ldf-vlf-counts"><div><dt>VLF totales</dt><dd><%= v.Total %></dd></div><div><dt>Activos</dt><dd class="ldf-teal"><%= v.Active %></dd></div><div><dt>Inactivos</dt><dd><%= v.Inactive %></dd></div><div><dt>Tamaño mínimo / máximo</dt><dd class="ldf-small-number"><%= mb(v.MinMB) %> / <%= mb(v.MaxMB) %> <small>MB</small></dd></div></dl>
+  <div class="ldf-vlf-map" aria-label="Distribución de segmentos por tamaño; detalle tabular debajo"><% data.segments.forEach((seg,i)=>{ %><span class="<%= seg.Active?'is-active':'' %>" style="flex-grow:<%= Math.max(Number(seg.SizeMB),0.001) %>" title="Archivo <%= seg.FileId %> · VLF <%= i+1 %> · <%= mb(seg.SizeMB) %> MB · <%= seg.Active?'Activo':'Inactivo' %>"></span><% }); %></div>
+  <div class="ldf-legend"><span><i class="is-active"></i> Activo</span><span><i></i> Inactivo</span><span>Orden físico · <%= data.segments.length %> de <%= v.Total %> segmentos</span></div>
+  <p class="ldf-footnote">VLF inactivos: <%= mb(v.InactiveMB) %> MB. No equivale al espacio libre exacto: un VLF activo puede contener espacio sin ocupar. No existe un conteo ideal universal.</p>
+  <details class="ldf-details"><summary>Ver distribución y detalle de VLF</summary>
+  <div class="ldf-table-scroll" tabindex="0" aria-label="Distribución por tamaños"><table class="ldf-table"><thead><tr><th>Rango</th><th>VLF</th><th>Activos</th><th>MB del grupo</th></tr></thead><tbody><% data.distribution.forEach(g=>{ %><tr><th scope="row"><%= g.SizeBand %></th><td><%= g.Total %></td><td><%= g.Active %></td><td><%= mb(g.TotalMB) %></td></tr><% }); %></tbody></table></div>
+  <div class="ldf-table-scroll ldf-bounded" tabindex="0" aria-label="Primeros 200 VLF"><table class="ldf-table"><thead><tr><th>Archivo</th><th>Offset bytes</th><th>Tamaño MB</th><th>Estado</th><th>Secuencia</th></tr></thead><tbody><% data.segments.forEach(seg=>{ %><tr><td><%= seg.FileId %></td><td><%= seg.OffsetBytes %></td><td><%= mb(seg.SizeMB) %></td><td><%= seg.Active?'Activo':'Inactivo' %> (<%= seg.Status %>)</td><td><%= seg.SequenceNumber %></td></tr><% }); %></tbody></table></div>
+  </details>
+ </section>
+ <% if(d.alerts.length){ %><section class="ldf-panel ldf-alerts" aria-labelledby="diagnosis-title"><header class="ldf-panel-head"><h2 id="diagnosis-title">Diagnóstico y atención</h2><span><%= d.alerts.length %> observación(es)</span></header><% d.alerts.forEach(a=>{ %><article><h3><%= a.title %></h3><p><%= a.text %></p></article><% }); %></section><% } %>
+ <div class="ldf-layout ldf-backup-layout">
+ <section class="ldf-panel" aria-labelledby="backup-title"><header class="ldf-panel-head"><h2 id="backup-title">04 / Respaldo manual del LOG</h2><span>CHECKSUM</span></header>
+ <p>Respalda las transacciones del LOG. Puede habilitar reutilización sin reducir el archivo físico.</p>
+ <dl class="ldf-backup-target"><dt>Directorio autorizado en el servidor SQL</dt><dd class="ldf-path"><%= s.BackupDirectory %></dd></dl>
+ <% if(canBackup){ %><form id="ldf-backup-form" method="post" action="/dba/ldf/backup"><input type="hidden" name="csrf" value="<%= csrf %>"><input type="hidden" name="OperacionId" value="<%= operationId %>">
+ <button class="ldf-button ldf-primary" type="submit" <%- s.ChainReady?'':'disabled' %>>Respaldar LOG ahora <span aria-hidden="true">↗</span></button>
+ <p class="ldf-operation">Referencia: <code id="ldf-operation"><%= operationId %></code></p></form><% }else{ %><p class="ldf-footnote">Tu acceso permite consultar. Respaldar requiere DBA_LDF_RESPALDAR_LOG.</p><% } %>
+ <p class="ldf-footnote">Un respaldo a la vez. La programación automática pertenece al módulo Backups; este panel ejecuta solicitudes manuales.</p>
+ </section>
+ <section class="ldf-panel ldf-last-backup"><header class="ldf-panel-head"><h2>Último respaldo LOG del motor</h2><span>msdb</span></header>
+ <% if(data.backups.length){ const b=data.backups[0]; %><p class="ldf-backup-date"><%= b.FinishServerTime.replace('T',' · ') %></p><p class="ldf-footnote">Hora local del servidor SQL</p><dl class="ldf-stats"><div><dt>Tamaño del respaldo</dt><dd><%= mb(b.SizeMB) %> <small>MB</small></dd></div><div><dt>Checksum / daños</dt><dd class="ldf-small-number"><%= b.HasChecksums?'Sí':'No' %> / <%= b.Damaged?'Reportados':'No reportados' %></dd></div></dl><p class="ldf-path"><%= b.PhysicalPath %></p><% }else{ %><p class="ldf-empty">Sin respaldo LOG registrado en msdb para esta identidad y rama de recuperación.</p><% } %>
+ </section></div>
+ <section class="ldf-panel" id="log-history"><header class="ldf-panel-head"><h2>05 / Historial de ejecuciones</h2><span>Últimas 30 solicitudes</span></header>
+ <div class="ldf-table-scroll" tabindex="0" aria-label="Historial de respaldos manuales"><table class="ldf-table"><thead><tr><th>Inicio UTC / referencia</th><th>Actor</th><th>Resultado</th><th>Evidencia</th></tr></thead><tbody>
+ <% data.history.forEach(h=>{ %><tr data-ldf-operation="<%= String(h.OperacionId).toLowerCase() %>" data-ldf-state="<%= h.Estado %>"><th scope="row"><%= utc(h.InicioUTC) %><small class="ldf-path"><%= h.OperacionId %></small></th><td><%= h.ActorUsuarioId %></td><td><span class="ldf-status <%= h.Estado==='CONFIRMADO'?'healthy':h.Estado==='FALLIDO'?'critical':'warning' %>"><%= h.Estado %></span><small><%= h.Mensaje %><%= h.CodigoSQL?' (SQL '+h.CodigoSQL+')':'' %></small></td><td><span class="ldf-path"><%= h.Archivo || 'Sin archivo confirmado' %></span><small>BackupSet: <%= h.BackupSetId || '—' %> · Fin: <%= utc(h.FinUTC) %></small></td></tr><% }); %>
+ <% if(!data.history.length){ %><tr><td colspan="4" class="ldf-empty">Todavía no se han solicitado respaldos desde este módulo.</td></tr><% } %>
+ </tbody></table></div>
+ <details class="ldf-details"><summary>Ver respaldos LOG registrados por SQL Server (últimos 20)</summary><div class="ldf-table-scroll" tabindex="0" aria-label="Historial SQL Server"><table class="ldf-table"><thead><tr><th>Fin (hora servidor)</th><th>ID / origen</th><th>LSN inicial → final</th><th>Archivo</th></tr></thead><tbody><% data.backups.forEach(b=>{ %><tr><th scope="row"><%= b.FinishServerTime %></th><td><%= b.BackupSetId %><small><%= b.CopyOnly?'COPY_ONLY':'LOG normal' %> · <%= b.BackupUser %></small></td><td><%= b.FirstLSN %><small>→ <%= b.LastLSN %></small></td><td class="ldf-path"><%= b.PhysicalPath %></td></tr><% }); %><% if(!data.backups.length){ %><tr><td colspan="4">No hay registros para esta base y rama de recuperación.</td></tr><% } %></tbody></table></div></details>
+ </section>
+ <footer class="ldf-footer"><span>SECUREFINANCE / ADMINISTRACIÓN LDF</span><span>Datos del motor · Actualización manual · Sin acciones automáticas</span></footer>
+ <% } %>
+ <noscript><p class="ldf-message">La consulta funciona sin JavaScript. Actívalo para conservar la referencia de un respaldo ante una respuesta interrumpida.</p></noscript>
+</main></body></html>

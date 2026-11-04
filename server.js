@@ -45,6 +45,9 @@ const { createCreditoService } = require('./src/modules/creditos/service');
 const { createCreditoRoutes } = require('./src/modules/creditos/routes');
 const { createMultibodegaService } = require('./src/modules/multibodega/service');
 const { createMultibodegaRoutes } = require('./src/modules/multibodega/routes');
+const { createLdfService } = require('./src/modules/dba/ldf/service');
+const { createLdfRoutes } = require('./src/modules/dba/ldf/routes');
+const { close: closeLdfPool } = require('./src/modules/dba/ldf/pools');
 
 function createApp({
   secret = process.env.SESSION_SECRET,
@@ -64,6 +67,8 @@ function createApp({
   promocionService = createPromocionService(),
   creditoService = createCreditoService(),
   multibodegaService = createMultibodegaService(),
+  ldfService = createLdfService(),
+  sessionName = process.env.SESSION_COOKIE_NAME || 'securefinance.sid',
   production = process.env.NODE_ENV === 'production',
 } = {}) {
   if (!secret || secret.trim().length < 32) {
@@ -74,6 +79,7 @@ function createApp({
 
   app.disable('x-powered-by');
   app.set('view engine', 'ejs');
+  app.set('sessionCookieName', sessionName);
   app.set('views', path.join(__dirname, 'src/views'));
   app.locals.moduleAreas = require('./src/config/moduleCatalog').visibleAreas;
   app.locals.displayMoney = require('./src/modules/cotizaciones/format').money;
@@ -90,7 +96,7 @@ function createApp({
   // MemoryStore exclusivamente para desarrollo académico local.
   app.use(
     session({
-      name: 'securefinance.sid',
+      name: sessionName,
       secret,
       resave: false,
       saveUninitialized: false,
@@ -129,6 +135,7 @@ function createApp({
   app.use(createPromocionRoutes(promocionService));
   app.use(createCreditoRoutes(creditoService));
   app.use(createMultibodegaRoutes(multibodegaService));
+  app.use(createLdfRoutes(ldfService));
 
   app.get('/health', (req, res) =>
     res.json({ status: 'ok', phase: 3 })
@@ -179,6 +186,7 @@ async function start() {
       `No se pudo iniciar HTTP (${error.code || 'error'}).`
     );
     await closePool().catch(() => {});
+    await closeLdfPool().catch(() => {});
     process.exitCode = 1;
   });
 
@@ -186,6 +194,7 @@ async function start() {
     process.once(signal, () => {
       server.close(async () => {
         await closePool().catch(() => {});
+        await closeLdfPool().catch(() => {});
         process.exitCode = 0;
       });
     });

@@ -31,14 +31,14 @@ function createAuthController(authService) {
         if (req.session) {
           await new Promise((resolve) => req.session.destroy(() => resolve()));
         }
-        res.clearCookie('securefinance.sid', { path: '/' });
+        res.clearCookie(req.app.get('sessionCookieName') || 'securefinance.sid', { path: '/' });
         return renderLogin(res, 503, 'No fue posible iniciar sesión. Inténtalo nuevamente.');
       }
     },
     logout(req, res) {
       req.session.destroy((error) => {
         if (error) return res.status(503).type('text').send('No fue posible cerrar sesión. Inténtalo nuevamente.');
-        res.clearCookie('securefinance.sid', { path: '/' });
+        res.clearCookie(req.app.get('sessionCookieName') || 'securefinance.sid', { path: '/' });
         return res.redirect('/login');
       });
     },
