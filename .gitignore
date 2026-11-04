@@ -16,6 +16,9 @@ docs/capturas/corporate-refinement/**/profile/
 *.mdf
 *.ndf
 *.ldf
+*.trn
+*.cer
+*.pvk
 *.dmp
 database/tests.zip
 database/ParteII_CorteKenneth_*.sql
