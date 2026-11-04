@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param()
 $ErrorActionPreference='Stop'
+. (Join-Path $PSScriptRoot 'Task-Safety.ps1')
 $operatorIdentity=[Security.Principal.WindowsIdentity]::GetCurrent()
 if(-not ([Security.Principal.WindowsPrincipal]::new($operatorIdentity)).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)){throw 'Windows elevation is required to create a standard worker identity and protect its secrets.'}
 $repo=(Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
@@ -15,8 +16,9 @@ $random.GetBytes($bytes)
 $newPassword=ConvertTo-SecureString ([Convert]::ToBase64String($bytes)+'aA1!') -AsPlainText -Force
 New-LocalUser -Name $account -Password $newPassword -Description 'SecureFinance UC13 dedicated standard worker' -AccountNeverExpires | Out-Null
 Add-LocalGroupMember -SID 'S-1-5-32-545' -Member $account
-$newPassword=$null
 $workerIdentity=$env:COMPUTERNAME+'\'+$account
+$registrationCredential=[PSCredential]::new($workerIdentity,$newPassword)
+$newPassword=$null
 New-Item -Path $destination -ItemType Directory | Out-Null
 & icacls.exe $destination /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' ($workerIdentity+':(OI)(CI)RX') | Out-Null
 if($LASTEXITCODE -ne 0){throw 'Failed to isolate runtime ACL.'}
@@ -29,6 +31,8 @@ try {
  if($LASTEXITCODE -ne 0){throw 'Failed to grant worker log access.'}
  & icacls.exe $destination /setowner '*S-1-5-18' /T /C | Out-Null
  if($LASTEXITCODE -ne 0){throw 'Failed to fix protected runtime ownership.'}
- & (Join-Path $PSScriptRoot 'Register-IsolatedTask.ps1')
+ Save-Uc13Credential $registrationCredential (Join-Path $destination 'task-registration.credential.clixml')
+ & (Join-Path $PSScriptRoot 'Register-IsolatedTask.ps1') -WorkerCredential $registrationCredential -WorkerAccount $account
+ $registrationCredential=$null
  Write-Output 'Production SQL installed; task registered DISABLED. Verify worker identity and task execution before enabling its queue processing. SQL automatic schedule remains DISABLED.'
-} finally {Pop-Location}
+} finally {$registrationCredential=$null;[Array]::Clear($bytes,0,$bytes.Length);$random.Dispose();Pop-Location}
