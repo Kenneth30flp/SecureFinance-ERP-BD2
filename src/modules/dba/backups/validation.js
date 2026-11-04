@@ -12,7 +12,7 @@ function point(value) {
 }
 function uuid(value) { if (typeof value !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(value)) throw new ValidationError('Referencia inválida.'); return value; }
 function directory(value) {
-  if (typeof value !== 'string' || !/^[A-Za-z]:\\(?:[A-Za-z0-9_-]+\\)+$/.test(value)) throw new ValidationError('Configure una carpeta local absoluta autorizada, terminada en barra inversa.');
+  if (typeof value !== 'string' || !/^[A-Za-z]:\\(?:[A-Za-z0-9_(). -]+\\)+$/.test(value) || value.split('\\').some(s=>s.endsWith(' ')||s.endsWith('.'))) throw new ValidationError('Configure una carpeta local absoluta autorizada, terminada en barra inversa.');
   return value;
 }
 module.exports={ValidationError,type,target,point,uuid,directory};

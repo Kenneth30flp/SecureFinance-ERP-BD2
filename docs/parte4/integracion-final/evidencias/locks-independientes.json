@@ -1,0 +1,15 @@
+{
+  "atUTC": "2026-11-04T17:23:17.107Z",
+  "database": "SecureFinanceERP_LDF_Rehearsal_20261104165323",
+  "secondWorker": {
+    "busy": true
+  },
+  "backupLockIndependent": true,
+  "backup": {
+    "Id": "5848D119-BC4C-4674-B84D-EC49146D87E2",
+    "Tipo": "LOG",
+    "Ruta": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\5848D119-BC4C-4674-B84D-EC49146D87E2.trn",
+    "Estado": "VERIFICADO"
+  },
+  "result": "PASS"
+}

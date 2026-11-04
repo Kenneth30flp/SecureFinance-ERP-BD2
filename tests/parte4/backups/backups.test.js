@@ -14,6 +14,8 @@ test('UC13 valida tipos, fechas reales, destino protegido y rutas',()=>{
  for(const x of ['ERP','master','SF_Recovery_foo];DROP DATABASE','SF_Recovery_'])assert.throws(()=>v.target(x));
  for(const x of ['D:\\Backups\\..\\','\\\\remote\\share\\','D:\\Backups'])assert.throws(()=>v.directory(x));
  assert.equal(v.directory('D:\\Backups\\'),'D:\\Backups\\');
+ assert.equal(v.directory('C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\'),'C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\');
+ for(const x of ['C:\\Backup.\\','C:\\Backup \\','C:\\Backup\\..\\','C:\\Backup\\.\\'])assert.throws(()=>v.directory(x));
 });
 test('UC13 plan FULL/DIFF/LOG conserva LSN superiores a precisión Number',()=>{
  const p=plan([full,diff,log],'2026-01-01T02:00:00','SF_Recovery_test','ERP');assert.deepEqual(p.chain,[full,diff,log]);
@@ -27,6 +29,12 @@ test('UC13 rechaza brechas, ramas distintas, medios dañados y futuro sin cobert
  assert.throws(()=>plan([full,diff,log],'2026-01-01T02:00:00','SF_Recovery_test','SF_Recovery_test'));
 });
 test('UC13 DIFF ajena no puede cerrar una brecha de logs',()=>{assert.throws(()=>plan([full,{...diff,BaseLSN:'123'},log],'2026-01-01T02:00:00','SF_Recovery_test','ERP'));});
+
+test('UC13 accepts transition LOG only past its verified fork point',()=>{
+ const bridge={...log,FirstLSN:full.FirstLSN,FirstFork:'old',ForkPointLSN:full.FirstLSN};
+ assert.deepEqual(plan([full,diff,bridge],'2026-01-01T02:00:00','SF_Recovery_test','ERP').chain,[full,diff,bridge]);
+ for(const ForkPointLSN of [null,'invalid','90071992547409951','90071992547409920'])assert.throws(()=>plan([full,diff,{...bridge,ForkPointLSN}],'2026-01-01T02:00:00','SF_Recovery_test','ERP'));
+});
 test('UC13 conserva milisegundos SQL en los limites temporales PITR',()=>{
  assert.throws(()=>plan([{...full,Finish:'2026-01-01T02:00:00.003'},log],'2026-01-01T02:00:00','SF_Recovery_test','ERP'),/FULL/);
  assert.throws(()=>plan([full,diff,{...log,Start:'2026-01-01T02:00:00.000'}],'2026-01-01T02:00:00','SF_Recovery_test','ERP'),/Cadena/);
@@ -47,8 +55,20 @@ test('UC13 verifica identidad de medios antes de restaurar',async()=>{
 test('UC13 conserva MOVE del FULL cuando LOG solo contiene archivos de log',async()=>{
  const files=[{LogicalName:'Data',Type:'D',UniqueID:'data',IsPresent:true},{LogicalName:'Log',Type:'L',UniqueID:'log',IsPresent:true}];
  let fileReads=0;
- const pool={request:()=>({query:async text=>({recordset:text.startsWith('RESTORE HEADERONLY')?[{Position:1,BackupSetGUID:'same',DatabaseName:'ERP',HasBackupChecksums:true}]:text.startsWith('RESTORE FILELISTONLY')?(fileReads++===0?files:[files[1]]):[]})})};
+ const pool={request:()=>({query:async text=>({recordset:text.startsWith('RESTORE HEADERONLY')?[{Position:1,BackupSetGUID:'same',DatabaseName:'ERP',HasBackupChecksums:true,BackupType:fileReads===0?1:2,FamilyGUID:'f',RecoveryForkID:'r',FirstRecoveryForkID:'r'}]:text.startsWith('RESTORE FILELISTONLY')?(fileReads++===0?files:[files[1]]):[]})})};
  const result=await inspect(pool,{source:'ERP',chain:[{...full,UUID:'same'},{...log,UUID:'same'}]},'D:\\Backups\\');assert.deepEqual(result,files);
+});
+
+test('UC13 accepts approved UC14 media folder and rejects traversal and wrong fork',async()=>{
+ const header={Position:1,BackupSetGUID:'same',DatabaseName:'ERP',HasBackupChecksums:true,BackupType:1,FamilyGUID:'f',RecoveryForkID:'r',FirstRecoveryForkID:'r'};
+ const files=[{LogicalName:'Data',Type:'D',UniqueID:'data',IsPresent:true}];let calls=0;
+ const pool={request:()=>({query:async text=>{calls++;return {recordset:text.startsWith('RESTORE HEADERONLY')?[header]:text.startsWith('RESTORE FILELISTONLY')?files:[]};}})};
+ const p={source:'ERP',chain:[{...full,UUID:'same',Path:'C:\\SQL Backups\\P4_LDF_1_test.bak'}]};
+ assert.deepEqual(await inspect(pool,p,['D:\\Backups\\','C:\\SQL Backups\\']),files);
+ for(const bad of ['C:\\SQL Backups\\..\\escape.bak','C:\\SQL Backups\\a.bak:stream','C:\\SQL Backups2\\a.bak','C:\\SQL Backups\\sub\\a.bak']){
+  const old=calls;await assert.rejects(()=>inspect(pool,{...p,chain:[{...p.chain[0],Path:bad}]},['D:\\Backups\\','C:\\SQL Backups\\']),/ruta autorizada/);assert.equal(calls,old);
+ }
+ header.RecoveryForkID='other';await assert.rejects(()=>inspect(pool,p,['C:\\SQL Backups\\']),/no coincide/);
 });
 test('UC13 ejecutor ocupado no altera cola ni agenda',async()=>{
  const {run}=require('../../../src/modules/dba/backups/worker');const queries=[];

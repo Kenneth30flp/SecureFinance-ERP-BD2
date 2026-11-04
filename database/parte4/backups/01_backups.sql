@@ -35,6 +35,16 @@ INSERT dbo.Permiso(Codigo,Descripcion)
 SELECT Codigo,N'UC13: '+Codigo FROM (VALUES('DBA_BACKUPS_CONSULTAR'),('DBA_BACKUPS_EJECUTAR'),('DBA_BACKUPS_RESTAURAR')) p(Codigo)
 WHERE NOT EXISTS(SELECT 1 FROM dbo.Permiso x WHERE x.Codigo=p.Codigo);
 GO
+CREATE OR ALTER PROCEDURE dbo.sp_BackupsRutas AS
+BEGIN
+ SET NOCOUNT ON;
+ SELECT Ruta FROM dbo.BackupsConfig WHERE Id=1
+ UNION
+ SELECT RutaBackup FROM dbo.P4_LDF_Configuracion WHERE Id=1 AND Habilitado=1
+ AND BaseDatos=DB_NAME() AND Servidor=CONVERT(nvarchar(128),SERVERPROPERTY('ServerName'))
+ AND DatabaseGuid=(SELECT database_guid FROM sys.database_recovery_status WHERE database_id=DB_ID());
+END;
+GO
 CREATE OR ALTER PROCEDURE dbo.sp_BackupsConsultar @ActorUsuarioId int AS
 BEGIN
  SET NOCOUNT ON;
@@ -79,7 +89,8 @@ BEGIN
  IF @RutaDestino IS NULL OR NOT EXISTS(SELECT 1 FROM dbo.BackupsConfig WHERE Id=1 AND Ruta=@RutaDestino) OR @RutaDestino LIKE '%..%' OR RIGHT(@RutaDestino,1)<>N'\' THROW 58002,'Ruta no autorizada.',1;
  IF DATABASEPROPERTYEX(DB_NAME(),'Recovery')<>'FULL' THROW 58002,'Se requiere recovery FULL y cadena inicializada por DBA.',1;
  DECLARE @lock int;
- EXEC @lock=sys.sp_getapplock @Resource='UC13_BACKUP',@LockMode='Exclusive',@LockOwner='Session',@LockTimeout=0;
+ -- Shared with signed UC14; database scope is the current ERP, principal public.
+ EXEC @lock=sys.sp_getapplock @Resource=N'SecureFinanceERP:BACKUP',@LockMode='Exclusive',@LockOwner='Session',@LockTimeout=0,@DbPrincipal='public';
  IF @lock<0 THROW 58002,'Otro respaldo esta activo.',1;
  DECLARE @id uniqueidentifier=NEWID(),@file nvarchar(400),@cmd nvarchar(max),@compression bit;
  SET @file=@RutaDestino+CONVERT(nvarchar(36),@id)+CASE WHEN @TipoBackup='LOG' THEN '.trn' ELSE '.bak' END;
@@ -91,12 +102,14 @@ BEGIN
   SET @cmd=N'BACKUP '+CASE WHEN @TipoBackup='LOG' THEN N'LOG ' ELSE N'DATABASE ' END+QUOTENAME(DB_NAME())+N' TO DISK=@file WITH CHECKSUM, NOINIT, '+CASE WHEN @TipoBackup='DIFF' THEN N'DIFFERENTIAL, ' ELSE N'' END+CASE WHEN @compression=1 THEN N'COMPRESSION' ELSE N'NO_COMPRESSION' END+N'; RESTORE VERIFYONLY FROM DISK=@file WITH CHECKSUM;';
   EXEC sys.sp_executesql @cmd,N'@file nvarchar(400)',@file;
   UPDATE dbo.BackupsExecution SET Estado='VERIFICADO',Fin=SYSUTCDATETIME() WHERE Id=@id;
-  EXEC sys.sp_releaseapplock @Resource='UC13_BACKUP',@LockOwner='Session';
+  EXEC sys.sp_releaseapplock @Resource=N'SecureFinanceERP:BACKUP',@LockOwner='Session',@DbPrincipal='public';
   SELECT Id,Tipo,Ruta,Estado FROM dbo.BackupsExecution WHERE Id=@id;
  END TRY
  BEGIN CATCH
+  -- Release before persistence: even a failed audit UPDATE must not retain the lock.
+  EXEC sys.sp_releaseapplock @Resource=N'SecureFinanceERP:BACKUP',@LockOwner='Session',@DbPrincipal='public';
   UPDATE dbo.BackupsExecution SET Estado='FALLIDO',Fin=SYSUTCDATETIME(),ErrorNumero=ERROR_NUMBER() WHERE Id=@id;
-  EXEC sys.sp_releaseapplock @Resource='UC13_BACKUP',@LockOwner='Session'; THROW;
+  THROW;
  END CATCH;
 END;
 GO

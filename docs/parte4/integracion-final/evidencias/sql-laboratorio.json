@@ -1,0 +1,185 @@
+{
+  "startedUTC": "2026-11-04T16:54:25.925Z",
+  "database": "SecureFinanceERP_LDF_Rehearsal_20261104165323",
+  "checks": [
+    {
+      "name": "Incremental install twice with active DDL capture",
+      "result": "PASS"
+    },
+    {
+      "name": "Separate trial identities and least privilege deployment",
+      "result": "PASS"
+    },
+    {
+      "name": "Permissions reject web backup and worker administrative roles",
+      "result": "PASS"
+    },
+    {
+      "name": "Prior SQL modules and signed LDF unchanged",
+      "result": "PASS"
+    },
+    {
+      "name": "FULL CHECKSUM and VERIFYONLY on real SQL",
+      "result": "PASS",
+      "detail": {
+        "Id": "4DA425EE-6A55-440E-8E78-3EC9F0C3CB08",
+        "Tipo": "FULL",
+        "Ruta": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\4DA425EE-6A55-440E-8E78-3EC9F0C3CB08.bak",
+        "Estado": "VERIFICADO"
+      }
+    },
+    {
+      "name": "DIFF CHECKSUM and VERIFYONLY on real SQL",
+      "result": "PASS",
+      "detail": {
+        "Id": "573DA13D-8D9A-480B-91D6-11C27D88A3C9",
+        "Tipo": "DIFF",
+        "Ruta": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\573DA13D-8D9A-480B-91D6-11C27D88A3C9.bak",
+        "Estado": "VERIFICADO"
+      }
+    },
+    {
+      "name": "LOG CHECKSUM and VERIFYONLY on real SQL",
+      "result": "PASS",
+      "detail": {
+        "Id": "522D026E-AABF-45F3-BA55-13208218B967",
+        "Tipo": "LOG",
+        "Ruta": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\522D026E-AABF-45F3-BA55-13208218B967.trn",
+        "Estado": "VERIFICADO"
+      }
+    },
+    {
+      "name": "Mutual exclusion UC13 and UC14, independent worker lock, error release",
+      "result": "PASS",
+      "detail": {
+        "ldfOperation": "B16DA11E-17CF-44E5-B79A-98F458DB05AC",
+        "ldfMedia": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\P4_LDF_97_B16DA11E-17CF-44E5-B79A-98F458DB05AC.trn"
+      }
+    },
+    {
+      "name": "Worker independent run, real manual queue and automatic 15 minute slot",
+      "result": "PASS",
+      "detail": [
+        {
+          "Tipo": "LOG",
+          "Estado": "COMPLETADO",
+          "Slot": "2026-11-04T16:45:00.000Z_LOG"
+        }
+      ]
+    },
+    {
+      "name": "UC14 LOG contributes to shared PITR chain",
+      "result": "PASS",
+      "detail": {
+        "OperacionId": "2C8856B4-B58D-4FBA-AAFA-0FB6D26B3190",
+        "ActorUsuarioId": 3,
+        "InicioUTC": "2026-11-04T16:54:53.649Z",
+        "FinUTC": "2026-11-04T16:54:53.680Z",
+        "Estado": "CONFIRMADO",
+        "Archivo": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\P4_LDF_97_2C8856B4-B58D-4FBA-AAFA-0FB6D26B3190.trn",
+        "BackupSetId": 21028,
+        "CodigoSQL": null,
+        "Mensaje": "BACKUP LOG completado con CHECKSUM y confirmado en msdb."
+      }
+    },
+    {
+      "name": "PITR verified before/after transactions in separate database",
+      "result": "PASS",
+      "detail": {
+        "point": "2026-11-04T10:54:50",
+        "target": "SF_Recovery_UC13_1793811293684",
+        "rows": [
+          {
+            "Id": 1,
+            "Label": "BEFORE_STOPAT"
+          }
+        ],
+        "chain": [
+          {
+            "Id": 21022,
+            "Type": "D",
+            "Path": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\4DA425EE-6A55-440E-8E78-3EC9F0C3CB08.bak",
+            "FirstLSN": "53000000991200001",
+            "LastLSN": "53000000993600001",
+            "Family": "0D0F04D3-921E-404C-AFB3-BE53BEF0D908",
+            "Fork": "5074578A-C2BD-4DE5-B64E-D2D8ED0E8AEA"
+          },
+          {
+            "Id": 21023,
+            "Type": "I",
+            "Path": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\573DA13D-8D9A-480B-91D6-11C27D88A3C9.bak",
+            "FirstLSN": "53000001004000001",
+            "LastLSN": "53000001006400001",
+            "Family": "0D0F04D3-921E-404C-AFB3-BE53BEF0D908",
+            "Fork": "5074578A-C2BD-4DE5-B64E-D2D8ED0E8AEA"
+          },
+          {
+            "Id": 21024,
+            "Type": "L",
+            "Path": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\522D026E-AABF-45F3-BA55-13208218B967.trn",
+            "FirstLSN": "53000000875200001",
+            "LastLSN": "53000001008000001",
+            "Family": "0D0F04D3-921E-404C-AFB3-BE53BEF0D908",
+            "Fork": "5074578A-C2BD-4DE5-B64E-D2D8ED0E8AEA"
+          },
+          {
+            "Id": 21025,
+            "Type": "L",
+            "Path": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\P4_LDF_97_B16DA11E-17CF-44E5-B79A-98F458DB05AC.trn",
+            "FirstLSN": "53000001008000001",
+            "LastLSN": "53000001012800001",
+            "Family": "0D0F04D3-921E-404C-AFB3-BE53BEF0D908",
+            "Fork": "5074578A-C2BD-4DE5-B64E-D2D8ED0E8AEA"
+          },
+          {
+            "Id": 21026,
+            "Type": "L",
+            "Path": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\745B204C-38C3-4390-9E0F-A897837AFB49.trn",
+            "FirstLSN": "53000001012800001",
+            "LastLSN": "53000001050400001",
+            "Family": "0D0F04D3-921E-404C-AFB3-BE53BEF0D908",
+            "Fork": "5074578A-C2BD-4DE5-B64E-D2D8ED0E8AEA"
+          },
+          {
+            "Id": 21027,
+            "Type": "L",
+            "Path": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\445367CE-249F-429A-94FB-5333988D660B.trn",
+            "FirstLSN": "53000001050400001",
+            "LastLSN": "53000001070400001",
+            "Family": "0D0F04D3-921E-404C-AFB3-BE53BEF0D908",
+            "Fork": "5074578A-C2BD-4DE5-B64E-D2D8ED0E8AEA"
+          },
+          {
+            "Id": 21028,
+            "Type": "L",
+            "Path": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\P4_LDF_97_2C8856B4-B58D-4FBA-AAFA-0FB6D26B3190.trn",
+            "FirstLSN": "53000001070400001",
+            "LastLSN": "53000001086400001",
+            "Family": "0D0F04D3-921E-404C-AFB3-BE53BEF0D908",
+            "Fork": "5074578A-C2BD-4DE5-B64E-D2D8ED0E8AEA"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Original restore rejected, request idempotence and actor SQL authorization",
+      "result": "PASS"
+    },
+    {
+      "name": "Six earlier modules real SQL rollback regressions",
+      "result": "PASS"
+    },
+    {
+      "name": "Historical row multiset preserved except lab-only configuration binding",
+      "result": "PASS",
+      "detail": 66
+    },
+    {
+      "name": "Final CHECKDB and enabled DDL trigger",
+      "result": "PASS",
+      "detail": ""
+    }
+  ],
+  "result": "PASS",
+  "finishedUTC": "2026-11-04T16:55:13.221Z"
+}

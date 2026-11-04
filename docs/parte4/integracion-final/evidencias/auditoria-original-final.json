@@ -1,0 +1,17 @@
+{
+  "atUTC": "2026-11-04T17:24:33.937Z",
+  "database": "SecureFinanceERP",
+  "historicalTables": 67,
+  "historicalRowsPreserved": true,
+  "previousSqlDefinitionsPreserved": true,
+  "ldfSignaturesPreserved": true,
+  "checkdb": "PASS",
+  "policy": {
+    "DdlTarget": "SecureFinanceERP",
+    "TriggerDisabled": false,
+    "AutoEnabled": false
+  },
+  "workerSecretDeniedToUnelevatedWebIdentity": true,
+  "secretDenialCode": "EPERM",
+  "result": "PASS"
+}
