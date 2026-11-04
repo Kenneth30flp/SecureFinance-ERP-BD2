@@ -12,9 +12,12 @@ function plan(rows, when, name, source) {
   const same=r=>r.Fork===full.Fork && r.Family===full.Family && r.FirstFork===r.Fork;
   const diff=valid.filter(r=>r.Type==='I'&&same(r)&&r.BaseLSN===full.CheckpointLSN&&time(r.Finish)<=cutoff).sort((a,b)=>b.Finish.localeCompare(a.Finish))[0];
   const chain=diff?[full,diff]:[full]; let end=BigInt((diff||full).LastLSN);
-  const logs=valid.filter(r=>r.Type==='L'&&same(r)).sort((a,b)=>BigInt(a.LastLSN)<BigInt(b.LastLSN)?-1:1);
+  // The first LOG after a restored database can span the recovery fork. It is
+  // usable from a FULL on the ending fork only when that FULL is past the fork point.
+  const logs=valid.filter(r=>r.Type==='L'&&r.Fork===full.Fork&&r.Family===full.Family).sort((a,b)=>BigInt(a.LastLSN)<BigInt(b.LastLSN)?-1:1);
   for(const row of logs) {
     if(BigInt(row.LastLSN)<=end) continue;
+    if(row.FirstFork!==row.Fork && (!/^\d+$/.test(row.ForkPointLSN||'') || BigInt(row.ForkPointLSN)>end || BigInt(row.ForkPointLSN)<BigInt(row.FirstLSN)))continue;
     if(BigInt(row.FirstLSN)>end) break;
     chain.push(row); end=BigInt(row.LastLSN);
     // Start strictly after STOPAT is conservative on pre-2022 servers without last_valid_restore_time.

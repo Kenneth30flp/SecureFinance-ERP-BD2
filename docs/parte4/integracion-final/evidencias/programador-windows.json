@@ -1,0 +1,14 @@
+{
+  "AtUTC": "2026-11-04T17:14:20.3169095Z",
+  "AutomaticPolicy": "DISABLED",
+  "Task": "SecureFinance-UC13",
+  "WindowsIdentity": "KENNETH\\sf_backup_runner",
+  "Checks": [
+    "Standard dedicated Windows identity; protected secret ACL and SYSTEM ownership"
+  ],
+  "Operator": "KENNETH\\kenne",
+  "Elevated": true,
+  "Result": "FAIL",
+  "Error": "Acceso denegado. (Excepción de HRESULT: 0x80070005 (E_ACCESSDENIED))",
+  "ErrorStack": "en <ScriptBlock>, C:\\Users\\kenne\\OneDrive\\Desktop\\CLASES\\SEMESTRE 2 2026\\Base de Datos 2\\proyecto SecureFinance-ERP-BD2\\SecureFinance-ERP-BD2\\scripts\\parte4\\backups\\Register-IsolatedTask.ps1: línea 29\r\nen <ScriptBlock>, C:\\Users\\kenne\\OneDrive\\Desktop\\CLASES\\SEMESTRE 2 2026\\Base de Datos 2\\proyecto SecureFinance-ERP-BD2\\SecureFinance-ERP-BD2\\scripts\\parte4\\backups\\Verify-Production.ps1: línea 25"
+}

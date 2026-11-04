@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 const {join}=require('node:path');
 const {execFileSync}=require('node:child_process');
 for(const dir of ['src/modules/dba/backups','scripts/parte4/backups','src/public/js/parte4','tests/parte4/backups']){
- for(const file of readdirSync(dir).filter(f=>f.endsWith('.js')))execFileSync(process.execPath,['--check',join(dir,file)],{stdio:'inherit'});
+ for(const file of readdirSync(dir).filter(f=>/\.(?:js|cjs)$/.test(f)))execFileSync(process.execPath,['--check',join(dir,file)],{stdio:'inherit'});
 }
 const ddl=readFileSync('database/parte4/backups/01_backups.sql','utf8');
 const grants=readFileSync('database/parte4/backups/02_permissions.sql','utf8');

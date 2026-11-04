@@ -19,6 +19,7 @@ DENY SELECT,INSERT,UPDATE,DELETE ON dbo.BackupsCatalog TO [$(WebUser)];
 DENY SELECT,INSERT,UPDATE,DELETE ON dbo.BackupsExecution TO [$(WebUser)];
 DENY SELECT,INSERT,UPDATE,DELETE ON dbo.BackupsAudit TO [$(WebUser)];
 GRANT EXECUTE ON dbo.sp_EjecutarBackupEstrategico TO [$(WorkerUser)];
+GRANT EXECUTE ON dbo.sp_BackupsRutas TO [$(WorkerUser)];
 GRANT EXECUTE ON dbo.sp_ParteII_ValidarPermiso TO [$(WorkerUser)];
 GRANT BACKUP DATABASE,BACKUP LOG TO [$(WorkerUser)];
 GRANT SELECT,INSERT,UPDATE ON dbo.BackupsJob TO [$(WorkerUser)];

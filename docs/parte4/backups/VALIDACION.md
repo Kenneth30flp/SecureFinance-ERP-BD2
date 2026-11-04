@@ -1,5 +1,7 @@
 # Validación UC13
 
+Este documento conserva la validación de la entrega inicial. La ejecución SQL/Chromium y el despliegue posteriores se registran en [integración final](../integracion-final/README.md); las frases «pendiente» de la matriz siguiente describen el estado de aquella entrega.
+
 Entorno de desarrollo: Windows, Node v24.16.0; repositorio `SecureFinance-ERP-COMPLETO`, rama `feature/p4-edward-backups`.
 
 ## Verificaciones ejecutadas

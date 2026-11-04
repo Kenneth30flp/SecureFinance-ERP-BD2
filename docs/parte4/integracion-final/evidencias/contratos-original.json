@@ -1,0 +1,43 @@
+{
+  "atUTC": "2026-11-04T17:17:42.895Z",
+  "database": "SecureFinanceERP",
+  "user": "admin",
+  "authentication": "SQL actor authorization; usual-password browser login still pending",
+  "jobs": [
+    {
+      "id": "d1e345e0-e37d-4779-94d7-9ffa5e1acac0",
+      "type": "FULL",
+      "state": "COMPLETADO",
+      "result": "[{\"Id\":\"E974AFF9-2175-4E43-B9A3-EC5E83BA8224\",\"Tipo\":\"FULL\",\"Ruta\":\"C:\\\\Program Files\\\\Microsoft SQL Server\\\\MSSQL16.MSSQLSERVER\\\\MSSQL\\\\Backup\\\\E974AFF9-2175-4E43-B9A3-EC5E83BA8224.bak\",\"Estado\":\"VERIFICADO\"}]"
+    },
+    {
+      "id": "1bb34268-e9ad-49bb-bde8-bc412c8129f0",
+      "type": "DIFF",
+      "state": "COMPLETADO",
+      "result": "[{\"Id\":\"D150247F-CE2D-4857-BC57-0FD2006FC130\",\"Tipo\":\"DIFF\",\"Ruta\":\"C:\\\\Program Files\\\\Microsoft SQL Server\\\\MSSQL16.MSSQLSERVER\\\\MSSQL\\\\Backup\\\\D150247F-CE2D-4857-BC57-0FD2006FC130.bak\",\"Estado\":\"VERIFICADO\"}]"
+    },
+    {
+      "id": "82555b9e-50ac-4e0b-9c23-e279a328175d",
+      "type": "LOG",
+      "state": "COMPLETADO",
+      "result": "[{\"Id\":\"458B9868-B7EB-4B6D-8914-D36C84A7BC38\",\"Tipo\":\"LOG\",\"Ruta\":\"C:\\\\Program Files\\\\Microsoft SQL Server\\\\MSSQL16.MSSQLSERVER\\\\MSSQL\\\\Backup\\\\458B9868-B7EB-4B6D-8914-D36C84A7BC38.trn\",\"Estado\":\"VERIFICADO\"}]"
+    }
+  ],
+  "ldf": {
+    "database": "SecureFinanceERP",
+    "recovery": "FULL",
+    "vlf": 6,
+    "historyRows": 5
+  },
+  "automaticPolicy": false,
+  "catalogRows": 28,
+  "uc14LogsInCatalog": 3,
+  "result": "PASS",
+  "ldfOperationId": "5aa1beff-a04b-435f-9d56-8f6d6cebe3ee",
+  "ldfLog": {
+    "id": "5AA1BEFF-A04B-435F-9D56-8F6D6CEBE3EE",
+    "state": "CONFIRMADO",
+    "backupSetId": 21033,
+    "file": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\P4_LDF_41_5AA1BEFF-A04B-435F-9D56-8F6D6CEBE3EE.trn"
+  }
+}

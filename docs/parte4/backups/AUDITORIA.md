@@ -1,5 +1,7 @@
 # Auditoría técnica UC13
 
+Auditoría inicial conservada. La corrección del lock común, catálogo SQL real, rutas UC14 y recovery fork, junto con sus evidencias, está en [integración final](../integracion-final/README.md).
+
 Se revisaron todos los archivos UC13 y sus cinco puntos compartidos de integración, no solo los 18 archivos principales mencionados inicialmente. El inventario completo está en ARCHIVOS.md. Esta auditoría no abrió conexiones SQL ni instaló tareas Windows.
 
 ## Correcciones

@@ -1,0 +1,64 @@
+{
+  "startedUTC": "2026-11-04T17:08:01.398Z",
+  "database": "SecureFinanceERP",
+  "server": "9U8ICS2VLMRUE",
+  "checks": [
+    {
+      "name": "Original CHECKDB before incremental installation",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "Fresh coordinated COPY_ONLY CHECKSUM, VERIFYONLY, independent restore and CHECKDB",
+      "result": "PASS",
+      "detail": {
+        "backup": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\SecureFinanceERP_PreUC13_Production_20261104170805.bak",
+        "target": "SecureFinanceERP_PreUC13_Verify_20261104170805"
+      }
+    },
+    {
+      "name": "Atomic incremental UC13 objects, dedicated permissions and Administrator role additions",
+      "result": "PASS"
+    },
+    {
+      "name": "All historical rows, SQL modules and LDF signatures preserved",
+      "result": "PASS",
+      "detail": "67 tables checked with SHA-256 multisets"
+    },
+    {
+      "name": "External isolated worker runtime and secrets prepared",
+      "result": "PASS",
+      "detail": {
+        "login": "securefinance_uc13_worker",
+        "windowsIdentity": "sf_backup_runner",
+        "runtime": "C:\\ProgramData\\SecureFinanceERP\\UC13",
+        "secretPublished": false
+      }
+    },
+    {
+      "name": "Real production worker catalog and disabled automatic policy",
+      "result": "PASS",
+      "detail": {
+        "processed": 0
+      }
+    },
+    {
+      "name": "Production CHECKDB and original DDL policy still enabled",
+      "result": "PASS",
+      "detail": ""
+    }
+  ],
+  "automaticSchedule": "DISABLED",
+  "runtime": "C:\\ProgramData\\SecureFinanceERP\\UC13",
+  "capacity": [
+    {
+      "Mount": "C:\\",
+      "FreeBytes": "510350319616"
+    }
+  ],
+  "backup": "C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\Backup\\SecureFinanceERP_PreUC13_Production_20261104170805.bak",
+  "verificationDatabase": "SecureFinanceERP_PreUC13_Verify_20261104170805",
+  "installed": true,
+  "result": "PASS",
+  "finishedUTC": "2026-11-04T17:08:37.579Z"
+}

@@ -1,0 +1,138 @@
+{
+  "atUTC": "2026-11-04T16:57:39.963Z",
+  "database": "SecureFinanceERP_LDF_Rehearsal_20261104165323",
+  "realSQL": true,
+  "user": "P4_QA_1793811452547",
+  "checks": [
+    {
+      "width": 1440,
+      "route": "/dba/backups",
+      "title": "Respaldos y recuperación | SecureFinance ERP"
+    },
+    {
+      "width": 1440,
+      "route": "/dba/ldf",
+      "title": "Registro transaccional LDF | SecureFinance ERP"
+    },
+    {
+      "width": 1440,
+      "route": "/cotizaciones",
+      "title": "Cotizaciones | SecureFinance ERP"
+    },
+    {
+      "width": 1440,
+      "route": "/compras",
+      "title": "Órdenes de compra | SecureFinance ERP"
+    },
+    {
+      "width": 1440,
+      "route": "/creditos",
+      "title": "Cuentas por cobrar | SecureFinance ERP"
+    },
+    {
+      "width": 1440,
+      "route": "/promociones",
+      "title": "Promociones | SecureFinance ERP"
+    },
+    {
+      "width": 1440,
+      "route": "/multibodega",
+      "title": "Gestion multibodega | SecureFinance ERP"
+    },
+    {
+      "width": 1440,
+      "route": "/auditoria/ddl",
+      "title": "Auditoria DDL | SecureFinance ERP"
+    },
+    {
+      "width": 768,
+      "route": "/dba/backups",
+      "title": "Respaldos y recuperación | SecureFinance ERP"
+    },
+    {
+      "width": 768,
+      "route": "/dba/ldf",
+      "title": "Registro transaccional LDF | SecureFinance ERP"
+    },
+    {
+      "width": 768,
+      "route": "/cotizaciones",
+      "title": "Cotizaciones | SecureFinance ERP"
+    },
+    {
+      "width": 768,
+      "route": "/compras",
+      "title": "Órdenes de compra | SecureFinance ERP"
+    },
+    {
+      "width": 768,
+      "route": "/creditos",
+      "title": "Cuentas por cobrar | SecureFinance ERP"
+    },
+    {
+      "width": 768,
+      "route": "/promociones",
+      "title": "Promociones | SecureFinance ERP"
+    },
+    {
+      "width": 768,
+      "route": "/multibodega",
+      "title": "Gestion multibodega | SecureFinance ERP"
+    },
+    {
+      "width": 768,
+      "route": "/auditoria/ddl",
+      "title": "Auditoria DDL | SecureFinance ERP"
+    },
+    {
+      "width": 390,
+      "route": "/dba/backups",
+      "title": "Respaldos y recuperación | SecureFinance ERP"
+    },
+    {
+      "width": 390,
+      "route": "/dba/ldf",
+      "title": "Registro transaccional LDF | SecureFinance ERP"
+    },
+    {
+      "width": 390,
+      "route": "/cotizaciones",
+      "title": "Cotizaciones | SecureFinance ERP"
+    },
+    {
+      "width": 390,
+      "route": "/compras",
+      "title": "Órdenes de compra | SecureFinance ERP"
+    },
+    {
+      "width": 390,
+      "route": "/creditos",
+      "title": "Cuentas por cobrar | SecureFinance ERP"
+    },
+    {
+      "width": 390,
+      "route": "/promociones",
+      "title": "Promociones | SecureFinance ERP"
+    },
+    {
+      "width": 390,
+      "route": "/multibodega",
+      "title": "Gestion multibodega | SecureFinance ERP"
+    },
+    {
+      "width": 390,
+      "route": "/auditoria/ddl",
+      "title": "Auditoria DDL | SecureFinance ERP"
+    }
+  ],
+  "csrfRejected": 403,
+  "queue": {
+    "status": 202,
+    "body": {
+      "Id": "5F76BAA1-4A28-4A7E-8C08-12EA0A10985F",
+      "Estado": "PENDIENTE"
+    }
+  },
+  "errors": [],
+  "result": "PASS"
+}

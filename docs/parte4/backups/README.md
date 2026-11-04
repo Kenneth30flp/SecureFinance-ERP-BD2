@@ -1,5 +1,7 @@
 # Parte IV · Módulo 1 · UC13
 
+Estado operativo actualizado: [integración UC13 + UC14](../integracion-final/README.md). Las evidencias SQL y Chromium de noviembre de 2026 amplían la validación inicial de este documento; revisar allí los pendientes de Windows y acceso original.
+
 Implementación para la aplicación Express/EJS vigente, rama `feature/p4-edward-backups`. No se ejecutan migraciones al arrancar HTTP. El servidor web **no importa el ejecutor ni carga sus credenciales**. Las operaciones son reales una vez instaladas: no hay modo demo ni resultados SQL simulados en producción.
 
 ## Arquitectura y acceso
@@ -12,7 +14,7 @@ El proceso independiente toma un `sp_getapplock` exclusivo de sesión y utiliza 
 
 ## Instalación explícita por DBA
 
-Requisitos: Windows, Node >=24, SQL Server 2016 SP1 o posterior (Express incluido), ERP con Parte II y autenticación instalados, TCP SQL habilitado. No se necesita SQL Server Agent. Ejecutar primero en un laboratorio aislado autorizado. Estos pasos son instrucciones de despliegue; **no se ejecutaron en esta entrega**.
+Requisitos: Windows, Node >=24, SQL Server 2016 SP1 o posterior (Express incluido), ERP con Parte II y autenticación instalados, TCP SQL habilitado. No se necesita SQL Server Agent. Ejecutar primero en un laboratorio aislado autorizado. La ejecución real posterior está documentada en el informe de integración.
 
 1. Instalar dependencias con `npm.cmd ci`. Crear, fuera del repositorio, carpetas de backup y recuperación, por ejemplo `D:\SFBackups\` y `D:\SFRecovery\`. No usar unidades mapeadas ni rutas UNC; no usar junctions/symlinks. La cuenta del servicio SQL necesita lectura/escritura en ambas carpetas. Los nombres de carpeta admiten letras ASCII, números, `_` y `-`. No conceder escritura a la cuenta Windows del servidor web.
 2. Crear por los mecanismos seguros del entorno un login SQL dedicado al worker y un usuario correspondiente en ERP. No usar `sa`, `sysadmin`, `db_owner` ni la cuenta de la aplicación. El worker requiere capacidad de crear bases nuevas, por lo que sus credenciales **no deben ser accesibles al proceso web**. Ejecutar ambos procesos con identidades Windows distintas y ACL separadas. No poner secretos en argumentos de consola, Git o `package.json`.
@@ -76,7 +78,7 @@ La vista muestra habilitación SQL, heartbeat y solicitudes. Una señal de más 
 1. Ingresar fecha/hora con segundos **en la hora local del servidor SQL**, que es la usada por backupset y STOPAT. No convierte silenciosamente entre UTC y hora local. Configurar SQL en UTC cuando sea posible; en zonas con DST no seleccionar horas ambiguas.
 2. Dar un nombre `SF_Recovery_...`, nunca el nombre origen. Generar plan; el worker elige FULL no copy-only anterior al punto, DIFF opcional con base LSN correcta y LOG continuos de la misma familia/rama. Usa BigInt/string para LSN, sin pérdida de precisión. Excluye medios dañados, sin checksum, BULK_LOGGED, bandas múltiples y dispositivos no DISK.
 3. Exige un LOG que **comience después** del punto, condición conservadora compatible con servidores anteriores a SQL 2022. Puede requerir esperar el siguiente LOG incluso si un backup recién terminado ya contiene el punto. Si hay una brecha o los medios no son suficientes, falla; no aproxima la hora.
-4. Verifica HEADERONLY/UUID, FILELISTONLY y VERIFYONLY sobre **todos** los medios antes de ofrecer el plan. Acepta archivos convencionales D/L presentes en FULL; rechaza FILESTREAM y archivos nuevos/cambios de identidad posteriores. Los LOG/DIFF pueden omitir contenidos ya presentes en FULL. Solo admite medios dentro de BACKUPS_ROOT. Los medios externos válidos se incorporan vía msdb si cumplen esas restricciones; no se aceptan rutas del navegador.
+4. Verifica HEADERONLY/UUID, familia, forks, tipo, FILELISTONLY y VERIFYONLY sobre **todos** los medios antes de ofrecer el plan. Acepta archivos convencionales D/L presentes en FULL; rechaza FILESTREAM y archivos nuevos/cambios de identidad posteriores. Los LOG/DIFF pueden omitir contenidos ya presentes en FULL. Admite medios inmediatos en las carpetas devueltas por `sp_BackupsRutas`: configuración UC13 y configuración UC14 habilitada y ligada a la identidad real. BACKUPS_ROOT debe estar autorizado en SQL. No se aceptan rutas del navegador.
 5. Revisar comandos en el historial y ejecutar el plan. Solo su autor puede ejecutarlo, una vez, dentro de 30 minutos. El worker verifica otra vez autorización, medios y archivos; rechaza un destino existente y una configuración modificada. MOVE usa nuevos nombres físicos con UUID por plan, independientes para todos los MDF/NDF/LDF.
 6. FULL/DIFF usan NORECOVERY y STOPAT. Cada LOG usa STOPAT + RECOVERY: SQL mantiene RESTORING cuando todavía no se alcanzó el punto. El ejecutor se detiene al primer ONLINE confirmado y no aplica logs posteriores. No existe RECOVERY final incondicional: si ninguno alcanza el punto, falla conservando la base sin recuperar. Antes del primer RESTORE vuelve a rechazar destinos existentes en el mismo lote SQL; los siguientes pasos verifican el ID, fecha de creación y estado RESTORING del destino creado por esta ejecución. Cada lote comprueba también el bloqueo de sesión. **No hay WITH REPLACE, DROP DATABASE, ALTER del origen ni restauración en el origen**. Un fallo conserva la base parcial para inspección DBA y exige otro nombre/plan para reintentar. No se cambia la conexión del ERP ni se realiza una conmutación automática a la base recuperada.
 
@@ -84,7 +86,7 @@ Los permisos CREATE ANY DATABASE permiten al worker crear destinos y ser dueño 
 
 ## Verificación y alcance académico
 
-Ver [VALIDACION.md](VALIDACION.md) y [ARCHIVOS.md](ARCHIVOS.md). Las pruebas Node usan dobles explícitos y fixtures solo en tests; no acreditan que un BACKUP o RESTORE haya ocurrido. La compilación/ejecución T-SQL, permisos efectivos, tarea Windows y recuperación de transacciones reales necesitan laboratorio aislado y siguen pendientes.
+Ver [VALIDACION.md](VALIDACION.md), [ARCHIVOS.md](ARCHIVOS.md) y el [estado de integración](../integracion-final/README.md). Las pruebas Node usan dobles explícitos y fixtures solo en tests; no acreditan por sí solas que un BACKUP o RESTORE haya ocurrido. La integración añade respaldos y PITR comprobados en SQL real, más navegador Chromium. El estado de Windows y los pendientes operativos se documentan por separado.
 
 El documento académico pide C#. El repositorio vigente usa Node.js/Express/EJS; UC13 se integra en esa arquitectura y el ejecutor independiente también es Node.js. Se cumplen los flujos funcionales mediante SQL Server, pero **no se entrega implementación C# ni se afirma cumplimiento del requisito tecnológico C#**. Esa discrepancia debe ser aceptada académicamente o resolverse en una entrega C# separada.
 
